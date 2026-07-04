@@ -1,0 +1,1 @@
+{ "Zenmuse_H30T": { "id": "Zenmuse_H30T", "name": "Zenmuse H30T", "weight_kg": 0.92, "power_draw_w": 28.0 }, "L1_LiDAR": { "id": "L1_LiDAR", "name": "Zenmuse L1", "weight_kg": 0.93, "power_draw_w": 30.0 }, "None": { "id": "None", "name": "No Payload", "weight_kg": 0.0, "power_draw_w": 0.0 } }
