@@ -17,13 +17,21 @@ interface MissionFormProps {
 }
 
 const AIRCRAFT_OPTIONS: readonly SelectOption[] = [
-  { value: "DJI_M350", label: "DJI Matrice 350 RTK" },
-  { value: "Mavic_3_Ent", label: "DJI Mavic 3 Enterprise" },
+  { value: "Skydio_X10D", label: "Skydio X10D" },
+  { value: "Skydio_X2D", label: "Skydio X2D" },
+  { value: "Parrot_ANAFI_USA", label: "Parrot ANAFI USA" },
+  { value: "Teal_Golden_Eagle", label: "Teal Golden Eagle (Teal 2)" },
+  { value: "Freefly_Astro_Max", label: "Freefly Astro Max" },
+  { value: "Freefly_Alta_X", label: "Freefly Alta X (Blue)" },
+  { value: "Inspired_Flight_IF1200A", label: "Inspired Flight IF1200A" },
 ];
 const PAYLOAD_OPTIONS: readonly SelectOption[] = [
-  { value: "Zenmuse_H30T", label: "Zenmuse H30T (Sensor)" },
-  { value: "L1_LiDAR", label: "Zenmuse L1 (LiDAR)" },
   { value: "None", label: "No External Payload" },
+  { value: "FLIR_Hadron_640R", label: "Teledyne FLIR Hadron 640R" },
+  { value: "Sony_ILX_LR1", label: "Sony ILX-LR1 (61MP)" },
+  { value: "Nextvision_Raptor", label: "Nextvision Raptor" },
+  { value: "Workswell_WIRIS_Ent", label: "Workswell WIRIS Enterprise" },
+  { value: "Trillium_HD40_LV", label: "Trillium HD40-LV Gimbal" },
 ];
 
 function parseParam(value: string): number | null {
@@ -33,8 +41,8 @@ function parseParam(value: string): number | null {
 
 export function MissionForm(props: MissionFormProps): JSX.Element {
   const { loading, onAnalyze } = props;
-  const [aircraftId, setAircraftId] = useState("DJI_M350");
-  const [payloadId, setPayloadId] = useState("Zenmuse_H30T");
+  const [aircraftId, setAircraftId] = useState("Skydio_X10D");
+  const [payloadId, setPayloadId] = useState("None");
   const [distanceM, setDistanceM] = useState("5000");
   const [hoverTimeS, setHoverTimeS] = useState("600");
   const [targetAltitudeM, setTargetAltitudeM] = useState("120");
