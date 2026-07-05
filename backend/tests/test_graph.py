@@ -8,10 +8,10 @@ from langgraph.graph.state import CompiledStateGraph
 from suas.schemas.responses import WeatherReading
 
 
-def _mission_input(aircraft_id: str = "DJI_M350") -> dict[str, Any]:
+def _mission_input(aircraft_id: str = "Skydio_X10D") -> dict[str, Any]:
     return {
         "aircraft_id": aircraft_id,
-        "payload_id": "Zenmuse_H30T",
+        "payload_id": "None",
         "mission_params": {
             "distance_m": 2000.0,
             "hover_time_s": 120.0,

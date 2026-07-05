@@ -16,8 +16,8 @@ from suas.config import Settings, get_settings
 from suas.main import create_app
 
 _VALID_BODY: dict[str, Any] = {
-    "aircraft_id": "DJI_M350",
-    "payload_id": "Zenmuse_H30T",
+    "aircraft_id": "Skydio_X10D",
+    "payload_id": "None",
     "mission_params": {
         "distance_m": 2000.0,
         "hover_time_s": 120.0,
