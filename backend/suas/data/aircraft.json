@@ -1,0 +1,86 @@
+{
+  "Skydio_X10D": {
+    "id": "Skydio_X10D",
+    "name": "Skydio X10D",
+    "weight_kg": 2.11,
+    "max_payload_kg": 0.0,
+    "battery_wh": 120.0,
+    "max_wind_mps": 12.0,
+    "cruise_speed_mps": 14.0,
+    "hover_power_w": 180.0,
+    "cruise_power_w": 162.0,
+    "max_temp_c": 45.0
+  },
+  "Skydio_X2D": {
+    "id": "Skydio_X2D",
+    "name": "Skydio X2D",
+    "weight_kg": 1.3,
+    "max_payload_kg": 0.15,
+    "battery_wh": 76.0,
+    "max_wind_mps": 11.0,
+    "cruise_speed_mps": 11.0,
+    "hover_power_w": 130.3,
+    "cruise_power_w": 117.3,
+    "max_temp_c": 43.0
+  },
+  "Parrot_ANAFI_USA": {
+    "id": "Parrot_ANAFI_USA",
+    "name": "Parrot ANAFI USA",
+    "weight_kg": 0.5,
+    "max_payload_kg": 0.0,
+    "battery_wh": 24.0,
+    "max_wind_mps": 14.7,
+    "cruise_speed_mps": 10.0,
+    "hover_power_w": 45.0,
+    "cruise_power_w": 40.5,
+    "max_temp_c": 43.0
+  },
+  "Teal_Golden_Eagle": {
+    "id": "Teal_Golden_Eagle",
+    "name": "Teal Golden Eagle (Teal 2)",
+    "weight_kg": 1.4,
+    "max_payload_kg": 0.9,
+    "battery_wh": 75.0,
+    "max_wind_mps": 11.0,
+    "cruise_speed_mps": 14.0,
+    "hover_power_w": 150.0,
+    "cruise_power_w": 135.0,
+    "max_temp_c": 43.0
+  },
+  "Freefly_Astro_Max": {
+    "id": "Freefly_Astro_Max",
+    "name": "Freefly Astro Max",
+    "weight_kg": 5.1,
+    "max_payload_kg": 3.0,
+    "battery_wh": 314.0,
+    "max_wind_mps": 12.0,
+    "cruise_speed_mps": 14.0,
+    "hover_power_w": 483.1,
+    "cruise_power_w": 434.8,
+    "max_temp_c": 50.0
+  },
+  "Freefly_Alta_X": {
+    "id": "Freefly_Alta_X",
+    "name": "Freefly Alta X (Blue)",
+    "weight_kg": 19.8,
+    "max_payload_kg": 15.06,
+    "battery_wh": 1420.0,
+    "max_wind_mps": 12.0,
+    "cruise_speed_mps": 15.0,
+    "hover_power_w": 4260.0,
+    "cruise_power_w": 3834.0,
+    "max_temp_c": 50.0
+  },
+  "Inspired_Flight_IF1200A": {
+    "id": "Inspired_Flight_IF1200A",
+    "name": "Inspired Flight IF1200A",
+    "weight_kg": 16.3,
+    "max_payload_kg": 8.7,
+    "battery_wh": 1420.0,
+    "max_wind_mps": 11.8,
+    "cruise_speed_mps": 17.0,
+    "hover_power_w": 1981.4,
+    "cruise_power_w": 1783.3,
+    "max_temp_c": 50.0
+  }
+}
