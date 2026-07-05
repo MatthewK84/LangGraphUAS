@@ -1,40 +1,48 @@
-version: '3.8'
-
 services:
   db:
-    image: postgres:15-alpine
+    image: postgres:16-alpine
     environment:
-      POSTGRES_USER: suas_user
-      POSTGRES_PASSWORD: suas_password
-      POSTGRES_DB: suas_db
-    ports:
-      - "5432:5432"
+      POSTGRES_USER: ${POSTGRES_USER:-suas}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required; set it in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-suas}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-suas} -d ${POSTGRES_DB:-suas}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
 
   backend:
-    build: 
+    build:
       context: ./backend
+    environment:
+      SUAS_DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-suas}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-suas}
+      SUAS_OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      SUAS_OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
+      SUAS_API_KEY: ${API_KEY:-}
+      SUAS_CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+      SUAS_LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    depends_on:
+      db:
+        condition: service_healthy
     ports:
       - "8000:8000"
-    volumes:
-      - ./backend:/app
-      - ./data:/app/data
-    environment:
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - DATABASE_URL=postgresql://suas_user:suas_password@db:5432/suas_db
-    depends_on:
-      - db
-    
+    restart: unless-stopped
+
   frontend:
     build:
       context: ./frontend
-    ports:
-      - "3000:3000"
-    volumes:
-      - ./frontend/src:/app/src
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
     depends_on:
       - backend
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
 
 volumes:
-  postgres_data:
+  pgdata:
