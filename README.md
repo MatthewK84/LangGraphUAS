@@ -3,7 +3,8 @@
 An async AI orchestration and deterministic physics engine for small unmanned
 aircraft system (sUAS) flight planning. A LangGraph state machine coordinates
 validation, live weather, deterministic safety math, and a language-model
-safety brief. A Next.js dashboard drives it.
+safety brief. A Next.js dashboard drives it. The reference data covers a set of
+DIU/DCMA Blue UAS (NDAA-compliant) multirotor platforms.
 
 ## Architecture
 
@@ -78,6 +79,42 @@ Backend variables use the `SUAS_` prefix. Compose maps friendly names to them.
 | `SUAS_LOG_LEVEL` | `INFO` | Root log level. |
 | `NEXT_PUBLIC_API_URL` | `http://localhost:8000` | Browser-reachable backend URL, baked at build time. |
 
+## Platforms and payloads
+
+Reference data is bundled at `backend/suas/data/` and seeds into the database on
+startup (idempotent). The frontend dropdowns and defaults resolve against these
+same keys.
+
+Aircraft: `Skydio_X10D`, `Skydio_X2D`, `Parrot_ANAFI_USA`, `Teal_Golden_Eagle`,
+`Freefly_Astro_Max`, `Freefly_Alta_X`, `Inspired_Flight_IF1200A`.
+
+Payloads: `None`, `FLIR_Hadron_640R`, `Sony_ILX_LR1`, `Nextvision_Raptor`,
+`Workswell_WIRIS_Ent`, `Trillium_HD40_LV`.
+
+The default selection is `Skydio_X10D` with `None`. The X10D carries an
+integrated sensor suite, so its external payload capacity is 0; pairing it with
+any payload other than `None` yields a negative payload margin and a NO-GO,
+which is the correct result. For a default that lands on a clean GO, select
+`Freefly_Astro_Max` with `Sony_ILX_LR1`.
+
+### Data provenance
+
+Each aircraft field is published, estimated, or derived:
+
+- Published: weight, max payload, max wind, and operating temperature, from
+  manufacturer or reputable spec sources.
+- Estimated: `battery_wh` where a manufacturer does not state pack energy, and
+  nominal cruise speed (roughly 0.6 to 0.7 of published max speed).
+- Derived: the two power fields, by
+  `hover_power_w = battery_wh / no_payload_endurance_hours` and
+  `cruise_power_w = 0.90 * hover_power_w`.
+
+The power fields are engineering estimates, not measurements. Replace them with
+real power logs before operational use. Treat the `Freefly_Alta_X` power values
+and the `Inspired_Flight_IF1200A` `battery_wh` (which assumes a 12S pack) as the
+softest numbers. All payload `power_draw_w` values are estimates. For the
+authoritative live roster, cross-check `bluelist.dcma.mil`.
+
 ## API
 
 `GET /health` returns a liveness payload.
@@ -87,8 +124,8 @@ result, weather, deterministic calculations, a report, and the `thread_id`.
 
 ```json
 {
-  "aircraft_id": "DJI_M350",
-  "payload_id": "Zenmuse_H30T",
+  "aircraft_id": "Skydio_X10D",
+  "payload_id": "None",
   "mission_params": {
     "distance_m": 5000,
     "hover_time_s": 600,
@@ -144,10 +181,10 @@ backend/
   suas/
     api/            routes, security, request dependencies
     calculations/   pure physics, battery, and assessment functions
+    data/           bundled Blue UAS aircraft and payload reference data
     db/             async engine, ORM models, repository, seed
     graph/          state, nodes, checkpointer, workflow
     schemas/        pydantic domain, request, and response models
-    services/       async weather and report clients
     config.py       typed settings
     main.py         app factory and lifespan
   tests/            unit, graph, and API tests
@@ -157,6 +194,16 @@ frontend/
     lib/            typed API client, geolocation, shared types
 docker-compose.yml
 ```
+
+## Known limitations and roadmap
+
+- **Reference power figures are estimates.** See Data provenance above. Swap in
+  measured power draw before relying on the energy budget operationally.
+- **Next.js ESLint plugin is disabled.** The `@next/eslint-plugin-next` v14
+  rules crash under ESLint 9 flat config, so Next-specific lint is off. Re-add it
+  after moving to Next 15, which is flat-config compatible.
+- **No database migrations yet.** Schema comes from `create_all`. Add Alembic
+  before the database holds data whose schema must evolve.
 
 ## License
 
