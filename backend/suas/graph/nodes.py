@@ -59,7 +59,7 @@ def make_weather_node(deps: GraphDependencies) -> NodeFn:
     return fetch_weather
 
 
-def make_calculations_node() -> NodeFn:
+def make_calculations_node(deps: GraphDependencies) -> NodeFn:
     """Return a node that runs the deterministic mission assessment."""
 
     async def calculate(state: MissionState) -> MissionState:
@@ -72,6 +72,7 @@ def make_calculations_node() -> NodeFn:
             payload=payload,
             params=params,
             weather=weather,
+            reserve_percent=deps.battery_reserve_percent,
         )
         return {
             "calculations": calculations.model_dump(),

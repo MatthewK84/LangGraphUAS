@@ -36,7 +36,7 @@ def build_mission_graph(
     builder = StateGraph(MissionState)
     builder.add_node("validate", make_validate_node(deps))
     builder.add_node("weather", make_weather_node(deps))
-    builder.add_node("calculations", make_calculations_node())
+    builder.add_node("calculations", make_calculations_node(deps))
     builder.add_node("report", make_report_node(deps))
 
     builder.add_edge(START, "validate")

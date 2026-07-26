@@ -4,13 +4,13 @@ from typing import Final
 
 from suas.schemas.responses import BatteryCheck
 
-_DEFAULT_RESERVE_PERCENT: Final[float] = 20.0
+DEFAULT_RESERVE_PERCENT: Final[float] = 20.0
 
 
 def check_battery_viability(
     energy_required_wh: float,
     battery_capacity_wh: float,
-    reserve_percent: float = _DEFAULT_RESERVE_PERCENT,
+    reserve_percent: float = DEFAULT_RESERVE_PERCENT,
 ) -> BatteryCheck:
     """Return the battery energy budget for a mission.
 

@@ -9,6 +9,7 @@ from dataclasses import dataclass
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from suas.calculations.battery import DEFAULT_RESERVE_PERCENT
 from suas.services.llm import ReportService
 from suas.services.weather import WeatherService
 
@@ -20,3 +21,4 @@ class GraphDependencies:
     session_factory: async_sessionmaker[AsyncSession]
     weather: WeatherService
     report: ReportService
+    battery_reserve_percent: float = DEFAULT_RESERVE_PERCENT

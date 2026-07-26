@@ -15,7 +15,7 @@ from tenacity import (
     wait_exponential,
 )
 
-from suas.schemas.responses import WeatherReading
+from suas.schemas.responses import WeatherReading, WeatherSource
 
 logger: Final[logging.Logger] = logging.getLogger(__name__)
 
@@ -30,7 +30,8 @@ _FALLBACK: Final[WeatherReading] = WeatherReading(
     wind_speed_mps=0.0,
     wind_direction=0.0,
     humidity_percent=50.0,
-    conditions="Fallback Defaults",
+    conditions="Fallback defaults; live feed unavailable",
+    source=WeatherSource.FALLBACK,
 )
 
 
@@ -41,7 +42,8 @@ def _parse_current(current: dict[str, Any]) -> WeatherReading:
         wind_speed_mps=float(current.get("wind_speed_10m", _FALLBACK.wind_speed_mps)),
         wind_direction=float(current.get("wind_direction_10m", _FALLBACK.wind_direction)),
         humidity_percent=float(current.get("relative_humidity_2m", _FALLBACK.humidity_percent)),
-        conditions="Live Meteorological Feed",
+        conditions="Live meteorological feed",
+        source=WeatherSource.LIVE,
     )
 
 

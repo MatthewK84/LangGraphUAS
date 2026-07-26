@@ -8,12 +8,15 @@ export interface SafetyFlags {
   readonly temperature_within_limits: boolean;
 }
 
+export type WeatherSource = "live" | "fallback";
+
 export interface WeatherReading {
   readonly temperature_c: number;
   readonly wind_speed_mps: number;
   readonly wind_direction: number;
   readonly humidity_percent: number;
   readonly conditions: string;
+  readonly source: WeatherSource;
 }
 
 export interface Calculations {
@@ -29,6 +32,8 @@ export interface PlanResult {
   readonly calculations: Calculations | null;
   readonly report: string;
   readonly thread_id: string;
+  readonly degraded: boolean;
+  readonly warnings: readonly string[];
 }
 
 export interface MissionParams {
@@ -51,3 +56,19 @@ export interface MissionRequest {
 export type ApiResult<T> =
   | { readonly ok: true; readonly data: T }
   | { readonly ok: false; readonly error: string };
+
+export interface AircraftSummary {
+  readonly id: string;
+  readonly name: string;
+  readonly max_payload_kg: number;
+  readonly battery_wh: number;
+  readonly max_wind_mps: number;
+  readonly max_temp_c: number;
+}
+
+export interface PayloadSummary {
+  readonly id: string;
+  readonly name: string;
+  readonly weight_kg: number;
+  readonly power_draw_w: number;
+}

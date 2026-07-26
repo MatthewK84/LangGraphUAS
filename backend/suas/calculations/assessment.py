@@ -4,7 +4,7 @@ Combines the individual physics and battery calculations into a single
 deterministic result. Kept pure so it is trivial to unit test (Principle 7).
 """
 
-from suas.calculations.battery import check_battery_viability
+from suas.calculations.battery import DEFAULT_RESERVE_PERCENT, check_battery_viability
 from suas.calculations.physics import calculate_density_altitude, calculate_energy_required
 from suas.schemas.domain import Aircraft, Payload
 from suas.schemas.requests import MissionParams
@@ -34,9 +34,20 @@ def assess_mission(
     payload: Payload,
     params: MissionParams,
     weather: WeatherReading,
+    reserve_percent: float = DEFAULT_RESERVE_PERCENT,
 ) -> Calculations:
-    """Return the full deterministic assessment for a planned mission."""
-    density_altitude_m: float = calculate_density_altitude(params.elevation_m, weather.temperature_c)
+    """Return the full deterministic assessment for a planned mission.
+
+    Args:
+        aircraft: The airframe being flown.
+        payload: The mounted payload.
+        params: Mission geometry and environment inputs.
+        weather: Current conditions at the launch point.
+        reserve_percent: Battery reserve withheld from usable capacity.
+    """
+    density_altitude_m: float = calculate_density_altitude(
+        params.elevation_m, weather.temperature_c
+    )
     payload_margin_kg: float = round(aircraft.max_payload_kg - payload.weight_kg, 2)
     energy_required_wh: float = calculate_energy_required(
         distance_m=params.distance_m,
@@ -46,7 +57,11 @@ def assess_mission(
         cruise_power_w=aircraft.cruise_power_w,
         payload_power_w=payload.power_draw_w,
     )
-    battery_check = check_battery_viability(energy_required_wh, aircraft.battery_wh)
+    battery_check = check_battery_viability(
+        energy_required_wh,
+        aircraft.battery_wh,
+        reserve_percent,
+    )
     safety_flags = _build_safety_flags(
         battery_viable=battery_check.is_viable,
         payload_margin_kg=payload_margin_kg,

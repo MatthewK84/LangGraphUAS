@@ -27,7 +27,9 @@ _SYSTEM_PROMPT: Final[str] = (
 def _fallback_report(is_viable: bool) -> str:
     """Return a deterministic brief when the model is unavailable."""
     decision: str = "GO" if is_viable else "NO-GO"
-    return f"Mission status: {decision}. Deterministic assessment only; model narrative unavailable."
+    return (
+        f"Mission status: {decision}. Deterministic assessment only; model narrative unavailable."
+    )
 
 
 def _build_prompt(

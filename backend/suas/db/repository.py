@@ -31,3 +31,15 @@ async def count_aircraft(session: AsyncSession) -> int:
     """Return the number of aircraft rows currently stored."""
     result = await session.execute(select(AircraftRow.id))
     return len(result.scalars().all())
+
+
+async def list_aircraft(session: AsyncSession) -> list[Aircraft]:
+    """Return every aircraft in the catalog, ordered by name."""
+    result = await session.execute(select(AircraftRow).order_by(AircraftRow.name))
+    return [Aircraft.model_validate(row, from_attributes=True) for row in result.scalars().all()]
+
+
+async def list_payloads(session: AsyncSession) -> list[Payload]:
+    """Return every payload in the catalog, ordered by weight ascending."""
+    result = await session.execute(select(PayloadRow).order_by(PayloadRow.weight_kg))
+    return [Payload.model_validate(row, from_attributes=True) for row in result.scalars().all()]

@@ -23,6 +23,24 @@ function StatusBanner({ result }: { readonly result: PlanResult }): JSX.Element 
   );
 }
 
+function WarningBanner({ warnings }: { readonly warnings: readonly string[] }): JSX.Element {
+  return (
+    <div
+      className="p-4 rounded-xl border bg-amber-950/40 border-amber-700 text-amber-300"
+      role="alert"
+    >
+      <span className="font-semibold text-sm uppercase tracking-wider">
+        Degraded inputs
+      </span>
+      <ul className="mt-2 space-y-1 text-sm list-disc list-inside">
+        {warnings.map((warning) => (
+          <li key={warning}>{warning}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 function TelemetryCard({ weather }: { readonly weather: WeatherReading }): JSX.Element {
   return (
     <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 shadow-sm">
@@ -30,6 +48,12 @@ function TelemetryCard({ weather }: { readonly weather: WeatherReading }): JSX.E
         Live Environmental Telemetry
       </span>
       <div className="mt-2 space-y-1 text-sm">
+        <p>
+          Source:{" "}
+          <span className={weather.source === "live" ? "text-emerald-400" : "text-amber-400"}>
+            {weather.source === "live" ? "Live feed" : "Fallback defaults"}
+          </span>
+        </p>
         <p>Conditions: <span className="text-white font-medium">{weather.conditions}</span></p>
         <p>Air Temperature: <span className="text-white font-medium">{weather.temperature_c}&deg;C</span></p>
         <p>Wind Velocity: <span className="text-white font-medium">{weather.wind_speed_mps} m/s</span></p>
@@ -79,6 +103,7 @@ export function ResultsPanel(props: ResultsPanelProps): JSX.Element {
   return (
     <div className="space-y-6">
       <StatusBanner result={result} />
+      {result.warnings.length > 0 && <WarningBanner warnings={result.warnings} />}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {result.weather !== null && <TelemetryCard weather={result.weather} />}
         {result.calculations !== null && <PerformanceCard calculations={result.calculations} />}

@@ -5,6 +5,7 @@ import type { JSX } from "react";
 
 import { planMission } from "@/lib/api";
 import type { MissionRequest, PlanResult } from "@/lib/types";
+import { useCatalog } from "@/lib/useCatalog";
 
 import { MissionForm } from "./components/MissionForm";
 import { ResultsPanel } from "./components/ResultsPanel";
@@ -14,6 +15,7 @@ export default function MissionPlanner(): JSX.Element {
   const [result, setResult] = useState<PlanResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [threadId, setThreadId] = useState<string | null>(null);
+  const catalog = useCatalog();
 
   async function analyze(request: MissionRequest): Promise<void> {
     setLoading(true);
@@ -44,6 +46,10 @@ export default function MissionPlanner(): JSX.Element {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <MissionForm
             loading={loading}
+            aircraft={catalog.aircraft}
+            payloads={catalog.payloads}
+            catalogLoading={catalog.loading}
+            catalogError={catalog.error}
             onAnalyze={(request) => {
               void analyze(request);
             }}

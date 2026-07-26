@@ -4,7 +4,16 @@ These are the explicit shapes returned to the client and produced by the pure
 calculation layer (Principle 8).
 """
 
-from pydantic import BaseModel
+from enum import Enum
+
+from pydantic import BaseModel, Field
+
+
+class WeatherSource(str, Enum):
+    """Provenance of a weather reading."""
+
+    LIVE = "live"
+    FALLBACK = "fallback"
 
 
 class WeatherReading(BaseModel):
@@ -15,6 +24,12 @@ class WeatherReading(BaseModel):
     wind_direction: float
     humidity_percent: float
     conditions: str
+    source: WeatherSource = WeatherSource.LIVE
+
+    @property
+    def is_live(self) -> bool:
+        """Return whether the reading came from the live provider."""
+        return self.source is WeatherSource.LIVE
 
 
 class SafetyFlags(BaseModel):
@@ -54,6 +69,8 @@ class PlanResponse(BaseModel):
     weather: WeatherReading | None
     report: str
     thread_id: str
+    degraded: bool = False
+    warnings: list[str] = Field(default_factory=list)
 
 
 class HealthResponse(BaseModel):
@@ -62,3 +79,42 @@ class HealthResponse(BaseModel):
     status: str
     service: str
     version: str
+
+
+class AircraftSummary(BaseModel):
+    """Catalog entry describing a selectable airframe."""
+
+    id: str
+    name: str
+    max_payload_kg: float
+    battery_wh: float
+    max_wind_mps: float
+    max_temp_c: float
+
+
+class PayloadSummary(BaseModel):
+    """Catalog entry describing a selectable payload."""
+
+    id: str
+    name: str
+    weight_kg: float
+    power_draw_w: float
+
+
+class ReadinessResponse(BaseModel):
+    """Readiness probe payload."""
+
+    ready: bool
+    database: str
+    checkpointer: str
+
+
+class ThreadStateResponse(BaseModel):
+    """Persisted state for a previously planned mission thread."""
+
+    thread_id: str
+    found: bool
+    is_viable: bool | None
+    report: str | None
+    calculations: Calculations | None
+    weather: WeatherReading | None

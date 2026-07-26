@@ -1,48 +1,83 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { JSX } from "react";
 
 import { getCurrentCoordinates } from "@/lib/geo";
-import type { MissionRequest } from "@/lib/types";
+import type {
+  AircraftSummary,
+  MissionParams,
+  MissionRequest,
+  PayloadSummary,
+} from "@/lib/types";
 
+import { CatalogStatus } from "./CatalogStatus";
 import { LocationFields } from "./LocationFields";
-import { NumberField } from "./NumberField";
+import { MissionParamFields } from "./MissionParamFields";
 import { SelectField } from "./SelectField";
 import type { SelectOption } from "./SelectField";
 
 interface MissionFormProps {
   readonly loading: boolean;
+  readonly aircraft: readonly AircraftSummary[];
+  readonly payloads: readonly PayloadSummary[];
+  readonly catalogLoading: boolean;
+  readonly catalogError: string | null;
   readonly onAnalyze: (request: MissionRequest) => void;
 }
 
-const AIRCRAFT_OPTIONS: readonly SelectOption[] = [
-  { value: "Skydio_X10D", label: "Skydio X10D" },
-  { value: "Skydio_X2D", label: "Skydio X2D" },
-  { value: "Parrot_ANAFI_USA", label: "Parrot ANAFI USA" },
-  { value: "Teal_Golden_Eagle", label: "Teal Golden Eagle (Teal 2)" },
-  { value: "Freefly_Astro_Max", label: "Freefly Astro Max" },
-  { value: "Freefly_Alta_X", label: "Freefly Alta X (Blue)" },
-  { value: "Inspired_Flight_IF1200A", label: "Inspired Flight IF1200A" },
-];
-const PAYLOAD_OPTIONS: readonly SelectOption[] = [
-  { value: "None", label: "No External Payload" },
-  { value: "FLIR_Hadron_640R", label: "Teledyne FLIR Hadron 640R" },
-  { value: "Sony_ILX_LR1", label: "Sony ILX-LR1 (61MP)" },
-  { value: "Nextvision_Raptor", label: "Nextvision Raptor" },
-  { value: "Workswell_WIRIS_Ent", label: "Workswell WIRIS Enterprise" },
-  { value: "Trillium_HD40_LV", label: "Trillium HD40-LV Gimbal" },
-];
+function toOptions(
+  items: readonly { readonly id: string; readonly name: string }[],
+): readonly SelectOption[] {
+  return items.map((item) => ({ value: item.id, label: item.name }));
+}
+
 
 function parseParam(value: string): number | null {
   const parsed = Number.parseFloat(value);
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+interface RawParams {
+  readonly distanceM: string;
+  readonly hoverTimeS: string;
+  readonly targetAltitudeM: string;
+  readonly elevationM: string;
+  readonly latitude: string;
+  readonly longitude: string;
+}
+
+function buildMissionParams(raw: RawParams): MissionParams | null {
+  const distance = parseParam(raw.distanceM);
+  const hover = parseParam(raw.hoverTimeS);
+  const altitude = parseParam(raw.targetAltitudeM);
+  const elevation = parseParam(raw.elevationM);
+  const lat = parseParam(raw.latitude);
+  const lon = parseParam(raw.longitude);
+  if (
+    distance === null ||
+    hover === null ||
+    altitude === null ||
+    elevation === null ||
+    lat === null ||
+    lon === null
+  ) {
+    return null;
+  }
+  return {
+    distance_m: distance,
+    hover_time_s: hover,
+    target_altitude_m: altitude,
+    elevation_m: elevation,
+    latitude: lat,
+    longitude: lon,
+  };
+}
+
 export function MissionForm(props: MissionFormProps): JSX.Element {
-  const { loading, onAnalyze } = props;
-  const [aircraftId, setAircraftId] = useState("Skydio_X10D");
-  const [payloadId, setPayloadId] = useState("None");
+  const { loading, aircraft, payloads, catalogLoading, catalogError, onAnalyze } = props;
+  const [aircraftId, setAircraftId] = useState("");
+  const [payloadId, setPayloadId] = useState("");
   const [distanceM, setDistanceM] = useState("5000");
   const [hoverTimeS, setHoverTimeS] = useState("600");
   const [targetAltitudeM, setTargetAltitudeM] = useState("120");
@@ -50,6 +85,16 @@ export function MissionForm(props: MissionFormProps): JSX.Element {
   const [latitude, setLatitude] = useState("");
   const [longitude, setLongitude] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
+
+  // Default the selection to the first catalog entry once it loads.
+  useEffect(() => {
+    if (aircraftId === "" && aircraft.length > 0) {
+      setAircraftId(aircraft[0]?.id ?? "");
+    }
+    if (payloadId === "" && payloads.length > 0) {
+      setPayloadId(payloads[0]?.id ?? "");
+    }
+  }, [aircraft, payloads, aircraftId, payloadId]);
 
   function locate(): void {
     setFormError(null);
@@ -65,34 +110,26 @@ export function MissionForm(props: MissionFormProps): JSX.Element {
 
   function submit(): void {
     setFormError(null);
-    const distance = parseParam(distanceM);
-    const hover = parseParam(hoverTimeS);
-    const altitude = parseParam(targetAltitudeM);
-    const elevation = parseParam(elevationM);
-    const lat = parseParam(latitude);
-    const lon = parseParam(longitude);
-    if (
-      distance === null ||
-      hover === null ||
-      altitude === null ||
-      elevation === null ||
-      lat === null ||
-      lon === null
-    ) {
+    if (aircraftId === "" || payloadId === "") {
+      setFormError("Select an aircraft and payload before analyzing.");
+      return;
+    }
+    const missionParams = buildMissionParams({
+      distanceM,
+      hoverTimeS,
+      targetAltitudeM,
+      elevationM,
+      latitude,
+      longitude,
+    });
+    if (missionParams === null) {
       setFormError("All numeric fields, including latitude and longitude, are required.");
       return;
     }
     onAnalyze({
       aircraft_id: aircraftId,
       payload_id: payloadId,
-      mission_params: {
-        distance_m: distance,
-        hover_time_s: hover,
-        target_altitude_m: altitude,
-        elevation_m: elevation,
-        latitude: lat,
-        longitude: lon,
-      },
+      mission_params: missionParams,
       thread_id: null,
     });
   }
@@ -100,6 +137,7 @@ export function MissionForm(props: MissionFormProps): JSX.Element {
   return (
     <div className="lg:col-span-1 bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-xl h-fit">
       <h2 className="text-xl font-semibold mb-4 text-white">Mission Configuration</h2>
+      <CatalogStatus loading={catalogLoading} error={catalogError} />
       <form
         className="space-y-4"
         onSubmit={(event) => {
@@ -111,34 +149,26 @@ export function MissionForm(props: MissionFormProps): JSX.Element {
           id="aircraft"
           label="Aircraft Platform"
           value={aircraftId}
-          options={AIRCRAFT_OPTIONS}
+          options={toOptions(aircraft)}
           onChange={setAircraftId}
         />
         <SelectField
           id="payload"
           label="Payload System"
           value={payloadId}
-          options={PAYLOAD_OPTIONS}
+          options={toOptions(payloads)}
           onChange={setPayloadId}
         />
-        <div className="grid grid-cols-2 gap-3">
-          <NumberField id="distance" label="Distance (m)" value={distanceM} onChange={setDistanceM} />
-          <NumberField id="hover" label="Hover Time (s)" value={hoverTimeS} onChange={setHoverTimeS} />
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <NumberField
-            id="altitude"
-            label="Target Alt (m)"
-            value={targetAltitudeM}
-            onChange={setTargetAltitudeM}
-          />
-          <NumberField
-            id="elevation"
-            label="Elevation (m)"
-            value={elevationM}
-            onChange={setElevationM}
-          />
-        </div>
+        <MissionParamFields
+          distanceM={distanceM}
+          hoverTimeS={hoverTimeS}
+          targetAltitudeM={targetAltitudeM}
+          elevationM={elevationM}
+          onDistanceChange={setDistanceM}
+          onHoverTimeChange={setHoverTimeS}
+          onTargetAltitudeChange={setTargetAltitudeM}
+          onElevationChange={setElevationM}
+        />
         <LocationFields
           latitude={latitude}
           longitude={longitude}
@@ -153,7 +183,7 @@ export function MissionForm(props: MissionFormProps): JSX.Element {
         )}
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || catalogLoading || aircraft.length === 0}
           className="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 text-white font-semibold py-3 rounded-lg text-sm mt-4 transition-colors shadow-lg"
         >
           {loading ? "Processing environment and metrics..." : "Analyze flight feasibility"}
