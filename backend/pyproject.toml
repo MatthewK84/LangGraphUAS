@@ -9,7 +9,7 @@ dependencies = [
     "pydantic==2.13.4",
     "pydantic-settings==2.14.2",
     "sqlalchemy[asyncio]==2.0.44",
-    "aiosqlite==0.21.0",
+    "aiosqlite==0.22.1",
     "alembic==1.18.5",
     "psycopg[binary]==3.3.4",
     "psycopg-pool==3.3.0",
