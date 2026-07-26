@@ -5,7 +5,7 @@ description = "Async LangGraph sUAS mission planning API"
 requires-python = ">=3.10"
 dependencies = [
     "fastapi==0.139.0",
-    "uvicorn[standard]==0.50.0",
+    "uvicorn[standard]==0.51.0",
     "pydantic==2.13.4",
     "pydantic-settings==2.14.2",
     "sqlalchemy[asyncio]==2.0.44",
