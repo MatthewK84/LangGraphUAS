@@ -111,7 +111,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install ".[dev]"
       - name: pip-audit
-        run: pip-audit --strict --skip-editable
+        run: pip-audit --strict --skip-editable --local
 
   frontend:
     name: Frontend (tsc, eslint, build)
