@@ -106,12 +106,34 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install
+
+      # Capture runtime dependencies only, and do it BEFORE pip-audit is
+      # installed so its own tooling does not pollute the audit set.
+      #
+      # The local project is excluded deliberately: suas-mission-planner is not
+      # published to PyPI, and --strict fails on any dependency it cannot
+      # resolve. --skip-editable does not help, because --strict also fails on
+      # packages that were skipped.
+      - name: Capture runtime dependencies
         run: |
           python -m pip install --upgrade pip
+          pip install .
+          pip freeze --exclude suas-mission-planner > "${RUNNER_TEMP}/requirements-runtime.txt"
+
+      - name: Audit runtime dependencies
+        run: |
+          pip install pip-audit
+          pip-audit --strict -r "${RUNNER_TEMP}/requirements-runtime.txt"
+
+      # Dev tooling never reaches production, so advisories here are
+      # informational and must not block a release. Read the step log when it
+      # reports findings and upgrade on your own schedule.
+      - name: Audit dev dependencies (advisory)
+        continue-on-error: true
+        run: |
           pip install ".[dev]"
-      - name: pip-audit
-        run: pip-audit --strict --skip-editable
+          pip freeze --exclude suas-mission-planner > "${RUNNER_TEMP}/requirements-dev.txt"
+          pip-audit --strict -r "${RUNNER_TEMP}/requirements-dev.txt"
 
   frontend:
     name: Frontend (tsc, eslint, build)
