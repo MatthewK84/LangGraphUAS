@@ -36,21 +36,11 @@ class Settings(BaseSettings):
     llm_max_retries: int = Field(default=2, ge=0, le=6)
     pool_max_size: int = Field(default=10, ge=1, le=100)
     log_level: str = Field(default="INFO")
-    json_logs: bool = Field(default=True)
-    battery_reserve_percent: float = Field(default=20.0, ge=0.0, le=90.0)
-    rate_limit_requests: int = Field(default=30, ge=1)
-    rate_limit_window_s: float = Field(default=60.0, gt=0.0)
-    metrics_enabled: bool = Field(default=True)
 
     @property
     def cors_origin_list(self) -> list[str]:
         """Return CORS origins as a clean list."""
         return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
-
-    @property
-    def rate_limit_enabled(self) -> bool:
-        """Return whether per-client rate limiting is active."""
-        return self.rate_limit_requests > 0
 
     @property
     def uses_postgres(self) -> bool:

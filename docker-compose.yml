@@ -24,10 +24,6 @@ services:
       SUAS_API_KEY: ${API_KEY:-}
       SUAS_CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
       SUAS_LOG_LEVEL: ${LOG_LEVEL:-INFO}
-      SUAS_JSON_LOGS: ${JSON_LOGS:-true}
-      SUAS_BATTERY_RESERVE_PERCENT: ${BATTERY_RESERVE_PERCENT:-20}
-      SUAS_RATE_LIMIT_REQUESTS: ${RATE_LIMIT_REQUESTS:-30}
-      SUAS_RATE_LIMIT_WINDOW_S: ${RATE_LIMIT_WINDOW_S:-60}
     depends_on:
       db:
         condition: service_healthy

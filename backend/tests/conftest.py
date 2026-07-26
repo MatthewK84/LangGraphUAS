@@ -19,7 +19,7 @@ from sqlalchemy.pool import StaticPool
 from suas.db.models import AircraftRow, Base, PayloadRow
 from suas.graph.dependencies import GraphDependencies
 from suas.graph.workflow import build_mission_graph
-from suas.schemas.responses import WeatherReading, WeatherSource
+from suas.schemas.responses import WeatherReading
 
 _DATA_DIR = Path(__file__).resolve().parent.parent / "suas" / "data"
 
@@ -28,8 +28,7 @@ CALM_WEATHER = WeatherReading(
     wind_speed_mps=2.0,
     wind_direction=180.0,
     humidity_percent=50.0,
-    conditions="Test feed",
-    source=WeatherSource.LIVE,
+    conditions="Test Feed",
 )
 
 
@@ -104,17 +103,3 @@ def graph(
 ) -> CompiledStateGraph:
     """Return a graph using calm test weather."""
     return build_graph(CALM_WEATHER)
-
-
-@pytest.fixture
-def app_with_graph(
-    graph: CompiledStateGraph,
-    session_factory: async_sessionmaker[AsyncSession],
-) -> Any:
-    """Return an app wired to the test graph and database, bypassing lifespan."""
-    from suas.main import create_app
-
-    app = create_app()
-    app.state.graph = graph
-    app.state.session_factory = session_factory
-    return app
