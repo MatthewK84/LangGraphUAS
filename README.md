@@ -110,6 +110,9 @@ Backend variables use the `SUAS_` prefix. Compose maps friendly names to them.
 | `SUAS_LOG_LEVEL` | `INFO` | Root log level. |
 | `SUAS_JSON_LOGS` | `true` | Emit structured JSON logs. Set false for readable local output. |
 | `SUAS_BATTERY_RESERVE_PERCENT` | `20` | Reserve withheld from usable battery capacity. |
+| `SUAS_VERTICAL_SPEED_MPS` | `3` | Assumed climb and descent rate. |
+| `SUAS_CLIMB_EFFICIENCY` | `0.6` | Propulsive efficiency for the climb energy term. |
+| `SUAS_CHECKPOINT_RETENTION_DAYS` | `30` | Age at which graph checkpoints are purged. `0` disables retention. |
 | `SUAS_RATE_LIMIT_REQUESTS` | `30` | Requests allowed per window, per client, per worker. |
 | `SUAS_RATE_LIMIT_WINDOW_S` | `60` | Rate limit window in seconds. |
 | `BACKEND_API_URL` | `http://localhost:8000` | Backend URL as reached by the Next.js **server**, not the browser. |
@@ -138,6 +141,35 @@ The X10D carries an integrated sensor suite, so its external payload capacity is
 and a NO-GO, which is the correct result. For a combination with real payload
 headroom, select `Freefly_Astro_Max`.
 
+## The performance model
+
+The deterministic engine is an **energy and performance feasibility calculator**.
+It is explicitly not an airspace, NOTAM, or regulatory clearance tool: it knows
+nothing about controlled airspace, TFRs, or Part 107 altitude limits. A GO here
+means the energy budget and airframe envelope close, nothing more.
+
+What the model accounts for:
+
+| Effect | Treatment |
+| --- | --- |
+| Payload mass | All-up mass scales induced power by `(m/m_ref)^1.5` (momentum theory). |
+| Air density | Power scales by `1/sqrt(rho/rho_0)`, with density from the ISA relation at the mission's density altitude. |
+| Density altitude | Computed at the operating altitude, surface temperature extrapolated up at the ISA lapse rate. |
+| Wind | Cruise is flown at `cruise_speed - wind_speed`. Heading is unknown, so the full wind is assumed to be a headwind. |
+| Climb | Hover power for the climb duration, plus `mgh / efficiency`. |
+| Descent | Hover power for the descent duration. No credit for recovered energy. |
+| Gusts | Checked against the airframe wind limit independently of sustained wind. |
+| Temperature | Two-sided against the airframe envelope, and battery capacity is derated when cold. |
+
+Battery capacity derates linearly from 100% at 20 C to 65% at -10 C, flat
+outside that range. This is representative of the chemistry, not a measured
+curve for any specific pack.
+
+Every one of these was absent in an earlier revision, and each omission biased
+the result toward GO. The choices above are deliberately conservative where the
+model is uncertain: worst-case headwind, no descent energy recovery, and the
+momentum-theory power law applied to cruise as well as hover.
+
 ### Data provenance
 
 Each aircraft field is published, estimated, or derived:
@@ -149,6 +181,10 @@ Each aircraft field is published, estimated, or derived:
 - Derived: the two power fields, by
   `hover_power_w = battery_wh / no_payload_endurance_hours` and
   `cruise_power_w = 0.90 * hover_power_w`.
+
+`min_temp_c` is a conservative placeholder of -20 C for every airframe, not a
+per-model published figure. Replace it with the manufacturer's stated lower
+operating limit before relying on the cold-weather check.
 
 The power fields are engineering estimates, not measurements. Replace them with
 real power logs before operational use. Treat the `Freefly_Alta_X` power values
@@ -302,9 +338,11 @@ docker-compose.yml
 - **Reference power figures are estimates.** See Data provenance. Swap in
   measured values before relying on the energy budget operationally. Edit
   `backend/suas/data/*.json`; the change is applied on the next restart.
-- **Graph checkpoints are never pruned.** Every plan writes a durable
-  checkpoint and nothing removes it, so the Postgres checkpoint tables grow
-  without bound. Add a retention job before running this for any length of time.
+- **Checkpoint retention runs at startup.** Threads older than
+  `SUAS_CHECKPOINT_RETENTION_DAYS` are purged through the checkpointer's own
+  API, capped at 1000 threads per pass. A long-running process that never
+  restarts will not purge; schedule a periodic restart or call the purge from
+  your own scheduler. Retention failures are logged and never block startup.
 
 ## Known limitations
 

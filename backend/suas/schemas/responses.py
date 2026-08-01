@@ -21,6 +21,7 @@ class WeatherReading(BaseModel):
 
     temperature_c: float
     wind_speed_mps: float
+    wind_gust_mps: float = 0.0
     wind_direction: float
     humidity_percent: float
     conditions: str
@@ -38,7 +39,9 @@ class SafetyFlags(BaseModel):
     battery_viable: bool
     payload_within_limits: bool
     wind_within_limits: bool
+    gust_within_limits: bool
     temperature_within_limits: bool
+    cruise_achievable: bool
 
 
 class BatteryCheck(BaseModel):
@@ -48,15 +51,31 @@ class BatteryCheck(BaseModel):
     usable_capacity_wh: float
     margin_wh: float
     reserve_percent: float
+    temperature_factor: float = 1.0
     is_viable: bool
+
+
+class EnergyBreakdown(BaseModel):
+    """Energy demanded by each phase of the planned profile, in watt-hours."""
+
+    climb_wh: float
+    cruise_wh: float
+    hover_wh: float
+    descent_wh: float
+    total_wh: float
 
 
 class Calculations(BaseModel):
     """Full deterministic assessment of a mission."""
 
     density_altitude_m: float
+    air_density_ratio: float
     energy_required_wh: float
+    energy_breakdown: EnergyBreakdown
     payload_margin_kg: float
+    all_up_mass_kg: float
+    ground_speed_mps: float
+    effective_hover_power_w: float
     battery_check: BatteryCheck
     safety_flags: SafetyFlags
 

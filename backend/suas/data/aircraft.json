@@ -9,7 +9,8 @@
     "cruise_speed_mps": 14.0,
     "hover_power_w": 180.0,
     "cruise_power_w": 162.0,
-    "max_temp_c": 45.0
+    "max_temp_c": 45.0,
+    "min_temp_c": -20.0
   },
   "Skydio_X2D": {
     "id": "Skydio_X2D",
@@ -21,7 +22,8 @@
     "cruise_speed_mps": 11.0,
     "hover_power_w": 130.3,
     "cruise_power_w": 117.3,
-    "max_temp_c": 43.0
+    "max_temp_c": 43.0,
+    "min_temp_c": -20.0
   },
   "Parrot_ANAFI_USA": {
     "id": "Parrot_ANAFI_USA",
@@ -33,7 +35,8 @@
     "cruise_speed_mps": 10.0,
     "hover_power_w": 45.0,
     "cruise_power_w": 40.5,
-    "max_temp_c": 43.0
+    "max_temp_c": 43.0,
+    "min_temp_c": -20.0
   },
   "Teal_Golden_Eagle": {
     "id": "Teal_Golden_Eagle",
@@ -45,7 +48,8 @@
     "cruise_speed_mps": 14.0,
     "hover_power_w": 150.0,
     "cruise_power_w": 135.0,
-    "max_temp_c": 43.0
+    "max_temp_c": 43.0,
+    "min_temp_c": -20.0
   },
   "Freefly_Astro_Max": {
     "id": "Freefly_Astro_Max",
@@ -57,7 +61,8 @@
     "cruise_speed_mps": 14.0,
     "hover_power_w": 483.1,
     "cruise_power_w": 434.8,
-    "max_temp_c": 50.0
+    "max_temp_c": 50.0,
+    "min_temp_c": -20.0
   },
   "Freefly_Alta_X": {
     "id": "Freefly_Alta_X",
@@ -69,7 +74,8 @@
     "cruise_speed_mps": 15.0,
     "hover_power_w": 4260.0,
     "cruise_power_w": 3834.0,
-    "max_temp_c": 50.0
+    "max_temp_c": 50.0,
+    "min_temp_c": -20.0
   },
   "Inspired_Flight_IF1200A": {
     "id": "Inspired_Flight_IF1200A",
@@ -81,6 +87,7 @@
     "cruise_speed_mps": 17.0,
     "hover_power_w": 1981.4,
     "cruise_power_w": 1783.3,
-    "max_temp_c": 50.0
+    "max_temp_c": 50.0,
+    "min_temp_c": -20.0
   }
 }

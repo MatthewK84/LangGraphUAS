@@ -9,6 +9,10 @@ from dataclasses import dataclass
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from suas.calculations.assessment import (
+    DEFAULT_CLIMB_EFFICIENCY,
+    DEFAULT_VERTICAL_SPEED_MPS,
+)
 from suas.calculations.battery import DEFAULT_RESERVE_PERCENT
 from suas.services.llm import ReportService
 from suas.services.weather import WeatherService
@@ -22,3 +26,5 @@ class GraphDependencies:
     weather: WeatherService
     report: ReportService
     battery_reserve_percent: float = DEFAULT_RESERVE_PERCENT
+    vertical_speed_mps: float = DEFAULT_VERTICAL_SPEED_MPS
+    climb_efficiency: float = DEFAULT_CLIMB_EFFICIENCY

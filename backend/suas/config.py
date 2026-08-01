@@ -38,9 +38,12 @@ class Settings(BaseSettings):
     log_level: str = Field(default="INFO")
     json_logs: bool = Field(default=True)
     battery_reserve_percent: float = Field(default=20.0, ge=0.0, le=90.0)
+    vertical_speed_mps: float = Field(default=3.0, gt=0.0, le=20.0)
+    climb_efficiency: float = Field(default=0.6, gt=0.0, le=1.0)
     rate_limit_requests: int = Field(default=30, ge=1)
     rate_limit_window_s: float = Field(default=60.0, gt=0.0)
     metrics_enabled: bool = Field(default=True)
+    checkpoint_retention_days: float = Field(default=30.0, ge=0.0)
 
     @property
     def cors_origin_list(self) -> list[str]:

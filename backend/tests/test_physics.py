@@ -8,7 +8,15 @@ in feet from the textbook constants and then converted, so it does not restate
 the implementation.
 """
 
-from suas.calculations.physics import calculate_density_altitude, calculate_energy_required
+from suas.calculations.physics import (
+    calculate_air_density_ratio,
+    calculate_climb_energy,
+    calculate_density_altitude,
+    calculate_descent_energy,
+    calculate_energy_required,
+    calculate_ground_speed,
+    scale_power_for_conditions,
+)
 
 _METERS_PER_FOOT = 0.3048
 
@@ -71,7 +79,7 @@ def test_energy_required_hover_only() -> None:
     energy = calculate_energy_required(
         distance_m=0.0,
         hover_time_s=3600.0,
-        cruise_speed_mps=15.0,
+        ground_speed_mps=15.0,
         hover_power_w=800.0,
         cruise_power_w=690.0,
         payload_power_w=0.0,
@@ -84,7 +92,7 @@ def test_energy_required_combines_hover_and_cruise() -> None:
     energy = calculate_energy_required(
         distance_m=5000.0,
         hover_time_s=600.0,
-        cruise_speed_mps=15.0,
+        ground_speed_mps=15.0,
         hover_power_w=800.0,
         cruise_power_w=690.0,
         payload_power_w=10.0,
@@ -98,7 +106,7 @@ def test_energy_required_scales_linearly_with_hover_time() -> None:
         return calculate_energy_required(
             distance_m=0.0,
             hover_time_s=seconds,
-            cruise_speed_mps=15.0,
+            ground_speed_mps=15.0,
             hover_power_w=900.0,
             cruise_power_w=690.0,
             payload_power_w=0.0,
@@ -112,9 +120,90 @@ def test_energy_required_zero_speed_ignores_cruise() -> None:
     energy = calculate_energy_required(
         distance_m=5000.0,
         hover_time_s=0.0,
-        cruise_speed_mps=0.0,
+        ground_speed_mps=0.0,
         hover_power_w=800.0,
         cruise_power_w=690.0,
         payload_power_w=10.0,
     )
     assert energy == 0.0
+
+
+def test_air_density_ratio_is_one_at_sea_level() -> None:
+    assert calculate_air_density_ratio(0.0) == 1.0
+
+
+def test_air_density_ratio_falls_with_altitude() -> None:
+    """ISA density is about 74% of sea level at 2500 m."""
+    ratio = calculate_air_density_ratio(2500.0)
+    assert 0.73 < ratio < 0.79
+    assert ratio < calculate_air_density_ratio(1000.0)
+
+
+def test_air_density_ratio_stays_positive_in_extreme_input() -> None:
+    assert calculate_air_density_ratio(100_000.0) > 0.0
+
+
+def test_power_scaling_is_neutral_at_reference_conditions() -> None:
+    assert scale_power_for_conditions(800.0, 1.0, 1.0) == 800.0
+
+
+def test_power_scaling_follows_momentum_theory_in_mass() -> None:
+    """Doubling mass raises induced power by 2^1.5, not 2."""
+    scaled = scale_power_for_conditions(800.0, 2.0, 1.0)
+    assert abs(scaled - 800.0 * (2.0**1.5)) < 0.01
+
+
+def test_power_scaling_rises_as_air_thins() -> None:
+    thin = scale_power_for_conditions(800.0, 1.0, 0.75)
+    assert thin > 800.0
+    assert abs(thin - 800.0 / (0.75**0.5)) < 0.01
+
+
+def test_ground_speed_subtracts_worst_case_headwind() -> None:
+    assert calculate_ground_speed(15.0, 4.0) == 11.0
+
+
+def test_ground_speed_is_non_positive_when_wind_matches_airspeed() -> None:
+    assert calculate_ground_speed(12.0, 12.0) == 0.0
+    assert calculate_ground_speed(12.0, 15.0) < 0.0
+
+
+def test_climb_energy_covers_hold_plus_potential_energy() -> None:
+    """120 m at 3 m/s is 40 s of hold, plus mgh/efficiency."""
+    energy = calculate_climb_energy(
+        height_m=120.0,
+        mass_kg=6.9,
+        hover_power_w=1000.0,
+        payload_power_w=0.0,
+        vertical_speed_mps=3.0,
+        efficiency=0.6,
+    )
+    hold_j = 1000.0 * 40.0
+    potential_j = 6.9 * 9.80665 * 120.0 / 0.6
+    assert abs(energy - (hold_j + potential_j) / 3600.0) < 0.01
+
+
+def test_climb_energy_is_zero_without_height() -> None:
+    assert (
+        calculate_climb_energy(
+            height_m=0.0,
+            mass_kg=6.9,
+            hover_power_w=1000.0,
+            payload_power_w=0.0,
+            vertical_speed_mps=3.0,
+            efficiency=0.6,
+        )
+        == 0.0
+    )
+
+
+def test_descent_energy_takes_no_credit_for_recovered_energy() -> None:
+    """A powered descent still holds the aircraft up; charge hover power."""
+    energy = calculate_descent_energy(
+        height_m=120.0,
+        hover_power_w=1000.0,
+        payload_power_w=0.0,
+        vertical_speed_mps=3.0,
+    )
+    assert energy > 0.0
+    assert abs(energy - (1000.0 * 40.0) / 3600.0) < 0.01

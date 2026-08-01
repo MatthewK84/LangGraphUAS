@@ -14,20 +14,34 @@ from .conftest import CALM_WEATHER
 
 _CALC_STUB = {
     "density_altitude_m": 100.0,
+    "air_density_ratio": 0.99,
     "energy_required_wh": 120.0,
+    "energy_breakdown": {
+        "climb_wh": 5.0,
+        "cruise_wh": 60.0,
+        "hover_wh": 50.0,
+        "descent_wh": 5.0,
+        "total_wh": 120.0,
+    },
     "payload_margin_kg": 1.5,
+    "all_up_mass_kg": 6.9,
+    "ground_speed_mps": 13.0,
+    "effective_hover_power_w": 900.0,
     "battery_check": {
         "energy_required_wh": 120.0,
         "usable_capacity_wh": 400.0,
         "margin_wh": 280.0,
         "reserve_percent": 20.0,
+        "temperature_factor": 1.0,
         "is_viable": True,
     },
     "safety_flags": {
         "battery_viable": True,
         "payload_within_limits": True,
         "wind_within_limits": True,
+        "gust_within_limits": True,
         "temperature_within_limits": True,
+        "cruise_achievable": True,
     },
 }
 

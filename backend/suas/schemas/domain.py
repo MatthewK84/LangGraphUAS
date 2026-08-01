@@ -22,6 +22,7 @@ class Aircraft(BaseModel):
     hover_power_w: float = Field(gt=0.0)
     cruise_power_w: float = Field(gt=0.0)
     max_temp_c: float
+    min_temp_c: float = Field(default=-20.0)
 
 
 class Payload(BaseModel):
