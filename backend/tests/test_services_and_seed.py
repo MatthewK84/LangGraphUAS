@@ -186,3 +186,23 @@ def test_configure_logging_both_modes(level: str, expected_json: bool) -> None:
 
     configure_logging(level, json_output=expected_json)
     assert logging.getLogger().handlers
+
+
+def test_bundled_aircraft_have_a_coherent_temperature_envelope() -> None:
+    """Every airframe must have a lower limit below its upper limit.
+
+    These are published manufacturer figures, not placeholders, so a nonsensical
+    envelope means the reference data has been edited incorrectly.
+    """
+    import json
+    from pathlib import Path
+
+    data_dir = Path(__file__).resolve().parent.parent / "suas" / "data"
+    records = json.loads((data_dir / "aircraft.json").read_text(encoding="utf-8"))
+    assert records
+    for aircraft_id, record in records.items():
+        assert "min_temp_c" in record, aircraft_id
+        assert record["min_temp_c"] < record["max_temp_c"], aircraft_id
+        # Sanity bounds: no sUAS in this catalog is rated outside these.
+        assert -60.0 < record["min_temp_c"] <= 0.0, aircraft_id
+        assert 20.0 <= record["max_temp_c"] < 70.0, aircraft_id

@@ -182,9 +182,30 @@ Each aircraft field is published, estimated, or derived:
   `hover_power_w = battery_wh / no_payload_endurance_hours` and
   `cruise_power_w = 0.90 * hover_power_w`.
 
-`min_temp_c` is a conservative placeholder of -20 C for every airframe, not a
-per-model published figure. Replace it with the manufacturer's stated lower
-operating limit before relying on the cold-weather check.
+Operating temperature limits are published manufacturer figures:
+
+| Aircraft | `min_temp_c` | Published range | Source |
+| --- | --- | --- | --- |
+| Skydio X10D | -20 | -20 to 45 C | Skydio X10 specifications |
+| Skydio X2D | -10 | -10 to 43 C | Skydio X2 support documentation |
+| Parrot ANAFI USA | -35 | -32 F (-35 C) to 120 F (49 C) | ANAFI USA user guide |
+| Teal Golden Eagle (Teal 2) | -36.7 | -34 F to 110 F (-36.7 to 43.3 C) | Teal 2 specifications |
+| Freefly Astro Max | -20 | -20 to 50 C | Freefly Astro pilot's operating handbook |
+| Freefly Alta X | -20 | -20 to 50 C | Freefly Alta X specifications |
+| Inspired Flight IF1200A | -20 | -20 to 45 C | IF1200A specifications |
+
+Two caveats before operational use. First, these were gathered from published
+specification summaries rather than retrieved from the manufacturers' own
+documents directly, so verify each against the current datasheet for your
+airframe. Second, two `max_temp_c` values in the bundled data disagree with the
+figures found alongside the minimums: Parrot ANAFI USA is stored as 43 C against
+a published 49 C, and Inspired Flight IF1200A is stored as 50 C against a
+published 45 C. The IF1200A discrepancy is permissive and worth correcting
+first. Both are left as-is pending confirmation.
+
+Note also that Freefly documents a separate battery guidance of 10 C minimum at
+takeoff for the Astro, well above the airframe's -20 C limit. The model's cold
+capacity derate is not a substitute for that kind of pack-specific procedure.
 
 The power fields are engineering estimates, not measurements. Replace them with
 real power logs before operational use. Treat the `Freefly_Alta_X` power values
