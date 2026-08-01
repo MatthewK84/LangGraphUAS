@@ -168,6 +168,13 @@ degraded-input warnings.
 }
 ```
 
+`elevation_m` is the launch point's elevation above sea level and
+`target_altitude_m` is the planned operating height above that launch point
+(AGL). Density altitude is reported for the operating altitude, not the field:
+the surface temperature is extrapolated upward with the ISA lapse rate before
+the deviation from standard is applied. Under a standard lapse rate that means
+planning `h` meters higher raises reported density altitude by exactly `h`.
+
 `GET /api/plan/{thread_id}` returns the persisted state for a prior mission
 thread, or `found: false` when the thread is unknown.
 

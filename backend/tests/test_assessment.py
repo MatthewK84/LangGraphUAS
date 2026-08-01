@@ -41,6 +41,42 @@ def test_assessment_viable_in_calm_conditions() -> None:
     assert result.safety_flags.wind_within_limits is True
 
 
+def test_assessment_computes_expected_magnitudes() -> None:
+    """Pin the numbers, not just the flags.
+
+    Cruise: 1000 m / 15 m/s = 66.67 s at (690 + 28) W. Hover: 60 s at
+    (820 + 28) W. Total = (50880 + 47866.7) J / 3600 = 27.43 Wh.
+    Payload margin = 2.7 - 0.9 = 1.8 kg.
+    """
+    result = assess_mission(aircraft=_AIRCRAFT, payload=_PAYLOAD, params=_PARAMS, weather=_CALM)
+    assert result.energy_required_wh == 27.43
+    assert result.payload_margin_kg == 1.8
+    assert result.battery_check.usable_capacity_wh == 470.4
+    assert result.battery_check.margin_wh == 442.97
+
+
+def test_assessment_uses_target_altitude_for_density_altitude() -> None:
+    """The target altitude is a live input, not a decorative form field.
+
+    Under a standard lapse rate, planning 120 m higher raises density altitude
+    by exactly 120 m. If this regresses, the field has gone dead again.
+    """
+    at_surface = _PARAMS.model_copy(update={"target_altitude_m": 0.0})
+    surface_result = assess_mission(
+        aircraft=_AIRCRAFT, payload=_PAYLOAD, params=at_surface, weather=_CALM
+    )
+    aloft_result = assess_mission(
+        aircraft=_AIRCRAFT, payload=_PAYLOAD, params=_PARAMS, weather=_CALM
+    )
+    assert aloft_result.density_altitude_m - surface_result.density_altitude_m == 120.0
+
+
+def test_assessment_density_altitude_reflects_warm_day_at_sea_level() -> None:
+    """20 C at sea level, planned at 120 m AGL: 36.21 * 5 + 120 = 301.05 m."""
+    result = assess_mission(aircraft=_AIRCRAFT, payload=_PAYLOAD, params=_PARAMS, weather=_CALM)
+    assert result.density_altitude_m == 301.05
+
+
 def test_assessment_flags_high_wind() -> None:
     gusty = _CALM.model_copy(update={"wind_speed_mps": 20.0})
     result = assess_mission(aircraft=_AIRCRAFT, payload=_PAYLOAD, params=_PARAMS, weather=gusty)

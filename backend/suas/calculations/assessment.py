@@ -46,7 +46,9 @@ def assess_mission(
         reserve_percent: Battery reserve withheld from usable capacity.
     """
     density_altitude_m: float = calculate_density_altitude(
-        params.elevation_m, weather.temperature_c
+        params.elevation_m,
+        weather.temperature_c,
+        params.target_altitude_m,
     )
     payload_margin_kg: float = round(aircraft.max_payload_kg - payload.weight_kg, 2)
     energy_required_wh: float = calculate_energy_required(
