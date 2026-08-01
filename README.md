@@ -20,6 +20,26 @@ Supported on Python 3.10, 3.11, and 3.12. CI verifies all three.
 - **Observability**: request correlation, JSON logs, Prometheus metrics, split liveness and readiness.
 - **Deployment**: Docker Compose with health checks and non-root images.
 
+### Authentication and the API key
+
+The browser never holds a credential. It calls this app's own origin, and
+server-side Next.js route handlers under `frontend/src/app/api/` proxy each
+request to the backend, attaching `X-API-Key` from `BACKEND_API_KEY`. That
+variable is deliberately not prefixed `NEXT_PUBLIC_`, so Next.js will not inline
+it into the client bundle.
+
+This replaces an earlier arrangement where the key was read from
+`NEXT_PUBLIC_API_KEY` and shipped inside the JavaScript bundle, which meant
+enabling auth published the key to every visitor. Only the Next.js server needs
+network reach to the backend now; the backend does not have to be exposed to
+browsers at all.
+
+The key still authenticates the *deployment*, not individual users. There is no
+per-user identity, so any caller who can reach the proxy can plan a mission and
+can fetch any `thread_id` they know. Thread ids are UUIDv4 and so are not
+practically enumerable, but put real authentication in front of this before
+serving distinct tenants.
+
 ### Graph design
 
 The graph is defined in `backend/suas/graph/`. Nodes are built by factories that
@@ -86,19 +106,26 @@ Backend variables use the `SUAS_` prefix. Compose maps friendly names to them.
 | `SUAS_OPENAI_API_KEY` | empty | Enables the model-generated report. |
 | `SUAS_OPENAI_MODEL` | `gpt-4o-mini` | Chat model name. |
 | `SUAS_API_KEY` | empty | When set, planning endpoints require header `X-API-Key`. |
-| `SUAS_CORS_ORIGINS` | `http://localhost:3000` | Comma-separated allowed origins. |
+| `SUAS_CORS_ORIGINS` | `http://localhost:3000` | Comma-separated allowed origins. Only needed for non-browser clients now that the UI proxies server-side. |
 | `SUAS_LOG_LEVEL` | `INFO` | Root log level. |
 | `SUAS_JSON_LOGS` | `true` | Emit structured JSON logs. Set false for readable local output. |
 | `SUAS_BATTERY_RESERVE_PERCENT` | `20` | Reserve withheld from usable battery capacity. |
 | `SUAS_RATE_LIMIT_REQUESTS` | `30` | Requests allowed per window, per client, per worker. |
 | `SUAS_RATE_LIMIT_WINDOW_S` | `60` | Rate limit window in seconds. |
-| `NEXT_PUBLIC_API_URL` | `http://localhost:8000` | Browser-reachable backend URL, baked at build time. |
+| `BACKEND_API_URL` | `http://localhost:8000` | Backend URL as reached by the Next.js **server**, not the browser. |
+| `BACKEND_API_KEY` | empty | Sent upstream as `X-API-Key` by the server-side proxy. Never exposed to the client. |
 
 ## Platforms and payloads
 
-Reference data is bundled at `backend/suas/data/` and seeds into the database on
-startup (idempotent). The frontend fetches the catalog from the API at runtime,
-so the dropdowns cannot drift from the data the backend actually holds.
+Reference data is bundled at `backend/suas/data/` and is reconciled into the
+database on every startup. The bundled JSON is the source of truth: rows are
+matched by id and updated in place, so a corrected performance figure reaches an
+existing deployment on the next restart. Rows you add yourself that are not in
+the JSON are left untouched. Edit the JSON (or mount your own) to change the
+catalog; direct database edits are overwritten on the next boot.
+
+The frontend fetches the catalog from the API at runtime, so the dropdowns
+cannot drift from the data the backend actually holds.
 
 Aircraft: `Skydio_X10D`, `Skydio_X2D`, `Parrot_ANAFI_USA`, `Teal_Golden_Eagle`,
 `Freefly_Astro_Max`, `Freefly_Alta_X`, `Inspired_Flight_IF1200A`.
@@ -209,6 +236,7 @@ Frontend:
 cd frontend
 npm run typecheck
 npm run lint
+npm test                              # vitest, covers the server-side proxy
 npm run build
 ```
 
@@ -252,8 +280,11 @@ backend/
   tests/            unit, service, graph, observability, and API tests
 frontend/
   src/
-    app/            App Router pages and UI components
+    app/
+      api/          server-side route handlers that proxy to the backend
+      components/   UI components
     lib/            typed API client, catalog hook, geolocation, shared types
+      server/       backend proxy; the only reader of the API key
 docker-compose.yml
 ```
 
@@ -269,7 +300,11 @@ docker-compose.yml
   schema for convenience, but in production run `alembic upgrade head` as a
   deploy step so schema changes are explicit and auditable.
 - **Reference power figures are estimates.** See Data provenance. Swap in
-  measured values before relying on the energy budget operationally.
+  measured values before relying on the energy budget operationally. Edit
+  `backend/suas/data/*.json`; the change is applied on the next restart.
+- **Graph checkpoints are never pruned.** Every plan writes a durable
+  checkpoint and nothing removes it, so the Postgres checkpoint tables grow
+  without bound. Add a retention job before running this for any length of time.
 
 ## Known limitations
 
