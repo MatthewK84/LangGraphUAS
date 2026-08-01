@@ -12,7 +12,10 @@ const GEO_TIMEOUT_MS = 10_000;
 
 export async function getCurrentCoordinates(): Promise<ApiResult<Coordinates>> {
   if (typeof navigator === "undefined") {
-    return { ok: false, error: "Geolocation is not available in this environment" };
+    return {
+      ok: false,
+      error: "Geolocation is not available in this environment",
+    };
   }
   return new Promise<ApiResult<Coordinates>>((resolve) => {
     navigator.geolocation.getCurrentPosition(

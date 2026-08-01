@@ -43,7 +43,10 @@ async function request<T>(
       signal: controller.signal,
     });
     if (!response.ok) {
-      return { ok: false, error: `Backend returned status ${String(response.status)}` };
+      return {
+        ok: false,
+        error: `Backend returned status ${String(response.status)}`,
+      };
     }
     const data = (await response.json()) as T;
     return { ok: true, data };
@@ -54,7 +57,9 @@ async function request<T>(
   }
 }
 
-export async function planMission(body: MissionRequest): Promise<ApiResult<PlanResult>> {
+export async function planMission(
+  body: MissionRequest,
+): Promise<ApiResult<PlanResult>> {
   return request<PlanResult>(
     "/api/plan",
     { method: "POST", body: JSON.stringify(body) },
@@ -63,9 +68,17 @@ export async function planMission(body: MissionRequest): Promise<ApiResult<PlanR
 }
 
 export async function fetchAircraft(): Promise<ApiResult<AircraftSummary[]>> {
-  return request<AircraftSummary[]>("/api/aircraft", { method: "GET" }, CATALOG_TIMEOUT_MS);
+  return request<AircraftSummary[]>(
+    "/api/aircraft",
+    { method: "GET" },
+    CATALOG_TIMEOUT_MS,
+  );
 }
 
 export async function fetchPayloads(): Promise<ApiResult<PayloadSummary[]>> {
-  return request<PayloadSummary[]>("/api/payloads", { method: "GET" }, CATALOG_TIMEOUT_MS);
+  return request<PayloadSummary[]>(
+    "/api/payloads",
+    { method: "GET" },
+    CATALOG_TIMEOUT_MS,
+  );
 }

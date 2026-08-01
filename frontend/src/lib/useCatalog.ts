@@ -37,11 +37,21 @@ export function useCatalog(): CatalogState {
         return;
       }
       if (!aircraftResult.ok) {
-        setState({ aircraft: [], payloads: [], loading: false, error: aircraftResult.error });
+        setState({
+          aircraft: [],
+          payloads: [],
+          loading: false,
+          error: aircraftResult.error,
+        });
         return;
       }
       if (!payloadResult.ok) {
-        setState({ aircraft: [], payloads: [], loading: false, error: payloadResult.error });
+        setState({
+          aircraft: [],
+          payloads: [],
+          loading: false,
+          error: payloadResult.error,
+        });
         return;
       }
       setState({

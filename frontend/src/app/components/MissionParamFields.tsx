@@ -13,7 +13,9 @@ interface MissionParamFieldsProps {
   readonly onElevationChange: (value: string) => void;
 }
 
-export function MissionParamFields(props: MissionParamFieldsProps): JSX.Element {
+export function MissionParamFields(
+  props: MissionParamFieldsProps,
+): JSX.Element {
   const {
     distanceM,
     hoverTimeS,

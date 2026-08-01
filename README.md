@@ -272,6 +272,7 @@ Frontend:
 cd frontend
 npm run typecheck
 npm run lint
+npm run format                        # prettier --check
 npm test                              # vitest, covers the server-side proxy
 npm run build
 ```
