@@ -32,7 +32,6 @@ function toOptions(
   return items.map((item) => ({ value: item.id, label: item.name }));
 }
 
-
 function parseParam(value: string): number | null {
   const parsed = Number.parseFloat(value);
   return Number.isFinite(parsed) ? parsed : null;
@@ -74,8 +73,50 @@ function buildMissionParams(raw: RawParams): MissionParams | null {
   };
 }
 
+type FormResult =
+  | { readonly ok: true; readonly request: MissionRequest }
+  | { readonly ok: false; readonly error: string };
+
+/** Validate the raw form state into a request, or explain why it cannot be. */
+function buildMissionRequest(
+  aircraftId: string,
+  payloadId: string,
+  raw: RawParams,
+): FormResult {
+  if (aircraftId === "" || payloadId === "") {
+    return {
+      ok: false,
+      error: "Select an aircraft and payload before analyzing.",
+    };
+  }
+  const missionParams = buildMissionParams(raw);
+  if (missionParams === null) {
+    return {
+      ok: false,
+      error:
+        "All numeric fields, including latitude and longitude, are required.",
+    };
+  }
+  return {
+    ok: true,
+    request: {
+      aircraft_id: aircraftId,
+      payload_id: payloadId,
+      mission_params: missionParams,
+      thread_id: null,
+    },
+  };
+}
+
 export function MissionForm(props: MissionFormProps): JSX.Element {
-  const { loading, aircraft, payloads, catalogLoading, catalogError, onAnalyze } = props;
+  const {
+    loading,
+    aircraft,
+    payloads,
+    catalogLoading,
+    catalogError,
+    onAnalyze,
+  } = props;
   const [aircraftId, setAircraftId] = useState("");
   const [payloadId, setPayloadId] = useState("");
   const [distanceM, setDistanceM] = useState("5000");
@@ -110,11 +151,7 @@ export function MissionForm(props: MissionFormProps): JSX.Element {
 
   function submit(): void {
     setFormError(null);
-    if (aircraftId === "" || payloadId === "") {
-      setFormError("Select an aircraft and payload before analyzing.");
-      return;
-    }
-    const missionParams = buildMissionParams({
+    const result = buildMissionRequest(aircraftId, payloadId, {
       distanceM,
       hoverTimeS,
       targetAltitudeM,
@@ -122,21 +159,18 @@ export function MissionForm(props: MissionFormProps): JSX.Element {
       latitude,
       longitude,
     });
-    if (missionParams === null) {
-      setFormError("All numeric fields, including latitude and longitude, are required.");
+    if (!result.ok) {
+      setFormError(result.error);
       return;
     }
-    onAnalyze({
-      aircraft_id: aircraftId,
-      payload_id: payloadId,
-      mission_params: missionParams,
-      thread_id: null,
-    });
+    onAnalyze(result.request);
   }
 
   return (
     <div className="lg:col-span-1 bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-xl h-fit">
-      <h2 className="text-xl font-semibold mb-4 text-white">Mission Configuration</h2>
+      <h2 className="text-xl font-semibold mb-4 text-white">
+        Mission Configuration
+      </h2>
       <CatalogStatus loading={catalogLoading} error={catalogError} />
       <form
         className="space-y-4"
@@ -186,7 +220,9 @@ export function MissionForm(props: MissionFormProps): JSX.Element {
           disabled={loading || catalogLoading || aircraft.length === 0}
           className="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 text-white font-semibold py-3 rounded-lg text-sm mt-4 transition-colors shadow-lg"
         >
-          {loading ? "Processing environment and metrics..." : "Analyze flight feasibility"}
+          {loading
+            ? "Processing environment and metrics..."
+            : "Analyze flight feasibility"}
         </button>
       </form>
     </div>

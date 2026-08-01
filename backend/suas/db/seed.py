@@ -12,7 +12,6 @@ from typing import Any, Final
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from suas.db.models import AircraftRow, PayloadRow
-from suas.db.repository import count_aircraft
 from suas.errors import SeedDataError
 
 logger: Final[logging.Logger] = logging.getLogger(__name__)
@@ -31,14 +30,26 @@ def _load_records(filename: str) -> list[dict[str, Any]]:
 
 
 async def seed_reference_data(session: AsyncSession) -> None:
-    """Populate aircraft and payload tables if they are empty (idempotent)."""
-    existing: int = await count_aircraft(session)
-    if existing > 0:
-        logger.info("Reference data already present (%d aircraft); skipping seed", existing)
-        return
-    for record in _load_records("aircraft.json"):
-        session.add(AircraftRow(**record))
-    for record in _load_records("payloads.json"):
-        session.add(PayloadRow(**record))
+    """Insert or update the bundled aircraft and payload rows (idempotent).
+
+    The bundled JSON is the source of truth: every boot reconciles the stored
+    rows against it, so corrected performance figures actually reach an existing
+    database. A previous revision inserted only when the table was empty, which
+    meant a data fix never propagated past the first deployment.
+
+    Rows are matched by primary key and updated in place. Rows present in the
+    database but absent from the JSON are left alone, so an operator can add
+    their own airframes without them being deleted on restart.
+    """
+    aircraft_records: list[dict[str, Any]] = _load_records("aircraft.json")
+    payload_records: list[dict[str, Any]] = _load_records("payloads.json")
+    for record in aircraft_records:
+        await session.merge(AircraftRow(**record))
+    for record in payload_records:
+        await session.merge(PayloadRow(**record))
     await session.commit()
-    logger.info("Seeded reference aircraft and payload data")
+    logger.info(
+        "Reconciled reference data: %d aircraft, %d payloads",
+        len(aircraft_records),
+        len(payload_records),
+    )

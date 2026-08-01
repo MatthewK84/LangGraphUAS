@@ -9,9 +9,9 @@ RUN npm ci
 # ---- Builder ----
 FROM node:20-alpine AS builder
 WORKDIR /app
-ARG NEXT_PUBLIC_API_URL=http://localhost:8000
-ENV NEXT_TELEMETRY_DISABLED=1 \
-    NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+# The backend URL and API key are read at runtime by the server-side route
+# handlers, so nothing backend-related is baked into the client bundle here.
+ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build

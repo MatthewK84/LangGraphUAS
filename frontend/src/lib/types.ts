@@ -5,7 +5,9 @@ export interface SafetyFlags {
   readonly battery_viable: boolean;
   readonly payload_within_limits: boolean;
   readonly wind_within_limits: boolean;
+  readonly gust_within_limits: boolean;
   readonly temperature_within_limits: boolean;
+  readonly cruise_achievable: boolean;
 }
 
 export type WeatherSource = "live" | "fallback";
@@ -13,16 +15,40 @@ export type WeatherSource = "live" | "fallback";
 export interface WeatherReading {
   readonly temperature_c: number;
   readonly wind_speed_mps: number;
+  readonly wind_gust_mps: number;
   readonly wind_direction: number;
   readonly humidity_percent: number;
   readonly conditions: string;
   readonly source: WeatherSource;
 }
 
+export interface EnergyBreakdown {
+  readonly climb_wh: number;
+  readonly cruise_wh: number;
+  readonly hover_wh: number;
+  readonly descent_wh: number;
+  readonly total_wh: number;
+}
+
+export interface BatteryCheck {
+  readonly energy_required_wh: number;
+  readonly usable_capacity_wh: number;
+  readonly margin_wh: number;
+  readonly reserve_percent: number;
+  readonly temperature_factor: number;
+  readonly is_viable: boolean;
+}
+
 export interface Calculations {
   readonly density_altitude_m: number;
+  readonly air_density_ratio: number;
   readonly energy_required_wh: number;
+  readonly energy_breakdown: EnergyBreakdown;
   readonly payload_margin_kg: number;
+  readonly all_up_mass_kg: number;
+  readonly ground_speed_mps: number;
+  readonly effective_hover_power_w: number;
+  readonly battery_check: BatteryCheck;
   readonly safety_flags: SafetyFlags;
 }
 

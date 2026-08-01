@@ -73,6 +73,8 @@ def make_calculations_node(deps: GraphDependencies) -> NodeFn:
             params=params,
             weather=weather,
             reserve_percent=deps.battery_reserve_percent,
+            vertical_speed_mps=deps.vertical_speed_mps,
+            climb_efficiency=deps.climb_efficiency,
         )
         return {
             "calculations": calculations.model_dump(),

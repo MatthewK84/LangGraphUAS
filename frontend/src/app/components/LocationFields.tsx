@@ -11,7 +11,8 @@ interface LocationFieldsProps {
 }
 
 export function LocationFields(props: LocationFieldsProps): JSX.Element {
-  const { latitude, longitude, onLatitudeChange, onLongitudeChange, onLocate } = props;
+  const { latitude, longitude, onLatitudeChange, onLongitudeChange, onLocate } =
+    props;
   return (
     <div className="pt-2 border-t border-slate-700 space-y-3">
       <button

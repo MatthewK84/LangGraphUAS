@@ -15,7 +15,9 @@ export function CatalogStatus(props: CatalogStatusProps): JSX.Element | null {
     );
   }
   if (loading) {
-    return <p className="text-slate-400 text-xs mb-3">Loading platform catalog...</p>;
+    return (
+      <p className="text-slate-400 text-xs mb-3">Loading platform catalog...</p>
+    );
   }
   return null;
 }

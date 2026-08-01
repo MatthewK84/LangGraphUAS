@@ -23,7 +23,9 @@ export default function MissionPlanner(): JSX.Element {
     setResult(null);
     const outcome = await planMission({ ...request, thread_id: threadId });
     if (!outcome.ok) {
-      setError(`Unable to reach the mission orchestration core: ${outcome.error}`);
+      setError(
+        `Unable to reach the mission orchestration core: ${outcome.error}`,
+      );
       setLoading(false);
       return;
     }

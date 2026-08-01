@@ -12,6 +12,7 @@ from suas.api.dependencies import GraphDep, MetricsDep, SessionFactoryDep
 from suas.api.rate_limit_dep import enforce_rate_limit
 from suas.api.security import require_api_key
 from suas.db.repository import list_aircraft, list_payloads
+from suas.db.retention import record_thread
 from suas.schemas.requests import MissionRequest
 from suas.schemas.responses import (
     AircraftSummary,
@@ -125,6 +126,7 @@ async def plan_mission(
     request: MissionRequest,
     graph: GraphDep,
     metrics: MetricsDep,
+    session_factory: SessionFactoryDep,
 ) -> PlanResponse:
     """Plan and assess a single mission, returning the go/no-go result."""
     thread_id: str = request.thread_id or str(uuid4())
@@ -134,6 +136,10 @@ async def plan_mission(
         "mission_params": request.mission_params.model_dump(),
         "is_viable": True,
     }
+    # Recorded before the run so a thread that writes a checkpoint and then
+    # fails is still eligible for retention rather than leaking.
+    async with session_factory() as session:
+        await record_thread(session, thread_id)
     final_state = await graph.ainvoke(initial, config=_thread_config(thread_id))
     result: PlanResponse = _build_plan_response(dict(final_state), thread_id)
     metrics.record_plan(

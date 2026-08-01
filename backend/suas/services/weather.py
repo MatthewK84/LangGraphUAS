@@ -22,12 +22,14 @@ logger: Final[logging.Logger] = logging.getLogger(__name__)
 _CURRENT_FIELDS: Final[list[str]] = [
     "temperature_2m",
     "wind_speed_10m",
+    "wind_gusts_10m",
     "wind_direction_10m",
     "relative_humidity_2m",
 ]
 _FALLBACK: Final[WeatherReading] = WeatherReading(
     temperature_c=15.0,
     wind_speed_mps=0.0,
+    wind_gust_mps=0.0,
     wind_direction=0.0,
     humidity_percent=50.0,
     conditions="Fallback defaults; live feed unavailable",
@@ -40,6 +42,7 @@ def _parse_current(current: dict[str, Any]) -> WeatherReading:
     return WeatherReading(
         temperature_c=float(current.get("temperature_2m", _FALLBACK.temperature_c)),
         wind_speed_mps=float(current.get("wind_speed_10m", _FALLBACK.wind_speed_mps)),
+        wind_gust_mps=float(current.get("wind_gusts_10m", _FALLBACK.wind_gust_mps)),
         wind_direction=float(current.get("wind_direction_10m", _FALLBACK.wind_direction)),
         humidity_percent=float(current.get("relative_humidity_2m", _FALLBACK.humidity_percent)),
         conditions="Live meteorological feed",

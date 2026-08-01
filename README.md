@@ -20,6 +20,26 @@ Supported on Python 3.10, 3.11, and 3.12. CI verifies all three.
 - **Observability**: request correlation, JSON logs, Prometheus metrics, split liveness and readiness.
 - **Deployment**: Docker Compose with health checks and non-root images.
 
+### Authentication and the API key
+
+The browser never holds a credential. It calls this app's own origin, and
+server-side Next.js route handlers under `frontend/src/app/api/` proxy each
+request to the backend, attaching `X-API-Key` from `BACKEND_API_KEY`. That
+variable is deliberately not prefixed `NEXT_PUBLIC_`, so Next.js will not inline
+it into the client bundle.
+
+This replaces an earlier arrangement where the key was read from
+`NEXT_PUBLIC_API_KEY` and shipped inside the JavaScript bundle, which meant
+enabling auth published the key to every visitor. Only the Next.js server needs
+network reach to the backend now; the backend does not have to be exposed to
+browsers at all.
+
+The key still authenticates the *deployment*, not individual users. There is no
+per-user identity, so any caller who can reach the proxy can plan a mission and
+can fetch any `thread_id` they know. Thread ids are UUIDv4 and so are not
+practically enumerable, but put real authentication in front of this before
+serving distinct tenants.
+
 ### Graph design
 
 The graph is defined in `backend/suas/graph/`. Nodes are built by factories that
@@ -86,19 +106,29 @@ Backend variables use the `SUAS_` prefix. Compose maps friendly names to them.
 | `SUAS_OPENAI_API_KEY` | empty | Enables the model-generated report. |
 | `SUAS_OPENAI_MODEL` | `gpt-4o-mini` | Chat model name. |
 | `SUAS_API_KEY` | empty | When set, planning endpoints require header `X-API-Key`. |
-| `SUAS_CORS_ORIGINS` | `http://localhost:3000` | Comma-separated allowed origins. |
+| `SUAS_CORS_ORIGINS` | `http://localhost:3000` | Comma-separated allowed origins. Only needed for non-browser clients now that the UI proxies server-side. |
 | `SUAS_LOG_LEVEL` | `INFO` | Root log level. |
 | `SUAS_JSON_LOGS` | `true` | Emit structured JSON logs. Set false for readable local output. |
 | `SUAS_BATTERY_RESERVE_PERCENT` | `20` | Reserve withheld from usable battery capacity. |
+| `SUAS_VERTICAL_SPEED_MPS` | `3` | Assumed climb and descent rate. |
+| `SUAS_CLIMB_EFFICIENCY` | `0.6` | Propulsive efficiency for the climb energy term. |
+| `SUAS_CHECKPOINT_RETENTION_DAYS` | `30` | Age at which graph checkpoints are purged. `0` disables retention. |
 | `SUAS_RATE_LIMIT_REQUESTS` | `30` | Requests allowed per window, per client, per worker. |
 | `SUAS_RATE_LIMIT_WINDOW_S` | `60` | Rate limit window in seconds. |
-| `NEXT_PUBLIC_API_URL` | `http://localhost:8000` | Browser-reachable backend URL, baked at build time. |
+| `BACKEND_API_URL` | `http://localhost:8000` | Backend URL as reached by the Next.js **server**, not the browser. |
+| `BACKEND_API_KEY` | empty | Sent upstream as `X-API-Key` by the server-side proxy. Never exposed to the client. |
 
 ## Platforms and payloads
 
-Reference data is bundled at `backend/suas/data/` and seeds into the database on
-startup (idempotent). The frontend fetches the catalog from the API at runtime,
-so the dropdowns cannot drift from the data the backend actually holds.
+Reference data is bundled at `backend/suas/data/` and is reconciled into the
+database on every startup. The bundled JSON is the source of truth: rows are
+matched by id and updated in place, so a corrected performance figure reaches an
+existing deployment on the next restart. Rows you add yourself that are not in
+the JSON are left untouched. Edit the JSON (or mount your own) to change the
+catalog; direct database edits are overwritten on the next boot.
+
+The frontend fetches the catalog from the API at runtime, so the dropdowns
+cannot drift from the data the backend actually holds.
 
 Aircraft: `Skydio_X10D`, `Skydio_X2D`, `Parrot_ANAFI_USA`, `Teal_Golden_Eagle`,
 `Freefly_Astro_Max`, `Freefly_Alta_X`, `Inspired_Flight_IF1200A`.
@@ -111,6 +141,35 @@ The X10D carries an integrated sensor suite, so its external payload capacity is
 and a NO-GO, which is the correct result. For a combination with real payload
 headroom, select `Freefly_Astro_Max`.
 
+## The performance model
+
+The deterministic engine is an **energy and performance feasibility calculator**.
+It is explicitly not an airspace, NOTAM, or regulatory clearance tool: it knows
+nothing about controlled airspace, TFRs, or Part 107 altitude limits. A GO here
+means the energy budget and airframe envelope close, nothing more.
+
+What the model accounts for:
+
+| Effect | Treatment |
+| --- | --- |
+| Payload mass | All-up mass scales induced power by `(m/m_ref)^1.5` (momentum theory). |
+| Air density | Power scales by `1/sqrt(rho/rho_0)`, with density from the ISA relation at the mission's density altitude. |
+| Density altitude | Computed at the operating altitude, surface temperature extrapolated up at the ISA lapse rate. |
+| Wind | Cruise is flown at `cruise_speed - wind_speed`. Heading is unknown, so the full wind is assumed to be a headwind. |
+| Climb | Hover power for the climb duration, plus `mgh / efficiency`. |
+| Descent | Hover power for the descent duration. No credit for recovered energy. |
+| Gusts | Checked against the airframe wind limit independently of sustained wind. |
+| Temperature | Two-sided against the airframe envelope, and battery capacity is derated when cold. |
+
+Battery capacity derates linearly from 100% at 20 C to 65% at -10 C, flat
+outside that range. This is representative of the chemistry, not a measured
+curve for any specific pack.
+
+Every one of these was absent in an earlier revision, and each omission biased
+the result toward GO. The choices above are deliberately conservative where the
+model is uncertain: worst-case headwind, no descent energy recovery, and the
+momentum-theory power law applied to cruise as well as hover.
+
 ### Data provenance
 
 Each aircraft field is published, estimated, or derived:
@@ -122,6 +181,31 @@ Each aircraft field is published, estimated, or derived:
 - Derived: the two power fields, by
   `hover_power_w = battery_wh / no_payload_endurance_hours` and
   `cruise_power_w = 0.90 * hover_power_w`.
+
+Operating temperature limits are published manufacturer figures:
+
+| Aircraft | `min_temp_c` | Published range | Source |
+| --- | --- | --- | --- |
+| Skydio X10D | -20 | -20 to 45 C | Skydio X10 specifications |
+| Skydio X2D | -10 | -10 to 43 C | Skydio X2 support documentation |
+| Parrot ANAFI USA | -35 | -32 F (-35 C) to 120 F (49 C) | ANAFI USA user guide |
+| Teal Golden Eagle (Teal 2) | -36.7 | -34 F to 110 F (-36.7 to 43.3 C) | Teal 2 specifications |
+| Freefly Astro Max | -20 | -20 to 50 C | Freefly Astro pilot's operating handbook |
+| Freefly Alta X | -20 | -20 to 50 C | Freefly Alta X specifications |
+| Inspired Flight IF1200A | -20 | -20 to 45 C | IF1200A specifications |
+
+Two caveats before operational use. First, these were gathered from published
+specification summaries rather than retrieved from the manufacturers' own
+documents directly, so verify each against the current datasheet for your
+airframe. Second, two `max_temp_c` values in the bundled data disagree with the
+figures found alongside the minimums: Parrot ANAFI USA is stored as 43 C against
+a published 49 C, and Inspired Flight IF1200A is stored as 50 C against a
+published 45 C. The IF1200A discrepancy is permissive and worth correcting
+first. Both are left as-is pending confirmation.
+
+Note also that Freefly documents a separate battery guidance of 10 C minimum at
+takeoff for the Astro, well above the airframe's -20 C limit. The model's cold
+capacity derate is not a substitute for that kind of pack-specific procedure.
 
 The power fields are engineering estimates, not measurements. Replace them with
 real power logs before operational use. Treat the `Freefly_Alta_X` power values
@@ -168,6 +252,13 @@ degraded-input warnings.
 }
 ```
 
+`elevation_m` is the launch point's elevation above sea level and
+`target_altitude_m` is the planned operating height above that launch point
+(AGL). Density altitude is reported for the operating altitude, not the field:
+the surface temperature is extrapolated upward with the ISA lapse rate before
+the deviation from standard is applied. Under a standard lapse rate that means
+planning `h` meters higher raises reported density altitude by exactly `h`.
+
 `GET /api/plan/{thread_id}` returns the persisted state for a prior mission
 thread, or `found: false` when the thread is unknown.
 
@@ -202,6 +293,8 @@ Frontend:
 cd frontend
 npm run typecheck
 npm run lint
+npm run format                        # prettier --check
+npm test                              # vitest, covers the server-side proxy
 npm run build
 ```
 
@@ -245,8 +338,11 @@ backend/
   tests/            unit, service, graph, observability, and API tests
 frontend/
   src/
-    app/            App Router pages and UI components
+    app/
+      api/          server-side route handlers that proxy to the backend
+      components/   UI components
     lib/            typed API client, catalog hook, geolocation, shared types
+      server/       backend proxy; the only reader of the API key
 docker-compose.yml
 ```
 
@@ -262,7 +358,13 @@ docker-compose.yml
   schema for convenience, but in production run `alembic upgrade head` as a
   deploy step so schema changes are explicit and auditable.
 - **Reference power figures are estimates.** See Data provenance. Swap in
-  measured values before relying on the energy budget operationally.
+  measured values before relying on the energy budget operationally. Edit
+  `backend/suas/data/*.json`; the change is applied on the next restart.
+- **Checkpoint retention runs at startup.** Threads older than
+  `SUAS_CHECKPOINT_RETENTION_DAYS` are purged through the checkpointer's own
+  API, capped at 1000 threads per pass. A long-running process that never
+  restarts will not purge; schedule a periodic restart or call the purge from
+  your own scheduler. Retention failures are logged and never block startup.
 
 ## Known limitations
 

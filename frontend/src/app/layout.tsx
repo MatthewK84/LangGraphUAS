@@ -8,7 +8,11 @@ export const metadata: Metadata = {
   description: "AI-powered deterministic flight planning",
 };
 
-export default function RootLayout({ children }: { readonly children: ReactNode }): JSX.Element {
+export default function RootLayout({
+  children,
+}: {
+  readonly children: ReactNode;
+}): JSX.Element {
   return (
     <html lang="en">
       <body>{children}</body>

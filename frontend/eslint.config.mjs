@@ -12,7 +12,15 @@ const typeCheckedForSrc = [
 ].map((config) => ({ ...config, files: SRC }));
 
 export default tseslint.config(
-  { ignores: [".next/", "node_modules/", "*.config.mjs", "*.config.ts", "next-env.d.ts"] },
+  {
+    ignores: [
+      ".next/",
+      "node_modules/",
+      "*.config.mjs",
+      "*.config.ts",
+      "next-env.d.ts",
+    ],
+  },
   ...typeCheckedForSrc,
   prettier,
   {
@@ -46,10 +54,16 @@ export default tseslint.config(
       "@typescript-eslint/no-non-null-assertion": "error",
 
       // P7: small focused functions
-      "max-lines-per-function": ["warn", { max: 120, skipBlankLines: true, skipComments: true }],
+      "max-lines-per-function": [
+        "warn",
+        { max: 120, skipBlankLines: true, skipComments: true },
+      ],
 
       // P8: explicit data shapes
-      "@typescript-eslint/explicit-function-return-type": ["error", { allowExpressions: true }],
+      "@typescript-eslint/explicit-function-return-type": [
+        "error",
+        { allowExpressions: true },
+      ],
       "@typescript-eslint/explicit-module-boundary-types": "error",
 
       // P9: standardized async error handling

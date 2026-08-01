@@ -9,11 +9,12 @@ import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
-from typing import Final
+from typing import Any, Final
 
 import httpx
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from langgraph.checkpoint.base import BaseCheckpointSaver
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
 from suas import __version__
@@ -23,6 +24,7 @@ from suas.api.ratelimit import SlidingWindowLimiter
 from suas.api.routes import router
 from suas.config import Settings, get_settings
 from suas.db.engine import create_engine, create_schema, create_session_factory
+from suas.db.retention import purge_expired_threads
 from suas.db.seed import seed_reference_data
 from suas.graph.checkpointer import build_checkpointer
 from suas.graph.dependencies import GraphDependencies
@@ -62,6 +64,8 @@ async def _build_resources(settings: Settings) -> _Resources:
         weather=weather_service,
         report=ReportService(settings),
         battery_reserve_percent=settings.battery_reserve_percent,
+        vertical_speed_mps=settings.vertical_speed_mps,
+        climb_efficiency=settings.climb_efficiency,
     )
     return _Resources(
         engine=engine,
@@ -69,6 +73,23 @@ async def _build_resources(settings: Settings) -> _Resources:
         deps=deps,
         session_factory=session_factory,
     )
+
+
+async def _purge_checkpoints(
+    session_factory: async_sessionmaker[AsyncSession],
+    checkpointer: BaseCheckpointSaver[Any],
+    settings: Settings,
+) -> None:
+    """Age out old checkpoints on boot. Never blocks startup on failure."""
+    try:
+        purged: int = await purge_expired_threads(
+            session_factory, checkpointer, settings.checkpoint_retention_days
+        )
+    except Exception as exc:  # Retention is housekeeping, not a startup gate.
+        logger.error("Checkpoint retention pass failed: %s", exc)
+        return
+    if purged > 0:
+        logger.info("Startup retention purged %d expired threads", purged)
 
 
 async def _dispose_resources(resources: _Resources) -> None:
@@ -88,6 +109,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     async with build_checkpointer(settings) as checkpointer:
         app.state.graph = build_mission_graph(resources.deps, checkpointer)
         app.state.session_factory = resources.session_factory
+        await _purge_checkpoints(resources.session_factory, checkpointer, settings)
         try:
             yield
         finally:
