@@ -1,13 +1,13 @@
 # syntax=docker/dockerfile:1
 
 # ---- Dependencies ----
-FROM node:20-alpine AS deps
+FROM node:25-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 
 # ---- Builder ----
-FROM node:20-alpine AS builder
+FROM node:25-alpine AS builder
 WORKDIR /app
 # The backend URL and API key are read at runtime by the server-side route
 # handlers, so nothing backend-related is baked into the client bundle here.
@@ -17,7 +17,7 @@ COPY . .
 RUN npm run build
 
 # ---- Runner ----
-FROM node:20-alpine AS runner
+FROM node:25-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
