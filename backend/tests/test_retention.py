@@ -4,7 +4,7 @@ Retention exists because LangGraph never expires checkpoints: without it the
 checkpoint tables grow for the life of the deployment.
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import httpx
@@ -41,7 +41,7 @@ async def _age_thread(
     async with session_factory() as session:
         row = await session.get(MissionThreadRow, thread_id)
         assert row is not None
-        row.created_at = datetime.now(timezone.utc) - timedelta(days=days)
+        row.created_at = datetime.now(UTC) - timedelta(days=days)
         await session.commit()
 
 

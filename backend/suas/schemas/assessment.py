@@ -11,12 +11,12 @@ be bound to exactly what was assessed: if either changes, a prior sign-off no
 longer applies to the current numbers.
 """
 
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class Decision(str, Enum):
+class Decision(StrEnum):
     """The three outcomes an assessment can reach.
 
     ``INSUFFICIENT_DATA`` is deliberately distinct from ``NO_GO``: "we assessed
@@ -30,7 +30,7 @@ class Decision(str, Enum):
     INSUFFICIENT_DATA = "insufficient_data"
 
 
-class AssessmentMode(str, Enum):
+class AssessmentMode(StrEnum):
     """How much weight a plan is allowed to carry.
 
     ``ADVISORY`` is planning support. ``OPERATIONAL`` asserts the inputs were
@@ -42,7 +42,7 @@ class AssessmentMode(str, Enum):
     OPERATIONAL = "operational"
 
 
-class Blocker(str, Enum):
+class Blocker(StrEnum):
     """Machine-readable reasons a plan could not be operational.
 
     Each is a fact about the inputs, not about the mission. A no-go with no

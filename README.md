@@ -6,12 +6,12 @@ validation, live weather, deterministic safety math, and a language-model
 safety brief. A Next.js dashboard drives it. The reference data covers a set of
 DIU/DCMA Blue UAS (NDAA-compliant) multirotor platforms.
 
-Supported on Python 3.10, 3.11, and 3.12. CI verifies all three.
+Supported on Python 3.11, 3.12, and 3.13. CI verifies all three.
 
 ## Architecture
 
 - **Frontend**: Next.js 14 (App Router, standalone output), TypeScript strict, TailwindCSS.
-- **Backend**: FastAPI on Python 3.10 to 3.12, fully async request path.
+- **Backend**: FastAPI on Python 3.11 to 3.13, fully async request path.
 - **Orchestration**: LangGraph 1.x `StateGraph` with a conditional edge and durable checkpointing.
 - **Language model**: `langchain-openai` `ChatOpenAI`, called with `ainvoke`, timeout, and bounded retries.
 - **Database**: PostgreSQL 16 via async SQLAlchemy 2.0 (SQLite for local and tests).
@@ -362,7 +362,7 @@ npm test                              # vitest, covers the server-side proxy
 npm run build
 ```
 
-CI runs the backend gates across Python 3.10, 3.11, and 3.12, plus a Postgres
+CI runs the backend gates across Python 3.11, 3.12, and 3.13, plus a Postgres
 integration job (real migrations and startup smoke check), the frontend gates,
 and Docker image builds for both services. See `.github/workflows/ci.yml`.
 
@@ -460,6 +460,10 @@ the air.
 
 ## Known limitations
 
+- **Python 3.10 is not supported.** The floor is 3.11, which is what makes
+  `enum.StrEnum` and `datetime.UTC` available to this codebase. The production
+  image still pins `python:3.11-slim`, the floor of the supported range, so CI
+  exercises a wider range than the container runs.
 - **Next.js ESLint plugin is disabled.** The `@next/eslint-plugin-next` v14 rules
   crash under ESLint 9 flat config, so Next-specific lint is off. Re-add it after
   moving to Next 15, which is flat-config compatible.

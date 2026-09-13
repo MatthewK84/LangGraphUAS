@@ -11,7 +11,7 @@ here depends on LangGraph's internal schema.
 """
 
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any, Final
 
 from langgraph.checkpoint.base import BaseCheckpointSaver
@@ -32,7 +32,7 @@ async def record_thread(session: AsyncSession, thread_id: str) -> None:
     existing: MissionThreadRow | None = await session.get(MissionThreadRow, thread_id)
     if existing is not None:
         return
-    session.add(MissionThreadRow(thread_id=thread_id, created_at=datetime.now(timezone.utc)))
+    session.add(MissionThreadRow(thread_id=thread_id, created_at=datetime.now(UTC)))
     await session.commit()
 
 
@@ -53,7 +53,7 @@ async def record_acknowledgement(
     row: MissionThreadRow | None = await session.get(MissionThreadRow, thread_id)
     if row is None:
         raise KeyError(thread_id)
-    row.ack_at = datetime.now(timezone.utc)
+    row.ack_at = datetime.now(UTC)
     row.ack_actor = actor
     row.ack_action = action
     row.ack_inputs_hash = inputs_hash
@@ -91,7 +91,7 @@ async def purge_expired_threads(
     """
     if retention_days <= 0.0:
         return 0
-    cutoff: datetime = datetime.now(timezone.utc) - timedelta(days=retention_days)
+    cutoff: datetime = datetime.now(UTC) - timedelta(days=retention_days)
     async with session_factory() as session:
         thread_ids: list[str] = await _expired_thread_ids(session, cutoff)
     if not thread_ids:

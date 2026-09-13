@@ -12,7 +12,7 @@ what this project knows. ``UNKNOWN`` exists for the same reason: when the record
 does not say where a number came from, saying so beats guessing a category.
 """
 
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -20,7 +20,7 @@ from pydantic import BaseModel, ConfigDict, Field
 OPERATIONAL_GRADE: frozenset[str] = frozenset({"datasheet", "flight_log"})
 
 
-class FieldSource(str, Enum):
+class FieldSource(StrEnum):
     """How a reference figure was obtained."""
 
     DATASHEET = "datasheet"
@@ -42,7 +42,7 @@ class FieldSource(str, Enum):
     """Provenance is not recorded. Distinct from an estimate: nobody vouched for this."""
 
 
-class Confidence(str, Enum):
+class Confidence(StrEnum):
     """How much weight to put on a figure."""
 
     LOW = "low"
