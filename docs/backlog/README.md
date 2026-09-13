@@ -57,10 +57,9 @@ should be split out when the phase they belong to opens:
 
 | Work | Currently carried by | Split out at |
 |---|---|---|
-| `blue_list_snapshots` table and `refresh_blue_list.py` | #02 (the gate consumes it) | Phase 1, Day 4 |
-| `rag` schema, pgvector extension, hybrid SQL function | #12 (fencing assumes it) | Phase 1, Day 19 |
-| Checkpoint prune job via `delete_thread` | #09 (retention is tested there) | Phase 2, Week 7 |
-| Two-worker `thread_id` lock | #09 | Phase 2, Week 6 |
+| `blue_list_snapshots` table and `refresh_blue_list.py` | #37 (the gate consumes it) | Phase 1, Day 4 |
+| `rag` schema, pgvector extension, hybrid SQL function | #47 (fencing assumes it) | Phase 1, Day 19 |
+| Checkpoint prune job via `delete_thread` | #44 (retention is tested there) | Phase 2, Week 7 |
+| Two-worker `thread_id` lock | #44 | Phase 2, Week 6 |
 
-Carrying them is fine for now; losing them is not. Splitting is cheap once the
-first seventeen are filed and the numbering is stable.
+Carrying them is fine for now; losing them is not.
