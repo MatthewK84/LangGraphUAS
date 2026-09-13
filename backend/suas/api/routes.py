@@ -142,6 +142,7 @@ async def plan_mission(
         "aircraft_id": request.aircraft_id,
         "payload_id": request.payload_id,
         "mission_params": request.mission_params.model_dump(),
+        "requested_mode": request.assessment_mode.value,
         "is_viable": True,
     }
     # Recorded before the run so a thread that writes a checkpoint and then

@@ -248,7 +248,8 @@ degraded-input warnings.
     "latitude": 34.0,
     "longitude": -80.0
   },
-  "thread_id": null
+  "thread_id": null,
+  "assessment_mode": "advisory"
 }
 ```
 
@@ -258,6 +259,24 @@ degraded-input warnings.
 the surface temperature is extrapolated upward with the ISA lapse rate before
 the deviation from standard is applied. Under a standard lapse rate that means
 planning `h` meters higher raises reported density altitude by exactly `h`.
+
+The response carries an `assessment` object, which is the authoritative
+decision: `decision` (`go`, `no_go`, or `insufficient_data`), the `reasons`
+behind it, the `mode` granted, any `blockers`, plus `inputs_hash` and
+`calculator_version` identifying exactly which numbers produced it. It is
+written by `suas/calculations/` and never by the language model. `is_viable`
+remains as a derived alias for `decision == "go"`.
+
+#### Advisory and operational
+
+`assessment_mode` is what you ask for. The backend decides what you get, and it
+fails closed: a gate condition it cannot verify counts against the plan. Today
+that means **operational mode is unreachable** — every plan returns `200` with
+`mode: "advisory"` and blockers naming what is missing, because the bundled
+power figures carry no provenance and no Blue List snapshot is stored. An
+ungrantable mode is a downgrade with reasons attached, not a `409`; see
+[ADR-005](docs/adr/005-mode-downgrade-is-not-an-error.md). A mode that is not a
+valid value is still a `422`.
 
 `GET /api/plan/{thread_id}` returns the persisted state for a prior mission
 thread, or `found: false` when the thread is unknown.

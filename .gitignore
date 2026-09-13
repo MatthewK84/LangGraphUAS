@@ -31,3 +31,6 @@ yarn-error.log*
 .coverage
 .coverage.*
 htmlcov/
+
+# TypeScript incremental build info
+*.tsbuildinfo

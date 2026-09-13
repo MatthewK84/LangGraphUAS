@@ -20,7 +20,7 @@ from suas.errors import ReportGenerationError
 from suas.graph.dependencies import GraphDependencies
 from suas.graph.seal import find_contradiction
 from suas.graph.state import MissionState
-from suas.schemas.assessment import Decision, DeterministicAssessment
+from suas.schemas.assessment import AssessmentMode, Decision, DeterministicAssessment
 from suas.schemas.domain import Aircraft, Payload
 from suas.schemas.requests import MissionParams
 from suas.schemas.responses import Calculations, WeatherReading
@@ -92,13 +92,19 @@ def make_calculations_node(deps: GraphDependencies) -> NodeFn:
             vertical_speed_mps=deps.vertical_speed_mps,
             climb_efficiency=deps.climb_efficiency,
         )
+        requested_mode = AssessmentMode(
+            str(state.get("requested_mode", AssessmentMode.ADVISORY.value))
+        )
         assessment: DeterministicAssessment = build_assessment(
             calculations=calculations,
+            requested_mode=requested_mode,
+            weather=weather,
             inputs={
                 "aircraft": aircraft.model_dump(mode="json"),
                 "payload": payload.model_dump(mode="json"),
                 "mission_params": params.model_dump(mode="json"),
                 "weather": weather.model_dump(mode="json"),
+                "requested_mode": requested_mode.value,
             },
         )
         return {

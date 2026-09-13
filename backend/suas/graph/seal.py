@@ -33,6 +33,8 @@ BRIEF_FIELDS: Final[frozenset[str]] = frozenset({"brief_markdown", "suggested_co
 SEALED_FIELDS: Final[frozenset[str]] = frozenset(DeterministicAssessment.model_fields) | frozenset(
     {
         "is_viable",
+        "assessment_mode",
+        "requested_mode",
         "energy",
         "energy_required_wh",
         "energy_breakdown",

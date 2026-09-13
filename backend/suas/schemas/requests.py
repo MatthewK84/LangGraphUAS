@@ -6,6 +6,8 @@ performs unchecked dictionary access (Principle 8/9).
 
 from pydantic import BaseModel, Field
 
+from suas.schemas.assessment import AssessmentMode
+
 
 class MissionParams(BaseModel):
     """Mission geometry and environment inputs."""
@@ -25,3 +27,6 @@ class MissionRequest(BaseModel):
     payload_id: str = Field(min_length=1)
     mission_params: MissionParams
     thread_id: str | None = Field(default=None)
+    # What the caller would like this plan to count as. The backend decides what
+    # it actually counts as; see suas.calculations.gate.
+    assessment_mode: AssessmentMode = AssessmentMode.ADVISORY

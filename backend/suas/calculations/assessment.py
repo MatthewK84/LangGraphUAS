@@ -16,6 +16,7 @@ from collections.abc import Mapping
 from typing import Any
 
 from suas.calculations.battery import DEFAULT_RESERVE_PERCENT, check_battery_viability
+from suas.calculations.gate import GateInputs, operational_blockers, resolve_mode
 from suas.calculations.physics import (
     calculate_air_density_ratio,
     calculate_climb_energy,
@@ -25,7 +26,12 @@ from suas.calculations.physics import (
     calculate_ground_speed,
     scale_power_for_conditions,
 )
-from suas.schemas.assessment import Decision, DeterministicAssessment
+from suas.schemas.assessment import (
+    AssessmentMode,
+    Blocker,
+    Decision,
+    DeterministicAssessment,
+)
 from suas.schemas.domain import Aircraft, Payload
 from suas.schemas.requests import MissionParams
 from suas.schemas.responses import (
@@ -42,7 +48,7 @@ DEFAULT_CLIMB_EFFICIENCY: float = 0.6
 # purpose: an automatic hash of the source would churn on a comment edit and
 # stop meaning anything. CI fails a change under calculations/ that does not
 # bump it, so forgetting is not a quiet failure mode.
-CALCULATOR_VERSION: str = "1.0.0"
+CALCULATOR_VERSION: str = "1.1.0"
 
 # Reason text per safety flag, used when that flag is False. Keyed by the field
 # name on SafetyFlags so a new flag that is never mapped shows up immediately as
@@ -253,12 +259,28 @@ def build_assessment(
     *,
     calculations: Calculations,
     inputs: Mapping[str, Any],
+    requested_mode: AssessmentMode = AssessmentMode.ADVISORY,
+    weather: WeatherReading | None = None,
 ) -> DeterministicAssessment:
-    """Return the sealed assessment for a completed calculation."""
+    """Return the sealed assessment for a completed calculation.
+
+    ``requested_mode`` is what the caller asked for. The mode on the returned
+    assessment is what the gate granted, which is never more than was asked for
+    and frequently less.
+    """
     decision, reasons = _decide(calculations)
+    blockers: list[Blocker] = operational_blockers(
+        GateInputs(
+            weather_is_live=weather.is_live if weather else False,
+            weather_degraded=weather is None or not weather.is_live,
+            assessment_is_complete=True,
+        )
+    )
     return DeterministicAssessment(
         decision=decision,
         reasons=reasons,
+        mode=resolve_mode(requested_mode, blockers),
+        blockers=blockers,
         inputs_hash=compute_inputs_hash(inputs),
         calculator_version=CALCULATOR_VERSION,
     )
@@ -277,6 +299,14 @@ def insufficient_data_assessment(
     return DeterministicAssessment(
         decision=Decision.INSUFFICIENT_DATA,
         reasons=[reason],
+        mode=AssessmentMode.ADVISORY,
+        blockers=operational_blockers(
+            GateInputs(
+                weather_is_live=False,
+                weather_degraded=True,
+                assessment_is_complete=False,
+            )
+        ),
         inputs_hash=compute_inputs_hash(inputs),
         calculator_version=CALCULATOR_VERSION,
     )

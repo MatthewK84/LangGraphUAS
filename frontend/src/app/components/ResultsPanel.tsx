@@ -1,6 +1,11 @@
 import type { JSX } from "react";
 
-import type { Calculations, PlanResult, WeatherReading } from "@/lib/types";
+import type {
+  Assessment,
+  Calculations,
+  PlanResult,
+  WeatherReading,
+} from "@/lib/types";
 
 interface ResultsPanelProps {
   readonly loading: boolean;
@@ -8,29 +13,76 @@ interface ResultsPanelProps {
   readonly result: PlanResult | null;
 }
 
+/**
+ * Green is reserved for an operational GO. An advisory plan is planning
+ * support, so it renders amber however good the numbers look: the one thing
+ * this banner must never do is read as clearance it did not grant.
+ */
+function bannerTone(result: PlanResult): string {
+  if (!result.is_viable) {
+    return "bg-rose-950/40 border-rose-800 text-rose-400";
+  }
+  if (result.assessment?.mode === "operational") {
+    return "bg-emerald-950/40 border-emerald-800 text-emerald-400";
+  }
+  return "bg-amber-950/40 border-amber-700 text-amber-300";
+}
+
+function bannerLabel(result: PlanResult): string {
+  if (result.assessment?.decision === "insufficient_data") {
+    return "INSUFFICIENT DATA (NOT ASSESSED)";
+  }
+  if (!result.is_viable) {
+    return "MISSION DENIED (NO-GO)";
+  }
+  if (result.assessment?.mode === "operational") {
+    return "CLEAR TO LAUNCH (GO)";
+  }
+  return "ADVISORY GO - NOT FOR OPERATIONAL USE";
+}
+
 function StatusBanner({
   result,
 }: {
   readonly result: PlanResult;
 }): JSX.Element {
-  const tone = result.is_viable
-    ? "bg-emerald-950/40 border-emerald-800 text-emerald-400"
-    : "bg-rose-950/40 border-rose-800 text-rose-400";
-  const label = result.is_viable
-    ? "CLEAR TO LAUNCH (GO)"
-    : "MISSION DENIED (NO-GO)";
   return (
     <div
-      className={`p-4 rounded-xl border flex items-center justify-between shadow-md ${tone}`}
+      className={`p-4 rounded-xl border flex items-center justify-between shadow-md ${bannerTone(result)}`}
     >
       <div>
         <span className="font-bold text-lg tracking-wide">
-          FLIGHT DISPATCH STATUS: {label}
+          FLIGHT DISPATCH STATUS: {bannerLabel(result)}
         </span>
         <p className="text-xs mt-1 opacity-75 font-mono">
           Memory Thread ID: {result.thread_id}
         </p>
       </div>
+    </div>
+  );
+}
+
+function BlockerList({
+  assessment,
+}: {
+  readonly assessment: Assessment;
+}): JSX.Element | null {
+  if (assessment.mode === "operational" || assessment.blockers.length === 0) {
+    return null;
+  }
+  return (
+    <div
+      className="p-4 rounded-xl border bg-slate-800 border-slate-700"
+      role="note"
+    >
+      <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+        Why this plan is advisory
+      </span>
+      <ul className="mt-2 space-y-1 text-sm list-disc list-inside text-slate-300 font-mono">
+        {assessment.blockers.map((blocker) => (
+          <li key={blocker}>{blocker}</li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -252,6 +304,9 @@ export function ResultsPanel(props: ResultsPanelProps): JSX.Element {
   return (
     <div className="space-y-6">
       <StatusBanner result={result} />
+      {result.assessment !== null && (
+        <BlockerList assessment={result.assessment} />
+      )}
       {result.warnings.length > 0 && (
         <WarningBanner warnings={result.warnings} />
       )}

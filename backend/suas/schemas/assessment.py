@@ -30,6 +30,34 @@ class Decision(str, Enum):
     INSUFFICIENT_DATA = "insufficient_data"
 
 
+class AssessmentMode(str, Enum):
+    """How much weight a plan is allowed to carry.
+
+    ``ADVISORY`` is planning support. ``OPERATIONAL`` asserts the inputs were
+    good enough to fly on, and is granted by the backend rather than requested
+    by the client: a caller asks, the gate decides.
+    """
+
+    ADVISORY = "advisory"
+    OPERATIONAL = "operational"
+
+
+class Blocker(str, Enum):
+    """Machine-readable reasons a plan could not be operational.
+
+    Each is a fact about the inputs, not about the mission. A no-go with no
+    blockers is a fully-informed refusal; an advisory plan with blockers is a
+    statement that we did not know enough to be sure either way.
+    """
+
+    WEATHER_NOT_LIVE = "WEATHER_NOT_LIVE"
+    WEATHER_DEGRADED = "WEATHER_DEGRADED"
+    ASSESSMENT_INCOMPLETE = "ASSESSMENT_INCOMPLETE"
+    POWER_PROVENANCE_UNAVAILABLE = "POWER_PROVENANCE_UNAVAILABLE"
+    CITATIONS_UNAVAILABLE = "CITATIONS_UNAVAILABLE"
+    BLUE_LIST_SNAPSHOT_UNAVAILABLE = "BLUE_LIST_SNAPSHOT_UNAVAILABLE"
+
+
 class DeterministicAssessment(BaseModel):
     """A decision, its reasons, and the inputs and code version behind it.
 
@@ -47,8 +75,15 @@ class DeterministicAssessment(BaseModel):
 
     decision: Decision
     reasons: list[str] = Field(default_factory=list)
+    mode: AssessmentMode = AssessmentMode.ADVISORY
+    blockers: list[Blocker] = Field(default_factory=list)
     inputs_hash: str
     calculator_version: str
+
+    @property
+    def is_operational(self) -> bool:
+        """Return whether this plan carries operational weight."""
+        return self.mode is AssessmentMode.OPERATIONAL
 
     @property
     def is_viable(self) -> bool:
