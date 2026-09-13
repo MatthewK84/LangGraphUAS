@@ -2,92 +2,596 @@
   "Skydio_X10D": {
     "id": "Skydio_X10D",
     "name": "Skydio X10D",
-    "weight_kg": 2.11,
-    "max_payload_kg": 0.0,
-    "battery_wh": 120.0,
-    "max_wind_mps": 12.0,
-    "cruise_speed_mps": 14.0,
-    "hover_power_w": 180.0,
-    "cruise_power_w": 162.0,
-    "max_temp_c": 45.0,
-    "min_temp_c": -20.0
+    "weight_kg": {
+      "value": 2.11,
+      "unit": "kg",
+      "source": "secondary",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "medium",
+      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance."
+    },
+    "max_payload_kg": {
+      "value": 0.0,
+      "unit": "kg",
+      "source": "secondary",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "medium",
+      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance."
+    },
+    "battery_wh": {
+      "value": 120.0,
+      "unit": "Wh",
+      "source": "unknown",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "low",
+      "notes": "The README records pack energy as estimated where the manufacturer does not state it, but does not say which airframes those are. Unrecorded rather than assumed."
+    },
+    "max_wind_mps": {
+      "value": 12.0,
+      "unit": "m/s",
+      "source": "secondary",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "medium",
+      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance."
+    },
+    "cruise_speed_mps": {
+      "value": 14.0,
+      "unit": "m/s",
+      "source": "estimate",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "low",
+      "notes": "Nominal cruise, roughly 0.6 to 0.7 of published maximum speed."
+    },
+    "hover_power_w": {
+      "value": 180.0,
+      "unit": "W",
+      "source": "derived",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "low",
+      "notes": "hover_power_w = battery_wh / no_payload_endurance_hours."
+    },
+    "cruise_power_w": {
+      "value": 162.0,
+      "unit": "W",
+      "source": "derived",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "low",
+      "notes": "cruise_power_w = 0.90 * hover_power_w."
+    },
+    "max_temp_c": {
+      "value": 45.0,
+      "unit": "C",
+      "source": "secondary",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "medium",
+      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance."
+    },
+    "min_temp_c": {
+      "value": -20.0,
+      "unit": "C",
+      "source": "secondary",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "medium",
+      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance. Source cited in README: Skydio X10 specifications."
+    }
   },
   "Skydio_X2D": {
     "id": "Skydio_X2D",
     "name": "Skydio X2D",
-    "weight_kg": 1.3,
-    "max_payload_kg": 0.15,
-    "battery_wh": 76.0,
-    "max_wind_mps": 11.0,
-    "cruise_speed_mps": 11.0,
-    "hover_power_w": 130.3,
-    "cruise_power_w": 117.3,
-    "max_temp_c": 43.0,
-    "min_temp_c": -10.0
+    "weight_kg": {
+      "value": 1.3,
+      "unit": "kg",
+      "source": "secondary",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "medium",
+      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance."
+    },
+    "max_payload_kg": {
+      "value": 0.15,
+      "unit": "kg",
+      "source": "secondary",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "medium",
+      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance."
+    },
+    "battery_wh": {
+      "value": 76.0,
+      "unit": "Wh",
+      "source": "unknown",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "low",
+      "notes": "The README records pack energy as estimated where the manufacturer does not state it, but does not say which airframes those are. Unrecorded rather than assumed."
+    },
+    "max_wind_mps": {
+      "value": 11.0,
+      "unit": "m/s",
+      "source": "secondary",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "medium",
+      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance."
+    },
+    "cruise_speed_mps": {
+      "value": 11.0,
+      "unit": "m/s",
+      "source": "estimate",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "low",
+      "notes": "Nominal cruise, roughly 0.6 to 0.7 of published maximum speed."
+    },
+    "hover_power_w": {
+      "value": 130.3,
+      "unit": "W",
+      "source": "derived",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "low",
+      "notes": "hover_power_w = battery_wh / no_payload_endurance_hours."
+    },
+    "cruise_power_w": {
+      "value": 117.3,
+      "unit": "W",
+      "source": "derived",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "low",
+      "notes": "cruise_power_w = 0.90 * hover_power_w."
+    },
+    "max_temp_c": {
+      "value": 43.0,
+      "unit": "C",
+      "source": "secondary",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "medium",
+      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance."
+    },
+    "min_temp_c": {
+      "value": -10.0,
+      "unit": "C",
+      "source": "secondary",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "medium",
+      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance. Source cited in README: Skydio X2 support documentation."
+    }
   },
   "Parrot_ANAFI_USA": {
     "id": "Parrot_ANAFI_USA",
     "name": "Parrot ANAFI USA",
-    "weight_kg": 0.5,
-    "max_payload_kg": 0.0,
-    "battery_wh": 24.0,
-    "max_wind_mps": 14.7,
-    "cruise_speed_mps": 10.0,
-    "hover_power_w": 45.0,
-    "cruise_power_w": 40.5,
-    "max_temp_c": 43.0,
-    "min_temp_c": -35.0
+    "weight_kg": {
+      "value": 0.5,
+      "unit": "kg",
+      "source": "secondary",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "medium",
+      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance."
+    },
+    "max_payload_kg": {
+      "value": 0.0,
+      "unit": "kg",
+      "source": "secondary",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "medium",
+      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance."
+    },
+    "battery_wh": {
+      "value": 24.0,
+      "unit": "Wh",
+      "source": "unknown",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "low",
+      "notes": "The README records pack energy as estimated where the manufacturer does not state it, but does not say which airframes those are. Unrecorded rather than assumed."
+    },
+    "max_wind_mps": {
+      "value": 14.7,
+      "unit": "m/s",
+      "source": "secondary",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "medium",
+      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance."
+    },
+    "cruise_speed_mps": {
+      "value": 10.0,
+      "unit": "m/s",
+      "source": "estimate",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "low",
+      "notes": "Nominal cruise, roughly 0.6 to 0.7 of published maximum speed."
+    },
+    "hover_power_w": {
+      "value": 45.0,
+      "unit": "W",
+      "source": "derived",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "low",
+      "notes": "hover_power_w = battery_wh / no_payload_endurance_hours."
+    },
+    "cruise_power_w": {
+      "value": 40.5,
+      "unit": "W",
+      "source": "derived",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "low",
+      "notes": "cruise_power_w = 0.90 * hover_power_w."
+    },
+    "max_temp_c": {
+      "value": 43.0,
+      "unit": "C",
+      "source": "secondary",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "low",
+      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance. Stored 43 C disagrees with a published 49 C. Unresolved; see #39."
+    },
+    "min_temp_c": {
+      "value": -35.0,
+      "unit": "C",
+      "source": "secondary",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "medium",
+      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance. Source cited in README: ANAFI USA user guide."
+    }
   },
   "Teal_Golden_Eagle": {
     "id": "Teal_Golden_Eagle",
     "name": "Teal Golden Eagle (Teal 2)",
-    "weight_kg": 1.4,
-    "max_payload_kg": 0.9,
-    "battery_wh": 75.0,
-    "max_wind_mps": 11.0,
-    "cruise_speed_mps": 14.0,
-    "hover_power_w": 150.0,
-    "cruise_power_w": 135.0,
-    "max_temp_c": 43.0,
-    "min_temp_c": -36.7
+    "weight_kg": {
+      "value": 1.4,
+      "unit": "kg",
+      "source": "secondary",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "medium",
+      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance."
+    },
+    "max_payload_kg": {
+      "value": 0.9,
+      "unit": "kg",
+      "source": "secondary",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "medium",
+      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance."
+    },
+    "battery_wh": {
+      "value": 75.0,
+      "unit": "Wh",
+      "source": "unknown",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "low",
+      "notes": "The README records pack energy as estimated where the manufacturer does not state it, but does not say which airframes those are. Unrecorded rather than assumed."
+    },
+    "max_wind_mps": {
+      "value": 11.0,
+      "unit": "m/s",
+      "source": "secondary",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "medium",
+      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance."
+    },
+    "cruise_speed_mps": {
+      "value": 14.0,
+      "unit": "m/s",
+      "source": "estimate",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "low",
+      "notes": "Nominal cruise, roughly 0.6 to 0.7 of published maximum speed."
+    },
+    "hover_power_w": {
+      "value": 150.0,
+      "unit": "W",
+      "source": "derived",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "low",
+      "notes": "hover_power_w = battery_wh / no_payload_endurance_hours."
+    },
+    "cruise_power_w": {
+      "value": 135.0,
+      "unit": "W",
+      "source": "derived",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "low",
+      "notes": "cruise_power_w = 0.90 * hover_power_w."
+    },
+    "max_temp_c": {
+      "value": 43.0,
+      "unit": "C",
+      "source": "secondary",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "medium",
+      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance."
+    },
+    "min_temp_c": {
+      "value": -36.7,
+      "unit": "C",
+      "source": "secondary",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "medium",
+      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance. Source cited in README: Teal 2 specifications."
+    }
   },
   "Freefly_Astro_Max": {
     "id": "Freefly_Astro_Max",
     "name": "Freefly Astro Max",
-    "weight_kg": 5.1,
-    "max_payload_kg": 3.0,
-    "battery_wh": 314.0,
-    "max_wind_mps": 12.0,
-    "cruise_speed_mps": 14.0,
-    "hover_power_w": 483.1,
-    "cruise_power_w": 434.8,
-    "max_temp_c": 50.0,
-    "min_temp_c": -20.0
+    "weight_kg": {
+      "value": 5.1,
+      "unit": "kg",
+      "source": "secondary",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "medium",
+      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance."
+    },
+    "max_payload_kg": {
+      "value": 3.0,
+      "unit": "kg",
+      "source": "secondary",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "medium",
+      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance."
+    },
+    "battery_wh": {
+      "value": 314.0,
+      "unit": "Wh",
+      "source": "unknown",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "low",
+      "notes": "The README records pack energy as estimated where the manufacturer does not state it, but does not say which airframes those are. Unrecorded rather than assumed."
+    },
+    "max_wind_mps": {
+      "value": 12.0,
+      "unit": "m/s",
+      "source": "secondary",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "medium",
+      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance."
+    },
+    "cruise_speed_mps": {
+      "value": 14.0,
+      "unit": "m/s",
+      "source": "estimate",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "low",
+      "notes": "Nominal cruise, roughly 0.6 to 0.7 of published maximum speed."
+    },
+    "hover_power_w": {
+      "value": 483.1,
+      "unit": "W",
+      "source": "derived",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "low",
+      "notes": "hover_power_w = battery_wh / no_payload_endurance_hours."
+    },
+    "cruise_power_w": {
+      "value": 434.8,
+      "unit": "W",
+      "source": "derived",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "low",
+      "notes": "cruise_power_w = 0.90 * hover_power_w."
+    },
+    "max_temp_c": {
+      "value": 50.0,
+      "unit": "C",
+      "source": "secondary",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "medium",
+      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance."
+    },
+    "min_temp_c": {
+      "value": -20.0,
+      "unit": "C",
+      "source": "secondary",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "medium",
+      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance. Source cited in README: Freefly Astro pilot's operating handbook."
+    }
   },
   "Freefly_Alta_X": {
     "id": "Freefly_Alta_X",
     "name": "Freefly Alta X (Blue)",
-    "weight_kg": 19.8,
-    "max_payload_kg": 15.06,
-    "battery_wh": 1420.0,
-    "max_wind_mps": 12.0,
-    "cruise_speed_mps": 15.0,
-    "hover_power_w": 4260.0,
-    "cruise_power_w": 3834.0,
-    "max_temp_c": 50.0,
-    "min_temp_c": -20.0
+    "weight_kg": {
+      "value": 19.8,
+      "unit": "kg",
+      "source": "secondary",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "medium",
+      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance."
+    },
+    "max_payload_kg": {
+      "value": 15.06,
+      "unit": "kg",
+      "source": "secondary",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "medium",
+      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance."
+    },
+    "battery_wh": {
+      "value": 1420.0,
+      "unit": "Wh",
+      "source": "unknown",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "low",
+      "notes": "The README records pack energy as estimated where the manufacturer does not state it, but does not say which airframes those are. Unrecorded rather than assumed."
+    },
+    "max_wind_mps": {
+      "value": 12.0,
+      "unit": "m/s",
+      "source": "secondary",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "medium",
+      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance."
+    },
+    "cruise_speed_mps": {
+      "value": 15.0,
+      "unit": "m/s",
+      "source": "estimate",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "low",
+      "notes": "Nominal cruise, roughly 0.6 to 0.7 of published maximum speed."
+    },
+    "hover_power_w": {
+      "value": 4260.0,
+      "unit": "W",
+      "source": "derived",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "low",
+      "notes": "hover_power_w = battery_wh / no_payload_endurance_hours. One of the softest numbers in this file."
+    },
+    "cruise_power_w": {
+      "value": 3834.0,
+      "unit": "W",
+      "source": "derived",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "low",
+      "notes": "cruise_power_w = 0.90 * hover_power_w. One of the softest numbers in this file."
+    },
+    "max_temp_c": {
+      "value": 50.0,
+      "unit": "C",
+      "source": "secondary",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "medium",
+      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance."
+    },
+    "min_temp_c": {
+      "value": -20.0,
+      "unit": "C",
+      "source": "secondary",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "medium",
+      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance. Source cited in README: Freefly Alta X specifications."
+    }
   },
   "Inspired_Flight_IF1200A": {
     "id": "Inspired_Flight_IF1200A",
     "name": "Inspired Flight IF1200A",
-    "weight_kg": 16.3,
-    "max_payload_kg": 8.7,
-    "battery_wh": 1420.0,
-    "max_wind_mps": 11.8,
-    "cruise_speed_mps": 17.0,
-    "hover_power_w": 1981.4,
-    "cruise_power_w": 1783.3,
-    "max_temp_c": 50.0,
-    "min_temp_c": -20.0
+    "weight_kg": {
+      "value": 16.3,
+      "unit": "kg",
+      "source": "secondary",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "medium",
+      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance."
+    },
+    "max_payload_kg": {
+      "value": 8.7,
+      "unit": "kg",
+      "source": "secondary",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "medium",
+      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance."
+    },
+    "battery_wh": {
+      "value": 1420.0,
+      "unit": "Wh",
+      "source": "estimate",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "low",
+      "notes": "Assumes a 12S pack. One of the softest numbers in this file."
+    },
+    "max_wind_mps": {
+      "value": 11.8,
+      "unit": "m/s",
+      "source": "secondary",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "medium",
+      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance."
+    },
+    "cruise_speed_mps": {
+      "value": 17.0,
+      "unit": "m/s",
+      "source": "estimate",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "low",
+      "notes": "Nominal cruise, roughly 0.6 to 0.7 of published maximum speed."
+    },
+    "hover_power_w": {
+      "value": 1981.4,
+      "unit": "W",
+      "source": "derived",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "low",
+      "notes": "hover_power_w = battery_wh / no_payload_endurance_hours."
+    },
+    "cruise_power_w": {
+      "value": 1783.3,
+      "unit": "W",
+      "source": "derived",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "low",
+      "notes": "cruise_power_w = 0.90 * hover_power_w."
+    },
+    "max_temp_c": {
+      "value": 50.0,
+      "unit": "C",
+      "source": "secondary",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "low",
+      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance. Stored 50 C disagrees with a published 45 C. Permissive direction, so correct this first. Unresolved; see #39."
+    },
+    "min_temp_c": {
+      "value": -20.0,
+      "unit": "C",
+      "source": "secondary",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "medium",
+      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance. Source cited in README: IF1200A specifications."
+    }
   }
 }

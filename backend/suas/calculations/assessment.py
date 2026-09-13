@@ -16,7 +16,13 @@ from collections.abc import Mapping
 from typing import Any
 
 from suas.calculations.battery import DEFAULT_RESERVE_PERCENT, check_battery_viability
-from suas.calculations.gate import GateInputs, operational_blockers, resolve_mode
+from suas.calculations.gate import (
+    GateInputs,
+    operational_blockers,
+    power_is_operational_grade,
+    provenance_is_complete,
+    resolve_mode,
+)
 from suas.calculations.physics import (
     calculate_air_density_ratio,
     calculate_climb_energy,
@@ -48,7 +54,7 @@ DEFAULT_CLIMB_EFFICIENCY: float = 0.6
 # purpose: an automatic hash of the source would churn on a comment edit and
 # stop meaning anything. CI fails a change under calculations/ that does not
 # bump it, so forgetting is not a quiet failure mode.
-CALCULATOR_VERSION: str = "1.1.0"
+CALCULATOR_VERSION: str = "1.2.0"
 
 # Reason text per safety flag, used when that flag is False. Keyed by the field
 # name on SafetyFlags so a new flag that is never mapped shows up immediately as
@@ -261,6 +267,8 @@ def build_assessment(
     inputs: Mapping[str, Any],
     requested_mode: AssessmentMode = AssessmentMode.ADVISORY,
     weather: WeatherReading | None = None,
+    aircraft: Aircraft | None = None,
+    payload: Payload | None = None,
 ) -> DeterministicAssessment:
     """Return the sealed assessment for a completed calculation.
 
@@ -269,11 +277,17 @@ def build_assessment(
     and frequently less.
     """
     decision, reasons = _decide(calculations)
+    aircraft_provenance = aircraft.provenance if aircraft else {}
+    payload_provenance = payload.provenance if payload else {}
     blockers: list[Blocker] = operational_blockers(
         GateInputs(
             weather_is_live=weather.is_live if weather else False,
             weather_degraded=weather is None or not weather.is_live,
             assessment_is_complete=True,
+            provenance_is_complete=provenance_is_complete(aircraft_provenance, payload_provenance),
+            power_is_operational_grade=power_is_operational_grade(
+                aircraft_provenance, payload_provenance
+            ),
         )
     )
     return DeterministicAssessment(

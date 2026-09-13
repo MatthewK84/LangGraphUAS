@@ -172,15 +172,32 @@ momentum-theory power law applied to cruise as well as hover.
 
 ### Data provenance
 
-Each aircraft field is published, estimated, or derived:
+Every numeric field in `backend/suas/data/*.json` carries its value, unit,
+source, confidence, and notes. The full inventory is generated into
+[`backend/suas/data/CITATIONS.md`](backend/suas/data/CITATIONS.md) and a test
+fails if it drifts from the data.
 
-- Published: weight, max payload, max wind, and operating temperature, from
-  manufacturer or reputable spec sources.
-- Estimated: `battery_wh` where a manufacturer does not state pack energy, and
-  nominal cruise speed (roughly 0.6 to 0.7 of published max speed).
-- Derived: the two power fields, by
-  `hover_power_w = battery_wh / no_payload_endurance_hours` and
-  `cruise_power_w = 0.90 * hover_power_w`.
+| Source | Meaning | Good enough to fly on |
+| --- | --- | --- |
+| `datasheet` | Read from the manufacturer's own published document | yes |
+| `flight_log` | Measured from recorded flight telemetry | yes |
+| `secondary` | Published figure from a specification summary, not the primary document | no |
+| `derived` | Computed from other fields by a formula in the notes | no |
+| `estimate` | An engineering estimate | no |
+| `unknown` | Provenance not recorded. Nobody vouched for this number | no |
+
+As of this writing: **75 fields, none of them operational-grade.** 35 are
+`secondary`, 14 `derived` (the two power fields, by
+`hover_power_w = battery_wh / no_payload_endurance_hours` and
+`cruise_power_w = 0.90 * hover_power_w`), 14 `estimate` (nominal cruise speed at
+roughly 0.6 to 0.7 of published maximum, and every payload power figure), and 12
+`unknown` (pack energy, payload mass). That is why the operational gate refuses
+every plan today.
+
+`secondary` is not a hedge. The figures below were gathered from published
+specification summaries rather than retrieved from the manufacturers' own
+documents, and recording them as `datasheet` would overstate what this project
+knows. Resolving them is [#39](https://github.com/MatthewK84/LangGraphUAS/issues/39).
 
 Operating temperature limits are published manufacturer figures:
 

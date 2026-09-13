@@ -12,7 +12,13 @@ import pytest
 from fastapi import FastAPI
 
 from suas.calculations.assessment import assess_mission, build_assessment
-from suas.calculations.gate import GateInputs, operational_blockers, resolve_mode
+from suas.calculations.gate import (
+    GateInputs,
+    operational_blockers,
+    power_is_operational_grade,
+    provenance_is_complete,
+    resolve_mode,
+)
 from suas.schemas.assessment import AssessmentMode, Blocker, Decision
 from suas.schemas.domain import Aircraft, Payload
 from suas.schemas.requests import MissionParams, MissionRequest
@@ -55,6 +61,8 @@ _ALL_CLEAR = GateInputs(
     weather_is_live=True,
     weather_degraded=False,
     assessment_is_complete=True,
+    provenance_is_complete=True,
+    power_is_operational_grade=True,
 )
 
 _BODY: dict[str, Any] = {
@@ -106,17 +114,48 @@ def test_resolve_mode_never_upgrades_an_advisory_request() -> None:
     assert resolve_mode(AssessmentMode.ADVISORY, []) is AssessmentMode.ADVISORY
 
 
-def test_gate_fails_closed_on_unverifiable_conditions() -> None:
-    """Even with everything we can check satisfied, unchecked conditions block.
+def test_gate_fails_closed_on_the_unverifiable_condition() -> None:
+    """With everything checkable satisfied, only the unchecked condition blocks.
 
-    This is the test that changes when #38 lands: those blockers become real
-    checks and stop appearing unconditionally.
+    No Blue List snapshot is stored, so configuration clearance cannot be
+    asserted at all. This test changes again when the snapshot work lands.
     """
     blockers = operational_blockers(_ALL_CLEAR)
-    assert Blocker.POWER_PROVENANCE_UNAVAILABLE in blockers
-    assert Blocker.CITATIONS_UNAVAILABLE in blockers
-    assert Blocker.BLUE_LIST_SNAPSHOT_UNAVAILABLE in blockers
-    assert Blocker.WEATHER_NOT_LIVE not in blockers
+    assert blockers == [Blocker.BLUE_LIST_SNAPSHOT_UNAVAILABLE]
+
+
+def test_missing_provenance_and_weak_power_are_separate_blockers() -> None:
+    """Nobody wrote it down and what was written down is too weak differ."""
+    blockers = operational_blockers(
+        GateInputs(
+            weather_is_live=True,
+            weather_degraded=False,
+            assessment_is_complete=True,
+            provenance_is_complete=False,
+            power_is_operational_grade=False,
+        )
+    )
+    assert Blocker.PROVENANCE_INCOMPLETE in blockers
+    assert Blocker.POWER_NOT_OPERATIONAL_GRADE in blockers
+
+
+def test_bundled_data_is_complete_but_not_operational_grade() -> None:
+    """The real reference data: fully accounted for, not good enough to fly on.
+
+    Every field carries provenance, so nothing is unrecorded. The power figures
+    are derived and estimated rather than read from a datasheet, so the gate
+    still refuses -- because the numbers were examined, not because nobody
+    looked. #39 is what changes this.
+    """
+    from suas.reference_data import AIRCRAFT_FILE, PAYLOAD_FILE, load_entries
+
+    aircraft = {entry.id: entry for entry in load_entries(AIRCRAFT_FILE)}
+    payloads = {entry.id: entry for entry in load_entries(PAYLOAD_FILE)}
+    airframe = aircraft["Skydio_X10D"].provenance
+    sensor = payloads["FLIR_Hadron_640R"].provenance
+
+    assert provenance_is_complete(airframe, sensor) is True
+    assert power_is_operational_grade(airframe, sensor) is False
 
 
 def test_fallback_weather_blocks_on_provenance_and_degradation() -> None:

@@ -99,6 +99,8 @@ def make_calculations_node(deps: GraphDependencies) -> NodeFn:
             calculations=calculations,
             requested_mode=requested_mode,
             weather=weather,
+            aircraft=aircraft,
+            payload=payload,
             inputs={
                 "aircraft": aircraft.model_dump(mode="json"),
                 "payload": payload.model_dump(mode="json"),
