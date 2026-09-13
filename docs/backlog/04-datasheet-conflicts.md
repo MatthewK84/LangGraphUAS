@@ -19,7 +19,7 @@ It is two different limits:
 battery.pack_min_takeoff_c   # procedure limit, 10 C
 limits.min_temp_c            # airframe limit, -20 C
 ```
-Do not collapse the procedure limit into `min_temp_c`. This pair becomes a retrieval eval class (#15) and a model trap (#10).
+Do not collapse the procedure limit into `min_temp_c`. This pair becomes a retrieval eval class (#50) and a model trap (#45).
 
 ## Acceptance
 - [ ] A unit test per patched constant

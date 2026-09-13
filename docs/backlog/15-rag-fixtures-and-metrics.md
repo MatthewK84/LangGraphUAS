@@ -9,7 +9,7 @@ Retrieval quality becomes a number with a confidence interval, computed without 
 ## Fixtures — `eval/rag_fixtures.jsonl`
 Per row: `qid`, `question`, `airframe_config_id`, `field_path`, `relevant_chunk_ids`, `hard_negatives`, `expected_quote_contains`, `answerable`, `class`.
 
-At least 40 questions across 6+ classes, with 20% `answerable: false`. Hard negatives are mandatory on every safety-limit class — for the Astro, the −20 °C airframe minimum against the 10 °C pack procedure (#4).
+At least 40 questions across 6+ classes, with 20% `answerable: false`. Hard negatives are mandatory on every safety-limit class — for the Astro, the −20 °C airframe minimum against the 10 °C pack procedure (#39).
 
 ## Metrics — `backend/suas/eval/`
 `recall@4`, `mrr`, `precision@4` (reported, ungated), `hard_negative_above_positive`, `wrong_config_leak`, `field_path_purity`, `false_confirm_rate`, `abstain_rate`, `p95_latency_ms`.

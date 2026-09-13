@@ -15,4 +15,4 @@ Rows (full table in `docs/injection-defense.md`): classic override, numeric over
 - [ ] All thirteen rows present and green
 - [ ] `kind='eval_trap'` cannot be ingested by the production path
 - [ ] The file grows monotonically — rows are added as techniques appear, never pruned
-- [ ] Contamination rate measured at 0, gated in CI (#16)
+- [ ] Contamination rate measured at 0, gated in CI (#51)

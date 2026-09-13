@@ -6,7 +6,7 @@ blocked_by: [1]
 ## Goal
 Model output is parsed into a closed model, checked against the sealed assessment, and rendered without any way to reach outward.
 
-**Ships with #5, not in Phase 3.** The first brief that exists is the first brief that can be wrong.
+**Ships with #40, not in Phase 3.** The first brief that exists is the first brief that can be wrong.
 
 ## Pipeline (small pure functions in `backend/suas/graph/seal.py`)
 1. **Parse** into `BriefOutput` with `extra="forbid"` and length caps. Failure yields `brief_status=unavailable` — never a retry loop that lets the model negotiate to a valid-looking object.

@@ -28,4 +28,4 @@ Store `ack_actor`, `ack_at`, and the signed assessment hash. A changed `inputs_h
 - [ ] Kill the process at the interrupt, resume from Postgres, assessment byte-identical
 - [ ] Frontend is two-step: compute, review card, confirm, with an explicit advisory checkbox
 
-Node order is a security control — see #17.
+Node order is a security control — see #52.
