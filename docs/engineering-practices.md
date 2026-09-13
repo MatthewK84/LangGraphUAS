@@ -13,7 +13,7 @@ set accordingly.
 ## CI gates that block merge
 
 Already in place: `ruff`, `mypy --strict`, `pytest` with coverage, frontend
-typecheck and Vitest, Prettier.
+typecheck and Vitest, Prettier, and the calculator-version gate below.
 
 Added by this plan:
 
@@ -21,7 +21,7 @@ Added by this plan:
 |---|---|
 | Oracle coverage | `backend/suas/calculations/` at 95%, not the repo default |
 | Reference data | Fails on any performance field lacking `source`, or `source=datasheet` lacking `source_url` |
-| Calculator version | Fails if `calculations/` changed without a `calculator_version` bump and a fixture regeneration |
+| ~~Calculator version~~ | **Shipped.** `backend/scripts/check_calculator_version.py` fails a pull request that changes `calculations/` without bumping `CALCULATOR_VERSION`. Documentation-only edits need a patch bump too: the gate cannot tell prose from physics, and a version bumped for nothing beats one silently stale. |
 | Graph tests | Run against real Postgres, not SQLite |
 | Retrieval gates | Wrong-config leak, hard-negative inversion, false-confirm all at 0 (`docs/rag-eval.md`) |
 | Injection matrix | Every row in `docs/injection-defense.md` green |

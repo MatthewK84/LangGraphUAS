@@ -95,6 +95,28 @@ jobs:
           SUAS_DATABASE_URL: postgresql+psycopg://suas:suas@localhost:5432/suas
         run: python scripts/smoke_check.py
 
+  calculator-version:
+    name: Calculator version bump
+    # Pull requests only: the check compares the head against the base branch,
+    # which has no meaning on a push to main.
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history: the gate diffs against the merge base, which a shallow
+          # clone does not contain.
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Fetch base branch
+        run: git fetch --no-tags origin "${{ github.base_ref }}"
+      - name: Require a version bump when the oracle changes
+        run: >-
+          python3 backend/scripts/check_calculator_version.py
+          --base "origin/${{ github.base_ref }}"
+
   frontend:
     name: Frontend (tsc, eslint, build)
     runs-on: ubuntu-latest
