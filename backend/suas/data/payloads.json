@@ -2,37 +2,133 @@
   "None": {
     "id": "None",
     "name": "No Payload",
-    "weight_kg": 0.0,
-    "power_draw_w": 0.0
+    "weight_kg": {
+      "value": 0.0,
+      "unit": "kg",
+      "source": "unknown",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "low",
+      "notes": "No provenance recorded for payload mass."
+    },
+    "power_draw_w": {
+      "value": 0.0,
+      "unit": "W",
+      "source": "estimate",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "low",
+      "notes": "The README records every payload power figure as an estimate."
+    }
   },
   "FLIR_Hadron_640R": {
     "id": "FLIR_Hadron_640R",
     "name": "Teledyne FLIR Hadron 640R",
-    "weight_kg": 0.037,
-    "power_draw_w": 3.0
+    "weight_kg": {
+      "value": 0.037,
+      "unit": "kg",
+      "source": "unknown",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "low",
+      "notes": "No provenance recorded for payload mass."
+    },
+    "power_draw_w": {
+      "value": 3.0,
+      "unit": "W",
+      "source": "estimate",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "low",
+      "notes": "The README records every payload power figure as an estimate."
+    }
   },
   "Sony_ILX_LR1": {
     "id": "Sony_ILX_LR1",
     "name": "Sony ILX-LR1 (61MP)",
-    "weight_kg": 0.5,
-    "power_draw_w": 5.0
+    "weight_kg": {
+      "value": 0.5,
+      "unit": "kg",
+      "source": "unknown",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "low",
+      "notes": "No provenance recorded for payload mass."
+    },
+    "power_draw_w": {
+      "value": 5.0,
+      "unit": "W",
+      "source": "estimate",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "low",
+      "notes": "The README records every payload power figure as an estimate."
+    }
   },
   "Nextvision_Raptor": {
     "id": "Nextvision_Raptor",
     "name": "Nextvision Raptor",
-    "weight_kg": 0.4,
-    "power_draw_w": 10.0
+    "weight_kg": {
+      "value": 0.4,
+      "unit": "kg",
+      "source": "unknown",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "low",
+      "notes": "No provenance recorded for payload mass."
+    },
+    "power_draw_w": {
+      "value": 10.0,
+      "unit": "W",
+      "source": "estimate",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "low",
+      "notes": "The README records every payload power figure as an estimate."
+    }
   },
   "Workswell_WIRIS_Ent": {
     "id": "Workswell_WIRIS_Ent",
     "name": "Workswell WIRIS Enterprise",
-    "weight_kg": 0.4,
-    "power_draw_w": 15.0
+    "weight_kg": {
+      "value": 0.4,
+      "unit": "kg",
+      "source": "unknown",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "low",
+      "notes": "No provenance recorded for payload mass."
+    },
+    "power_draw_w": {
+      "value": 15.0,
+      "unit": "W",
+      "source": "estimate",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "low",
+      "notes": "The README records every payload power figure as an estimate."
+    }
   },
   "Trillium_HD40_LV": {
     "id": "Trillium_HD40_LV",
     "name": "Trillium HD40-LV Gimbal",
-    "weight_kg": 1.6,
-    "power_draw_w": 35.0
+    "weight_kg": {
+      "value": 1.6,
+      "unit": "kg",
+      "source": "unknown",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "low",
+      "notes": "No provenance recorded for payload mass."
+    },
+    "power_draw_w": {
+      "value": 35.0,
+      "unit": "W",
+      "source": "estimate",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "low",
+      "notes": "The README records every payload power figure as an estimate."
+    }
   }
 }

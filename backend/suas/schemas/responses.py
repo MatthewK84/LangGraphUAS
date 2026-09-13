@@ -8,6 +8,8 @@ from enum import Enum
 
 from pydantic import BaseModel, Field
 
+from suas.schemas.assessment import DeterministicAssessment
+
 
 class WeatherSource(str, Enum):
     """Provenance of a weather reading."""
@@ -81,9 +83,16 @@ class Calculations(BaseModel):
 
 
 class PlanResponse(BaseModel):
-    """The complete result of a mission planning run."""
+    """The complete result of a mission planning run.
+
+    ``assessment`` is the authoritative decision. ``is_viable`` is retained as a
+    derived convenience for existing clients and means exactly
+    ``assessment.decision == "go"``; it will be removed once the review-and-ack
+    flow lands and the dashboard reads the assessment directly.
+    """
 
     is_viable: bool
+    assessment: DeterministicAssessment | None = None
     calculations: Calculations | None
     weather: WeatherReading | None
     report: str

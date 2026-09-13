@@ -5,7 +5,6 @@ bundled reference data, fake weather and report services, and an in-memory
 checkpointer. No network calls occur during tests.
 """
 
-import json
 from collections.abc import AsyncIterator, Callable
 from pathlib import Path
 from typing import Any
@@ -19,6 +18,7 @@ from sqlalchemy.pool import StaticPool
 from suas.db.models import AircraftRow, Base, PayloadRow
 from suas.graph.dependencies import GraphDependencies
 from suas.graph.workflow import build_mission_graph
+from suas.reference_data import load_rows
 from suas.schemas.responses import WeatherReading, WeatherSource
 
 _DATA_DIR = Path(__file__).resolve().parent.parent / "suas" / "data"
@@ -56,8 +56,8 @@ class FakeReportService:
 
 
 def _seed_records(filename: str) -> list[dict[str, Any]]:
-    raw = json.loads((_DATA_DIR / filename).read_text(encoding="utf-8"))
-    return list(raw.values())
+    """Seed from the same loader production uses, so the shapes cannot drift."""
+    return load_rows(filename)
 
 
 @pytest.fixture

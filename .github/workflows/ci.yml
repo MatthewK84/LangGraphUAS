@@ -95,45 +95,27 @@ jobs:
           SUAS_DATABASE_URL: postgresql+psycopg://suas:suas@localhost:5432/suas
         run: python scripts/smoke_check.py
 
-  security:
-    name: Dependency audit
+  calculator-version:
+    name: Calculator version bump
+    # Pull requests only: the check compares the head against the base branch,
+    # which has no meaning on a push to main.
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: backend
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Full history: the gate diffs against the merge base, which a shallow
+          # clone does not contain.
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-
-      # Capture runtime dependencies only, and do it BEFORE pip-audit is
-      # installed so its own tooling does not pollute the audit set.
-      #
-      # The local project is excluded deliberately: suas-mission-planner is not
-      # published to PyPI, and --strict fails on any dependency it cannot
-      # resolve. --skip-editable does not help, because --strict also fails on
-      # packages that were skipped.
-      - name: Capture runtime dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install .
-          pip freeze --exclude suas-mission-planner > "${RUNNER_TEMP}/requirements-runtime.txt"
-
-      - name: Audit runtime dependencies
-        run: |
-          pip install pip-audit
-          pip-audit --strict -r "${RUNNER_TEMP}/requirements-runtime.txt"
-
-      # Dev tooling never reaches production, so advisories here are
-      # informational and must not block a release. Read the step log when it
-      # reports findings and upgrade on your own schedule.
-      - name: Audit dev dependencies (advisory)
-        continue-on-error: true
-        run: |
-          pip install ".[dev]"
-          pip freeze --exclude suas-mission-planner > "${RUNNER_TEMP}/requirements-dev.txt"
-          pip-audit --strict -r "${RUNNER_TEMP}/requirements-dev.txt"
+      - name: Fetch base branch
+        run: git fetch --no-tags origin "${{ github.base_ref }}"
+      - name: Require a version bump when the oracle changes
+        run: >-
+          python3 backend/scripts/check_calculator_version.py
+          --base "origin/${{ github.base_ref }}"
 
   frontend:
     name: Frontend (tsc, eslint, build)

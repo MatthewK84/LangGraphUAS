@@ -50,6 +50,9 @@ class MetricsRegistry:
         self._latency_sum_s: dict[tuple[str, str], float] = {}
         self._plan_outcomes: dict[str, int] = {"go": 0, "no_go": 0}
         self._weather_source: dict[str, int] = {"live": 0, "fallback": 0}
+        # Expected to stay at zero. A non-zero value means a brief was produced
+        # that disagrees with the sealed assessment, which is an incident.
+        self._seal_violations: int = 0
 
     def record_request(self, method: str, path: str, code: int, duration_s: float) -> None:
         """Record one completed HTTP request."""
@@ -64,6 +67,13 @@ class MetricsRegistry:
         with self._lock:
             self._plan_outcomes["go" if is_viable else "no_go"] += 1
             self._weather_source["live" if weather_live else "fallback"] += 1
+
+    def record_seal_violations(self, count: int) -> None:
+        """Record seal violations observed while producing one brief."""
+        if count <= 0:
+            return
+        with self._lock:
+            self._seal_violations += count
 
     def render(self) -> str:
         """Return the current metrics in Prometheus text exposition format."""
@@ -98,6 +108,12 @@ class MetricsRegistry:
             ]
             for source, count in sorted(self._weather_source.items()):
                 lines.append(f'suas_weather_source_total{{source="{source}"}} {count}')
+            lines += [
+                "# HELP suas_llm_field_violations_total Model output conflicting with the "
+                "sealed assessment.",
+                "# TYPE suas_llm_field_violations_total counter",
+                f"suas_llm_field_violations_total {self._seal_violations}",
+            ]
             return "\n".join(lines) + "\n"
 
 

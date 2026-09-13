@@ -10,7 +10,19 @@ heat. An earlier revision did none of these, and every one of those omissions
 biased the result toward GO.
 """
 
+import hashlib
+import json
+from collections.abc import Mapping
+from typing import Any
+
 from suas.calculations.battery import DEFAULT_RESERVE_PERCENT, check_battery_viability
+from suas.calculations.gate import (
+    GateInputs,
+    operational_blockers,
+    power_is_operational_grade,
+    provenance_is_complete,
+    resolve_mode,
+)
 from suas.calculations.physics import (
     calculate_air_density_ratio,
     calculate_climb_energy,
@@ -19,6 +31,12 @@ from suas.calculations.physics import (
     calculate_energy_required,
     calculate_ground_speed,
     scale_power_for_conditions,
+)
+from suas.schemas.assessment import (
+    AssessmentMode,
+    Blocker,
+    Decision,
+    DeterministicAssessment,
 )
 from suas.schemas.domain import Aircraft, Payload
 from suas.schemas.requests import MissionParams
@@ -31,6 +49,24 @@ from suas.schemas.responses import (
 
 DEFAULT_VERTICAL_SPEED_MPS: float = 3.0
 DEFAULT_CLIMB_EFFICIENCY: float = 0.6
+
+# Bump this whenever a formula in this package changes. It is hand-maintained on
+# purpose: an automatic hash of the source would churn on a comment edit and
+# stop meaning anything. CI fails a change under calculations/ that does not
+# bump it, so forgetting is not a quiet failure mode.
+CALCULATOR_VERSION: str = "1.2.0"
+
+# Reason text per safety flag, used when that flag is False. Keyed by the field
+# name on SafetyFlags so a new flag that is never mapped shows up immediately as
+# an unexplained no-go rather than silently producing an empty reason list.
+_FLAG_REASONS: dict[str, str] = {
+    "battery_viable": "Energy required exceeds usable battery capacity after reserve.",
+    "payload_within_limits": "Payload mass exceeds the airframe limit.",
+    "wind_within_limits": "Sustained wind exceeds the airframe limit.",
+    "gust_within_limits": "Gusts exceed the airframe wind limit.",
+    "temperature_within_limits": "Temperature is outside the airframe operating range.",
+    "cruise_achievable": "Headwind meets or exceeds cruise speed; no ground progress.",
+}
 
 
 def _build_safety_flags(
@@ -197,4 +233,94 @@ def is_mission_viable(calculations: Calculations) -> bool:
         and flags.gust_within_limits
         and flags.temperature_within_limits
         and flags.cruise_achievable
+    )
+
+
+def compute_inputs_hash(inputs: Mapping[str, Any]) -> str:
+    """Return a stable SHA-256 over the inputs an assessment was computed from.
+
+    Canonical JSON with sorted keys, so the same mission hashes identically
+    across processes and restarts. The hash covers inputs rather than results:
+    an operator changing the payload and the calculator changing a formula are
+    different events, and an acknowledgement needs to tell them apart.
+    """
+    canonical: str = json.dumps(inputs, sort_keys=True, separators=(",", ":"), default=str)
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def _decide(calculations: Calculations) -> tuple[Decision, list[str]]:
+    """Return the decision and the reasons for it from the safety flags."""
+    flags: dict[str, Any] = calculations.safety_flags.model_dump()
+    reasons: list[str] = [
+        _FLAG_REASONS.get(name, f"Safety flag {name} failed.")
+        for name, passed in sorted(flags.items())
+        if passed is False
+    ]
+    if reasons:
+        return Decision.NO_GO, reasons
+    return Decision.GO, []
+
+
+def build_assessment(
+    *,
+    calculations: Calculations,
+    inputs: Mapping[str, Any],
+    requested_mode: AssessmentMode = AssessmentMode.ADVISORY,
+    weather: WeatherReading | None = None,
+    aircraft: Aircraft | None = None,
+    payload: Payload | None = None,
+) -> DeterministicAssessment:
+    """Return the sealed assessment for a completed calculation.
+
+    ``requested_mode`` is what the caller asked for. The mode on the returned
+    assessment is what the gate granted, which is never more than was asked for
+    and frequently less.
+    """
+    decision, reasons = _decide(calculations)
+    aircraft_provenance = aircraft.provenance if aircraft else {}
+    payload_provenance = payload.provenance if payload else {}
+    blockers: list[Blocker] = operational_blockers(
+        GateInputs(
+            weather_is_live=weather.is_live if weather else False,
+            weather_degraded=weather is None or not weather.is_live,
+            assessment_is_complete=True,
+            provenance_is_complete=provenance_is_complete(aircraft_provenance, payload_provenance),
+            power_is_operational_grade=power_is_operational_grade(
+                aircraft_provenance, payload_provenance
+            ),
+        )
+    )
+    return DeterministicAssessment(
+        decision=decision,
+        reasons=reasons,
+        mode=resolve_mode(requested_mode, blockers),
+        blockers=blockers,
+        inputs_hash=compute_inputs_hash(inputs),
+        calculator_version=CALCULATOR_VERSION,
+    )
+
+
+def insufficient_data_assessment(
+    *,
+    reason: str,
+    inputs: Mapping[str, Any],
+) -> DeterministicAssessment:
+    """Return a sealed assessment for a mission that could not be assessed.
+
+    Used when an input cannot be resolved at all. No calculations were possible,
+    so none accompany it on the response, and it is not viable.
+    """
+    return DeterministicAssessment(
+        decision=Decision.INSUFFICIENT_DATA,
+        reasons=[reason],
+        mode=AssessmentMode.ADVISORY,
+        blockers=operational_blockers(
+            GateInputs(
+                weather_is_live=False,
+                weather_degraded=True,
+                assessment_is_complete=False,
+            )
+        ),
+        inputs_hash=compute_inputs_hash(inputs),
+        calculator_version=CALCULATOR_VERSION,
     )

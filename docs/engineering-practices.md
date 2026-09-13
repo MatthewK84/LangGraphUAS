@@ -12,8 +12,8 @@ set accordingly.
 
 ## CI gates that block merge
 
-Already in place: `ruff`, `mypy --strict`, `pytest` with coverage, `pip-audit`,
-frontend typecheck and Vitest, Prettier.
+Already in place: `ruff`, `mypy --strict`, `pytest` with coverage, frontend
+typecheck and Vitest, Prettier, and the calculator-version gate below.
 
 Added by this plan:
 
@@ -21,15 +21,19 @@ Added by this plan:
 |---|---|
 | Oracle coverage | `backend/suas/calculations/` at 95%, not the repo default |
 | Reference data | Fails on any performance field lacking `source`, or `source=datasheet` lacking `source_url` |
-| Calculator version | Fails if `calculations/` changed without a `calculator_version` bump and a fixture regeneration |
+| ~~Calculator version~~ | **Shipped.** `backend/scripts/check_calculator_version.py` fails a pull request that changes `calculations/` without bumping `CALCULATOR_VERSION`. Documentation-only edits need a patch bump too: the gate cannot tell prose from physics, and a version bumped for nothing beats one silently stale. |
 | Graph tests | Run against real Postgres, not SQLite |
 | Retrieval gates | Wrong-config leak, hard-negative inversion, false-confirm all at 0 (`docs/rag-eval.md`) |
 | Injection matrix | Every row in `docs/injection-defense.md` green |
 | Secret scan | `gitleaks` |
 | SBOM | Generated on tag |
 
-`pip-audit` ignores are documented inline with an expiry date or they are not
-ignores, they are decisions nobody remembers making.
+Dependency auditing is deliberately not a merge gate: `pip-audit --strict`
+failed on transitive advisories this project cannot fix, and a gate that is red
+for reasons nobody can act on teaches people to ignore red. It runs on demand
+instead. The tradeoff is real and unmitigated — nothing currently notices a
+vulnerable dependency on its own. If that bites, the fix is a scheduled
+non-blocking job that opens an issue, not a restored merge gate.
 
 ## Environments
 

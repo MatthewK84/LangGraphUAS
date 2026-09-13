@@ -5,8 +5,9 @@ Uses the typed 2.0 ``Mapped`` style so column types are visible to mypy
 """
 
 from datetime import datetime
+from typing import Any
 
-from sqlalchemy import DateTime, Float, String
+from sqlalchemy import JSON, DateTime, Float, String
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -30,6 +31,11 @@ class AircraftRow(Base):
     cruise_power_w: Mapped[float] = mapped_column(Float, nullable=False)
     max_temp_c: Mapped[float] = mapped_column(Float, nullable=False)
     min_temp_c: Mapped[float] = mapped_column(Float, nullable=False, server_default="-20.0")
+    # Where each number came from, keyed by field name. Read by the operational
+    # gate: a figure that is not from a datasheet or a flight log blocks
+    # operational mode. JSON rather than columns because the shape is per-field
+    # and belongs to the data, not the schema.
+    provenance: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False, default=dict)
 
 
 class PayloadRow(Base):
@@ -41,6 +47,7 @@ class PayloadRow(Base):
     name: Mapped[str] = mapped_column(String, nullable=False)
     weight_kg: Mapped[float] = mapped_column(Float, nullable=False)
     power_draw_w: Mapped[float] = mapped_column(Float, nullable=False)
+    provenance: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False, default=dict)
 
 
 class MissionThreadRow(Base):

@@ -172,15 +172,32 @@ momentum-theory power law applied to cruise as well as hover.
 
 ### Data provenance
 
-Each aircraft field is published, estimated, or derived:
+Every numeric field in `backend/suas/data/*.json` carries its value, unit,
+source, confidence, and notes. The full inventory is generated into
+[`backend/suas/data/CITATIONS.md`](backend/suas/data/CITATIONS.md) and a test
+fails if it drifts from the data.
 
-- Published: weight, max payload, max wind, and operating temperature, from
-  manufacturer or reputable spec sources.
-- Estimated: `battery_wh` where a manufacturer does not state pack energy, and
-  nominal cruise speed (roughly 0.6 to 0.7 of published max speed).
-- Derived: the two power fields, by
-  `hover_power_w = battery_wh / no_payload_endurance_hours` and
-  `cruise_power_w = 0.90 * hover_power_w`.
+| Source | Meaning | Good enough to fly on |
+| --- | --- | --- |
+| `datasheet` | Read from the manufacturer's own published document | yes |
+| `flight_log` | Measured from recorded flight telemetry | yes |
+| `secondary` | Published figure from a specification summary, not the primary document | no |
+| `derived` | Computed from other fields by a formula in the notes | no |
+| `estimate` | An engineering estimate | no |
+| `unknown` | Provenance not recorded. Nobody vouched for this number | no |
+
+As of this writing: **75 fields, none of them operational-grade.** 35 are
+`secondary`, 14 `derived` (the two power fields, by
+`hover_power_w = battery_wh / no_payload_endurance_hours` and
+`cruise_power_w = 0.90 * hover_power_w`), 14 `estimate` (nominal cruise speed at
+roughly 0.6 to 0.7 of published maximum, and every payload power figure), and 12
+`unknown` (pack energy, payload mass). That is why the operational gate refuses
+every plan today.
+
+`secondary` is not a hedge. The figures below were gathered from published
+specification summaries rather than retrieved from the manufacturers' own
+documents, and recording them as `datasheet` would overstate what this project
+knows. Resolving them is [#39](https://github.com/MatthewK84/LangGraphUAS/issues/39).
 
 Operating temperature limits are published manufacturer figures:
 
@@ -248,7 +265,8 @@ degraded-input warnings.
     "latitude": 34.0,
     "longitude": -80.0
   },
-  "thread_id": null
+  "thread_id": null,
+  "assessment_mode": "advisory"
 }
 ```
 
@@ -258,6 +276,24 @@ degraded-input warnings.
 the surface temperature is extrapolated upward with the ISA lapse rate before
 the deviation from standard is applied. Under a standard lapse rate that means
 planning `h` meters higher raises reported density altitude by exactly `h`.
+
+The response carries an `assessment` object, which is the authoritative
+decision: `decision` (`go`, `no_go`, or `insufficient_data`), the `reasons`
+behind it, the `mode` granted, any `blockers`, plus `inputs_hash` and
+`calculator_version` identifying exactly which numbers produced it. It is
+written by `suas/calculations/` and never by the language model. `is_viable`
+remains as a derived alias for `decision == "go"`.
+
+#### Advisory and operational
+
+`assessment_mode` is what you ask for. The backend decides what you get, and it
+fails closed: a gate condition it cannot verify counts against the plan. Today
+that means **operational mode is unreachable** — every plan returns `200` with
+`mode: "advisory"` and blockers naming what is missing, because the bundled
+power figures carry no provenance and no Blue List snapshot is stored. An
+ungrantable mode is a downgrade with reasons attached, not a `409`; see
+[ADR-005](docs/adr/005-mode-downgrade-is-not-an-error.md). A mode that is not a
+valid value is still a `422`.
 
 `GET /api/plan/{thread_id}` returns the persisted state for a prior mission
 thread, or `found: false` when the thread is unknown.
@@ -299,9 +335,16 @@ npm run build
 ```
 
 CI runs the backend gates across Python 3.10, 3.11, and 3.12, plus a Postgres
-integration job (real migrations and startup smoke check), a `pip-audit`
-dependency audit, the frontend gates, and Docker image builds for both services.
-See `.github/workflows/ci.yml`.
+integration job (real migrations and startup smoke check), the frontend gates,
+and Docker image builds for both services. See `.github/workflows/ci.yml`.
+
+Dependency auditing is **not** a CI gate. `pip-audit` stays in the dev extras
+and is run on demand:
+
+```bash
+pip install -e ".[dev]"
+pip-audit                             # runtime + dev, advisory
+```
 
 ## Coding standards
 
@@ -392,9 +435,11 @@ the air.
 - **Next.js ESLint plugin is disabled.** The `@next/eslint-plugin-next` v14 rules
   crash under ESLint 9 flat config, so Next-specific lint is off. Re-add it after
   moving to Next 15, which is flat-config compatible.
-- **`pip-audit --strict` can fail on transitive advisories** outside this
-  project's control. Pin a specific `--ignore-vuln` with a written rationale
-  rather than disabling the job.
+- **No dependency-audit gate.** `pip-audit --strict` failed regularly on
+  transitive advisories outside this project's control, so the job was removed
+  rather than left red. Nothing watches for a vulnerable dependency
+  automatically: run `pip-audit` before a release, and reinstate a scheduled
+  (non-blocking) job if that proves too easy to forget.
 
 ## License
 

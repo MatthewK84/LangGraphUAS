@@ -9,7 +9,8 @@ blocked_by: []
 The LLM must be physically unable to write any field that can keep an aircraft in the air. Today `make_report_node` receives model output and the graph has no barrier between parsed JSON and persisted results.
 
 ## Scope
-- `DeterministicAssessment`: `decision` (`go | no_go | insufficient_data`), `reasons`, `energy{}`, `limits{}`, `inputs_hash`, `calculator_version`.
+- `DeterministicAssessment`: `decision` (`go | no_go | insufficient_data`), `reasons`, `inputs_hash`, `calculator_version`.
+  Implemented **without** embedding `energy{}` / `limits{}`: `Calculations` already travels beside it on the response, and embedding it created an import cycle and duplicated the payload on the wire. `inputs_hash` plus `calculator_version` identify which numbers produced the decision, which is what the acknowledgement in #40 needs.
 - `backend/suas/calculations/assessment.py` returns it; nothing else constructs one.
 - `backend/suas/graph/seal.py` with `seal_assessment()` — a positive allowlist over parsed model output. Unknown keys are dropped, not merged.
 - On intersection with the sealed field set: drop, log `llm_field_violation`, increment a counter. Never raise, never retry the model.

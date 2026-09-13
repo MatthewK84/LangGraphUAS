@@ -52,8 +52,26 @@ export interface Calculations {
   readonly safety_flags: SafetyFlags;
 }
 
+export type Decision = "go" | "no_go" | "insufficient_data";
+
+export type AssessmentMode = "advisory" | "operational";
+
+/**
+ * The sealed decision. Produced by the backend calculator, never by the model.
+ * `mode` is what the gate granted, which may be less than was requested.
+ */
+export interface Assessment {
+  readonly decision: Decision;
+  readonly reasons: readonly string[];
+  readonly mode: AssessmentMode;
+  readonly blockers: readonly string[];
+  readonly inputs_hash: string;
+  readonly calculator_version: string;
+}
+
 export interface PlanResult {
   readonly is_viable: boolean;
+  readonly assessment: Assessment | null;
   readonly weather: WeatherReading | null;
   readonly calculations: Calculations | null;
   readonly report: string;

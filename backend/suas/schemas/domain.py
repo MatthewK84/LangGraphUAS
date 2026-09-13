@@ -2,9 +2,15 @@
 
 These describe the physical characteristics of aircraft and payloads. They are
 frozen so that a value, once loaded, cannot be mutated in place (Principle 2).
+
+Each carries a ``provenance`` map keyed by field name. It is optional on the
+model but not in practice: a row loaded without it is a row whose numbers nobody
+has accounted for, and the operational gate reads it that way.
 """
 
 from pydantic import BaseModel, ConfigDict, Field
+
+from suas.schemas.provenance import FieldProvenance
 
 
 class Aircraft(BaseModel):
@@ -23,6 +29,7 @@ class Aircraft(BaseModel):
     cruise_power_w: float = Field(gt=0.0)
     max_temp_c: float
     min_temp_c: float = Field(default=-20.0)
+    provenance: dict[str, FieldProvenance] = Field(default_factory=dict)
 
 
 class Payload(BaseModel):
@@ -34,3 +41,4 @@ class Payload(BaseModel):
     name: str
     weight_kg: float = Field(ge=0.0)
     power_draw_w: float = Field(ge=0.0)
+    provenance: dict[str, FieldProvenance] = Field(default_factory=dict)
