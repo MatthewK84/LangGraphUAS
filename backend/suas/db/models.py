@@ -65,3 +65,12 @@ class MissionThreadRow(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, index=True
     )
+
+    # Who signed off on what. The hash and calculator version pin the
+    # acknowledgement to the exact assessment it was given: if either changes,
+    # the signature no longer describes the mission and must be taken again.
+    ack_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    ack_actor: Mapped[str | None] = mapped_column(String, nullable=True)
+    ack_action: Mapped[str | None] = mapped_column(String, nullable=True)
+    ack_inputs_hash: Mapped[str | None] = mapped_column(String, nullable=True)
+    ack_calculator_version: Mapped[str | None] = mapped_column(String, nullable=True)

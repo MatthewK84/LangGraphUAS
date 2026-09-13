@@ -36,6 +36,36 @@ async def record_thread(session: AsyncSession, thread_id: str) -> None:
     await session.commit()
 
 
+async def record_acknowledgement(
+    session: AsyncSession,
+    *,
+    thread_id: str,
+    actor: str,
+    action: str,
+    inputs_hash: str,
+    calculator_version: str,
+) -> None:
+    """Record who acknowledged a thread's assessment, and which one.
+
+    Raises KeyError when the thread is unknown: an acknowledgement with nothing
+    to attach to is a bug in the caller, not a row to invent.
+    """
+    row: MissionThreadRow | None = await session.get(MissionThreadRow, thread_id)
+    if row is None:
+        raise KeyError(thread_id)
+    row.ack_at = datetime.now(timezone.utc)
+    row.ack_actor = actor
+    row.ack_action = action
+    row.ack_inputs_hash = inputs_hash
+    row.ack_calculator_version = calculator_version
+    await session.commit()
+
+
+async def get_acknowledgement(session: AsyncSession, thread_id: str) -> MissionThreadRow | None:
+    """Return the thread row carrying its acknowledgement, or None if unknown."""
+    return await session.get(MissionThreadRow, thread_id)
+
+
 async def _expired_thread_ids(session: AsyncSession, cutoff: datetime) -> list[str]:
     """Return ids of threads first seen before the cutoff."""
     result = await session.execute(

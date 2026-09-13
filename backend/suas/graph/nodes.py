@@ -9,6 +9,8 @@ import logging
 from collections.abc import Awaitable, Callable
 from typing import Any, Final
 
+from langgraph.types import interrupt
+
 from suas.calculations.assessment import (
     assess_mission,
     build_assessment,
@@ -18,9 +20,9 @@ from suas.calculations.assessment import (
 from suas.db.repository import get_aircraft, get_payload
 from suas.errors import ReportGenerationError
 from suas.graph.dependencies import GraphDependencies
-from suas.graph.seal import find_contradiction
+from suas.graph.seal import find_contradiction, render_template_brief
 from suas.graph.state import MissionState
-from suas.schemas.assessment import AssessmentMode, Decision, DeterministicAssessment
+from suas.schemas.assessment import AssessmentMode, DeterministicAssessment
 from suas.schemas.domain import Aircraft, Payload
 from suas.schemas.requests import MissionParams
 from suas.schemas.responses import Calculations, WeatherReading
@@ -139,30 +141,101 @@ def make_report_node(deps: GraphDependencies) -> NodeFn:
         except ReportGenerationError:
             logger.warning("Falling back to deterministic report text")
             report = f"Mission status: {'GO' if is_viable else 'NO-GO'}. Narrative unavailable."
-        return {"report": report, "seal_violations": _check_prose(report, state)}
+        report, violations = _vet_prose(report, state)
+        return {"report": report, "seal_violations": violations}
 
     return generate_report
 
 
-def _check_prose(report: str, state: MissionState) -> list[str]:
-    """Return seal violations found in generated prose.
+def _vet_prose(report: str, state: MissionState) -> tuple[str, list[str]]:
+    """Return the brief to publish and any seal violations found in it.
 
-    The decision comes from the sealed assessment, not from this text, so a
-    contradiction here cannot change what the operator is told to do -- the
-    dashboard renders the verdict from the assessment on a separate path. It
-    still means something upstream produced a brief at odds with the math, so it
-    is named and counted rather than passed along quietly.
+    A brief that contradicts the sealed decision is replaced with one rendered
+    from the assessment itself, not truncated: silent truncation hides an attack
+    or a bug in progress, while a template keeps the operator informed and makes
+    the substitution obvious.
     """
     assessment_dump = state.get("assessment")
     if assessment_dump is None:
-        return []
-    decision = Decision(str(assessment_dump.get("decision", Decision.INSUFFICIENT_DATA.value)))
-    found: str | None = find_contradiction(report, decision)
+        return report, []
+    assessment = DeterministicAssessment.model_validate(assessment_dump)
+    found: str | None = find_contradiction(report, assessment.decision)
     if found is None:
-        return []
+        return report, []
     logger.warning(
-        "Brief contradicts sealed decision %s: found %r",
-        decision.value,
+        "Brief contradicts sealed decision %s: found %r. Substituting template.",
+        assessment.decision.value,
         found,
     )
-    return [f"contradiction:{found.lower()}"]
+    return render_template_brief(assessment), [f"contradiction:{found.lower()}"]
+
+
+# An operator may revise and re-review, but not forever. The loop exists so a
+# mistyped altitude can be fixed without replanning from scratch; an unbounded
+# one is a way to spin the graph, and a way for a client bug to spin it silently.
+MAX_ACK_ROUNDS: Final[int] = 5
+
+
+def make_human_ack_node() -> NodeFn:
+    """Return a node that pauses for a human to sign off on the assessment.
+
+    This node is the reason a brief can be trusted: it runs after the calculator
+    and before the model, so what the operator signs has been touched by neither
+    retrieved text nor generated prose. See ADR-004 -- the ordering is a security
+    control, not a UX preference.
+    """
+
+    async def await_acknowledgement(state: MissionState) -> MissionState:
+        rounds: int = int(state.get("ack_rounds", 0))
+        if rounds >= MAX_ACK_ROUNDS:
+            logger.warning("Acknowledgement round limit reached; proceeding to report")
+            return {"ack_action": "confirm", "ack_rounds": rounds}
+
+        response: dict[str, Any] = interrupt(
+            {
+                "assessment": state.get("assessment"),
+                "calculations": state.get("calculations"),
+                "weather": state.get("weather"),
+                "requested_mode": state.get("requested_mode"),
+                "editable": ["target_altitude_m", "hover_time_s", "payload_id"],
+                "round": rounds,
+            }
+        )
+
+        action: str = str(response.get("action", "confirm"))
+        updates: MissionState = {
+            "ack_action": action,
+            "ack_actor": str(response.get("actor", "unknown")),
+            "ack_rounds": rounds + 1,
+        }
+        if action == "abort":
+            updates["aborted"] = True
+            updates["report"] = "Mission aborted by the operator before any brief was generated."
+            return updates
+        if action == "edit":
+            updates.update(_apply_edits(state, response.get("edits") or {}))
+        return updates
+
+    return await_acknowledgement
+
+
+def _apply_edits(state: MissionState, edits: dict[str, Any]) -> MissionState:
+    """Return the state changes for an operator revision.
+
+    Only the fields the interrupt offered are honoured. An edit to anything else
+    is ignored rather than merged, so a client cannot quietly rewrite the mission
+    between the assessment and the signature.
+    """
+    updates: MissionState = {}
+    params: dict[str, Any] = dict(state.get("mission_params") or {})
+    changed: bool = False
+    for field in ("target_altitude_m", "hover_time_s"):
+        if field in edits and edits[field] is not None:
+            params[field] = float(edits[field])
+            changed = True
+    if changed:
+        updates["mission_params"] = params
+    payload_id = edits.get("payload_id")
+    if payload_id:
+        updates["payload_id"] = str(payload_id)
+    return updates

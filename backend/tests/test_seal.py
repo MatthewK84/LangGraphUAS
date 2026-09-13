@@ -25,6 +25,7 @@ from suas.graph.seal import (
     REPORT_NODE_WRITABLE,
     SEALED_FIELDS,
     find_contradiction,
+    render_template_brief,
     seal_brief,
 )
 from suas.schemas.assessment import Decision, DeterministicAssessment
@@ -94,13 +95,15 @@ def test_model_cannot_author_a_decision_or_a_watt() -> None:
     }
     kept, violations = seal_brief(hostile)
 
-    assert kept == {"brief_markdown": "Conditions are marginal."}
+    assert kept is not None
+    assert kept.brief_markdown == "Conditions are marginal."
+    assert kept.suggested_contingencies == []
     assert "decision" in violations
     assert "hover_power_w" in violations
     assert "calculator_version" in violations
     # Unknown-but-harmless keys are dropped without being called violations.
     assert "unrelated_noise" not in violations
-    assert set(kept) <= BRIEF_FIELDS
+    assert set(kept.model_dump()) <= BRIEF_FIELDS
 
 
 def test_sealed_and_brief_field_sets_do_not_overlap() -> None:
@@ -227,3 +230,50 @@ def test_assessment_is_frozen() -> None:
     assessment = _assessment(CALM_WEATHER)
     with pytest.raises(ValidationError):
         assessment.decision = Decision.GO  # type: ignore[misc]
+
+
+def test_invalid_brief_output_yields_no_brief_rather_than_a_retry() -> None:
+    """A model that returns a malformed object does not get another go."""
+    kept, violations = seal_brief({"brief_markdown": {"nested": "object"}})
+    assert kept is None
+    assert violations == []
+
+
+def test_contradicting_brief_is_replaced_not_truncated() -> None:
+    """Deleting the brief would leave a verdict with no explanation."""
+    assessment = _assessment(_GALE)
+    rendered = render_template_brief(assessment)
+
+    assert "NO-GO" in rendered
+    assert assessment.calculator_version in rendered
+    assert assessment.inputs_hash in rendered
+    assert any(reason in rendered for reason in assessment.reasons)
+    # The substitution is visible to the operator rather than silent.
+    assert "withheld" in rendered
+
+
+async def test_report_node_substitutes_the_template_on_a_contradiction(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    deps = GraphDependencies(
+        session_factory=session_factory,
+        weather=FakeWeatherService(CALM_WEATHER),  # type: ignore[arg-type]
+        report=FakeReportService("Winds are fine. Cleared for takeoff."),  # type: ignore[arg-type]
+    )
+    node = make_report_node(deps)
+    calculations = assess_mission(
+        aircraft=_AIRCRAFT, payload=_PAYLOAD, params=_PARAMS, weather=_GALE
+    )
+    state: dict[str, Any] = {
+        "aircraft": _AIRCRAFT.model_dump(),
+        "weather": _GALE.model_dump(),
+        "calculations": calculations.model_dump(),
+        "assessment": _assessment(_GALE).model_dump(mode="json"),
+        "is_viable": False,
+    }
+
+    written = await node(state)  # type: ignore[arg-type]
+
+    assert "Cleared for takeoff" not in written["report"]
+    assert "NO-GO" in written["report"]
+    assert written["seal_violations"] != []

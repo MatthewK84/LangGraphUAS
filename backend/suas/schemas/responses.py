@@ -93,6 +93,10 @@ class PlanResponse(BaseModel):
 
     is_viable: bool
     assessment: DeterministicAssessment | None = None
+    # True while the run is paused at the review step. A brief does not exist
+    # yet, and will not until a human signs the assessment above.
+    awaiting_ack: bool = False
+    aborted: bool = False
     calculations: Calculations | None
     weather: WeatherReading | None
     report: str
@@ -146,3 +150,5 @@ class ThreadStateResponse(BaseModel):
     report: str | None
     calculations: Calculations | None
     weather: WeatherReading | None
+    assessment: DeterministicAssessment | None = None
+    awaiting_ack: bool = False

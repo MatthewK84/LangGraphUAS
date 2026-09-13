@@ -78,12 +78,16 @@ async def test_payload_catalog_returns_seeded_payloads(app_with_graph: FastAPI) 
     assert "None" in ids
 
 
-async def test_plan_endpoint_returns_result(app_with_graph: FastAPI) -> None:
+async def test_plan_endpoint_returns_an_assessment_awaiting_acknowledgement(
+    app_with_graph: FastAPI,
+) -> None:
     async with _client(app_with_graph) as client:
         response = await client.post("/api/plan", json=_VALID_BODY)
     assert response.status_code == 200
     body = response.json()
-    assert body["report"] == "TEST REPORT"
+    assert body["awaiting_ack"] is True
+    assert body["report"] == ""
+    assert body["assessment"]["inputs_hash"]
     assert body["thread_id"]
     assert body["degraded"] is False
     assert body["warnings"] == []
@@ -100,6 +104,10 @@ async def test_thread_state_roundtrip(app_with_graph: FastAPI) -> None:
     async with _client(app_with_graph) as client:
         created = await client.post("/api/plan", json=_VALID_BODY)
         thread_id = created.json()["thread_id"]
+        await client.post(
+            f"/api/plan/{thread_id}/ack",
+            json={"action": "confirm", "actor": "tester"},
+        )
         fetched = await client.get(f"/api/plan/{thread_id}")
     assert fetched.status_code == 200
     body = fetched.json()
