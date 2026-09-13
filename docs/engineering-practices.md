@@ -12,8 +12,8 @@ set accordingly.
 
 ## CI gates that block merge
 
-Already in place: `ruff`, `mypy --strict`, `pytest` with coverage, `pip-audit`,
-frontend typecheck and Vitest, Prettier.
+Already in place: `ruff`, `mypy --strict`, `pytest` with coverage, frontend
+typecheck and Vitest, Prettier.
 
 Added by this plan:
 
@@ -28,8 +28,12 @@ Added by this plan:
 | Secret scan | `gitleaks` |
 | SBOM | Generated on tag |
 
-`pip-audit` ignores are documented inline with an expiry date or they are not
-ignores, they are decisions nobody remembers making.
+Dependency auditing is deliberately not a merge gate: `pip-audit --strict`
+failed on transitive advisories this project cannot fix, and a gate that is red
+for reasons nobody can act on teaches people to ignore red. It runs on demand
+instead. The tradeoff is real and unmitigated — nothing currently notices a
+vulnerable dependency on its own. If that bites, the fix is a scheduled
+non-blocking job that opens an issue, not a restored merge gate.
 
 ## Environments
 

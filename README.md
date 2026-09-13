@@ -299,9 +299,16 @@ npm run build
 ```
 
 CI runs the backend gates across Python 3.10, 3.11, and 3.12, plus a Postgres
-integration job (real migrations and startup smoke check), a `pip-audit`
-dependency audit, the frontend gates, and Docker image builds for both services.
-See `.github/workflows/ci.yml`.
+integration job (real migrations and startup smoke check), the frontend gates,
+and Docker image builds for both services. See `.github/workflows/ci.yml`.
+
+Dependency auditing is **not** a CI gate. `pip-audit` stays in the dev extras
+and is run on demand:
+
+```bash
+pip install -e ".[dev]"
+pip-audit                             # runtime + dev, advisory
+```
 
 ## Coding standards
 
@@ -392,9 +399,11 @@ the air.
 - **Next.js ESLint plugin is disabled.** The `@next/eslint-plugin-next` v14 rules
   crash under ESLint 9 flat config, so Next-specific lint is off. Re-add it after
   moving to Next 15, which is flat-config compatible.
-- **`pip-audit --strict` can fail on transitive advisories** outside this
-  project's control. Pin a specific `--ignore-vuln` with a written rationale
-  rather than disabling the job.
+- **No dependency-audit gate.** `pip-audit --strict` failed regularly on
+  transitive advisories outside this project's control, so the job was removed
+  rather than left red. Nothing watches for a vulnerable dependency
+  automatically: run `pip-audit` before a release, and reinstate a scheduled
+  (non-blocking) job if that proves too easy to forget.
 
 ## License
 
