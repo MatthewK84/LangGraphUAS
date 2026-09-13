@@ -13,6 +13,7 @@ from suas.api.rate_limit_dep import enforce_rate_limit
 from suas.api.security import require_api_key
 from suas.db.repository import list_aircraft, list_payloads
 from suas.db.retention import record_thread
+from suas.schemas.assessment import DeterministicAssessment
 from suas.schemas.requests import MissionRequest
 from suas.schemas.responses import (
     AircraftSummary,
@@ -55,11 +56,18 @@ def _build_plan_response(final_state: dict[str, Any], thread_id: str) -> PlanRes
     """Convert the graph's final state into a typed API response."""
     weather_dump = final_state.get("weather")
     calc_dump = final_state.get("calculations")
+    assessment_dump = final_state.get("assessment")
     weather = WeatherReading.model_validate(weather_dump) if weather_dump else None
     calculations = Calculations.model_validate(calc_dump) if calc_dump else None
+    assessment = (
+        DeterministicAssessment.model_validate(assessment_dump) if assessment_dump else None
+    )
     warnings: list[str] = _collect_warnings(weather)
     return PlanResponse(
-        is_viable=bool(final_state.get("is_viable", False)),
+        is_viable=assessment.is_viable
+        if assessment
+        else bool(final_state.get("is_viable", False)),
+        assessment=assessment,
         calculations=calculations,
         weather=weather,
         report=str(final_state.get("report", "")),
@@ -146,6 +154,9 @@ async def plan_mission(
         is_viable=result.is_viable,
         weather_live=result.weather is None or result.weather.is_live,
     )
+    violations = final_state.get("seal_violations")
+    if isinstance(violations, list):
+        metrics.record_seal_violations(len(violations))
     return result
 
 

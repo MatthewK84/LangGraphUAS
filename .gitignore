@@ -26,3 +26,8 @@ yarn-error.log*
 .DS_Store
 .idea/
 .vscode/
+
+# Coverage artifacts
+.coverage
+.coverage.*
+htmlcov/

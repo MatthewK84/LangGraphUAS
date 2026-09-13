@@ -18,6 +18,8 @@ class MissionState(TypedDict, total=False):
     payload: dict[str, Any] | None
     weather: dict[str, Any] | None
     calculations: dict[str, Any] | None
+    assessment: dict[str, Any] | None
     is_viable: bool
+    seal_violations: list[str]
     report: str
     error: str | None
