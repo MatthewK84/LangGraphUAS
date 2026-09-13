@@ -366,6 +366,27 @@ docker-compose.yml
   restarts will not purge; schedule a periodic restart or call the purge from
   your own scheduler. Retention failures are logged and never block startup.
 
+## Planning and design documents
+
+The 90-day plan for taking this from a working demo to a system whose numbers
+can be defended lives in [`docs/PLAN-90.md`](docs/PLAN-90.md). Supporting
+specifications:
+
+| Document | Covers |
+|---|---|
+| [`docs/engineering-practices.md`](docs/engineering-practices.md) | Branching, CI gates, environments, review bar |
+| [`docs/retrieval.md`](docs/retrieval.md) | pgvector hybrid search for datasheet citations |
+| [`docs/rag-eval.md`](docs/rag-eval.md) | Retrieval and citation metrics that gate CI |
+| [`docs/injection-defense.md`](docs/injection-defense.md) | Prompt injection surfaces and controls |
+| [`docs/threat-model.md`](docs/threat-model.md) | STRIDE across every trust boundary |
+| [`docs/ops.md`](docs/ops.md) | Retention, concurrency, incident handling |
+| [`docs/adr/`](docs/adr/README.md) | The decisions later code is allowed to assume |
+| [`docs/backlog/`](docs/backlog/README.md) | The seventeen opening issues, ready to file |
+
+The organizing rule across all of it: the language model writes prose, and
+`backend/suas/calculations/` writes every number that can keep an aircraft in
+the air.
+
 ## Known limitations
 
 - **Next.js ESLint plugin is disabled.** The `@next/eslint-plugin-next` v14 rules
