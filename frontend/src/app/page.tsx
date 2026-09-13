@@ -3,12 +3,13 @@
 import { useState } from "react";
 import type { JSX } from "react";
 
-import { planMission } from "@/lib/api";
-import type { MissionRequest, PlanResult } from "@/lib/types";
+import { acknowledgePlan, planMission } from "@/lib/api";
+import type { AckAction, MissionRequest, PlanResult } from "@/lib/types";
 import { useCatalog } from "@/lib/useCatalog";
 
 import { MissionForm } from "./components/MissionForm";
 import { ResultsPanel } from "./components/ResultsPanel";
+import { ReviewCard } from "./components/ReviewCard";
 
 export default function MissionPlanner(): JSX.Element {
   const [loading, setLoading] = useState(false);
@@ -34,6 +35,27 @@ export default function MissionPlanner(): JSX.Element {
     setLoading(false);
   }
 
+  async function decide(action: AckAction): Promise<void> {
+    const assessment = result?.assessment;
+    if (result === null || !assessment) {
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    const outcome = await acknowledgePlan(result.thread_id, {
+      action,
+      actor: "dashboard-operator",
+      inputs_hash: assessment.inputs_hash,
+    });
+    if (!outcome.ok) {
+      setError(`Unable to record the acknowledgement: ${outcome.error}`);
+      setLoading(false);
+      return;
+    }
+    setResult(outcome.data);
+    setLoading(false);
+  }
+
   return (
     <main className="min-h-screen bg-slate-900 text-slate-100 p-8 font-sans">
       <div className="max-w-6xl mx-auto space-y-8">
@@ -56,7 +78,21 @@ export default function MissionPlanner(): JSX.Element {
               void analyze(request);
             }}
           />
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 space-y-6">
+            {result !== null &&
+              result.awaiting_ack &&
+              result.assessment !== null && (
+                <ReviewCard
+                  assessment={result.assessment}
+                  busy={loading}
+                  onConfirm={() => {
+                    void decide("confirm");
+                  }}
+                  onAbort={() => {
+                    void decide("abort");
+                  }}
+                />
+              )}
             <ResultsPanel loading={loading} error={error} result={result} />
           </div>
         </div>

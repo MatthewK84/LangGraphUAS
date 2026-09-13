@@ -3,6 +3,12 @@
 Builds the LangGraph ``StateGraph`` with a conditional edge that skips straight
 to reporting when validation fails, and compiles it with the supplied
 checkpointer for durable, thread-scoped memory.
+
+``human_ack`` sits between the calculator and the report, and that order is a
+security control rather than a workflow preference: the operator signs an
+assessment that no retrieved text and no generated prose has touched. See
+ADR-004. Moving ``report`` earlier -- to hide latency behind the review card,
+say -- converts a structural guarantee into a filtering problem.
 """
 
 from typing import Literal
@@ -14,6 +20,7 @@ from langgraph.graph.state import CompiledStateGraph
 from suas.graph.dependencies import GraphDependencies
 from suas.graph.nodes import (
     make_calculations_node,
+    make_human_ack_node,
     make_report_node,
     make_validate_node,
     make_weather_node,
@@ -28,6 +35,21 @@ def route_after_validation(state: MissionState) -> Literal["weather", "report"]:
     return "weather"
 
 
+def route_after_ack(state: MissionState) -> Literal["calculations", "report", "__end__"]:
+    """Route on what the operator decided.
+
+    An edit returns to the calculator so the revision is assessed rather than
+    assumed. An abort ends the run without ever calling the model.
+    """
+    action: str = str(state.get("ack_action", "confirm"))
+    if action == "edit":
+        return "calculations"
+    if action == "abort":
+        # END is this literal; spelling it out keeps the annotation checkable.
+        return "__end__"
+    return "report"
+
+
 def build_mission_graph(
     deps: GraphDependencies,
     checkpointer: BaseCheckpointSaver,
@@ -37,6 +59,7 @@ def build_mission_graph(
     builder.add_node("validate", make_validate_node(deps))
     builder.add_node("weather", make_weather_node(deps))
     builder.add_node("calculations", make_calculations_node(deps))
+    builder.add_node("human_ack", make_human_ack_node())
     builder.add_node("report", make_report_node(deps))
 
     builder.add_edge(START, "validate")
@@ -46,7 +69,12 @@ def build_mission_graph(
         {"weather": "weather", "report": "report"},
     )
     builder.add_edge("weather", "calculations")
-    builder.add_edge("calculations", "report")
+    builder.add_edge("calculations", "human_ack")
+    builder.add_conditional_edges(
+        "human_ack",
+        route_after_ack,
+        {"calculations": "calculations", "report": "report", END: END},
+    )
     builder.add_edge("report", END)
 
     return builder.compile(checkpointer=checkpointer)

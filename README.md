@@ -47,9 +47,19 @@ receive dependencies explicitly, so no node relies on global state and each is
 unit testable. The flow is:
 
 ```
-START -> validate -> (conditional) -> weather -> calculations -> report -> END
-                          \-> report (when validation fails)
+START -> validate -> (conditional) -> weather -> calculations -> human_ack -> report -> END
+                          \-> report (when validation fails)          |
+                                        edit <---------------------- /
+                                        abort -> END
 ```
+
+`human_ack` interrupts the run and waits for a person. The order is a security
+control rather than a workflow preference: the operator signs an assessment that
+neither retrieved text nor generated prose has touched, so nothing a model
+produces can change what was signed. See
+[ADR-004](docs/adr/004-node-order-and-empty-tool-binding.md). The report node has
+no tools bound, for the same reason. Both are pinned by tests that fail if the
+invariant is removed.
 
 State holds only JSON-native values. Pydantic models are dumped to dictionaries
 before entering state, which keeps checkpoint serialization simple and safe.
@@ -58,7 +68,9 @@ deserialization to known-safe types.
 
 Every request supplies a `thread_id`. The checkpointer persists state per thread,
 so `GET /api/plan/{thread_id}` can retrieve a prior assessment and a follow-up
-request can resume the same conversation.
+request can resume the same conversation. Checkpoints are written with
+`durability="sync"`, so a crash between the assessment and the signature loses
+neither.
 
 ## Quickstart (Docker)
 
@@ -276,6 +288,22 @@ degraded-input warnings.
 the surface temperature is extrapolated upward with the ISA lapse rate before
 the deviation from standard is applied. Under a standard lapse rate that means
 planning `h` meters higher raises reported density altitude by exactly `h`.
+
+`POST /api/plan` now returns with `awaiting_ack: true` and no brief. The run is
+paused at the review step until a person acts:
+
+```
+POST /api/plan/{thread_id}/ack
+{ "action": "confirm", "actor": "dispatcher-1", "inputs_hash": "<from the plan response>" }
+```
+
+`action` is `confirm`, `edit`, or `abort`. `inputs_hash` is the assessment the
+operator was actually shown; if it no longer matches, the acknowledgement is
+refused with `409` rather than applied to numbers that changed underneath it. An
+`edit` (altitude, hover time, or payload) re-runs the calculator and pauses
+again, because a revision is a new thing to sign. An `abort` ends the run without
+calling the model at all. Confirmations are recorded against the thread with the
+actor, timestamp, assessment hash, and calculator version.
 
 The response carries an `assessment` object, which is the authoritative
 decision: `decision` (`go`, `no_go`, or `insufficient_data`), the `reasons`

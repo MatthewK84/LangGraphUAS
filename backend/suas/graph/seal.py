@@ -18,14 +18,17 @@ counted rather than swallowed.
 import re
 from typing import Any, Final
 
+from pydantic import ValidationError
+
 from suas.schemas.assessment import Decision, DeterministicAssessment
+from suas.schemas.brief import BriefOutput
 
 # The only state keys the report node may write. Enforced by test, because the
 # refactor that quietly adds a seventh key is the one worth catching.
 REPORT_NODE_WRITABLE: Final[frozenset[str]] = frozenset({"report", "seal_violations"})
 
 # The only keys a brief may contribute. Anything else is dropped.
-BRIEF_FIELDS: Final[frozenset[str]] = frozenset({"brief_markdown", "suggested_contingencies"})
+BRIEF_FIELDS: Final[frozenset[str]] = frozenset(BriefOutput.model_fields)
 
 # Fields the calculator owns. A model emitting one of these is not a formatting
 # quirk to tidy up; it is the failure this module exists to catch, so these are
@@ -67,20 +70,54 @@ _GO_LANGUAGE: Final[re.Pattern[str]] = re.compile(
 )
 
 
-def seal_brief(raw: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
-    """Return the allowlisted brief fields and the sealed keys that were dropped.
+def seal_brief(raw: dict[str, Any]) -> tuple[BriefOutput | None, list[str]]:
+    """Return the parsed brief and the sealed keys the model tried to write.
 
-    Args:
-        raw: Parsed model output.
+    Keys outside the allowlist are dropped before validation rather than after,
+    so a model that pads its output with noise still produces a usable brief
+    while one that tries to author a decision is recorded as having done so.
 
-    Returns:
-        A pair of (kept fields, names of sealed fields the model tried to write).
-        Unknown keys that are not sealed are dropped silently; they are noise,
-        not an attempt to author a decision.
+    Returns ``None`` for the brief when what remains cannot be validated. There
+    is deliberately no retry: a model that returns an invalid object does not get
+    to negotiate its way to a valid-looking one.
     """
-    kept: dict[str, Any] = {key: value for key, value in raw.items() if key in BRIEF_FIELDS}
     violations: list[str] = sorted(key for key in raw if key in SEALED_FIELDS)
-    return kept, violations
+    kept: dict[str, Any] = {key: value for key, value in raw.items() if key in BRIEF_FIELDS}
+    try:
+        return BriefOutput.model_validate(kept), violations
+    except ValidationError:
+        return None, violations
+
+
+def render_template_brief(assessment: DeterministicAssessment) -> str:
+    """Return a brief built only from the sealed assessment.
+
+    Used when generated prose is suppressed. Deleting the brief instead would
+    leave an operator with a verdict and no explanation at exactly the moment
+    something upstream is behaving oddly, so the sealed object writes its own.
+    """
+    verdict: str = {
+        Decision.GO: "GO",
+        Decision.NO_GO: "NO-GO",
+        Decision.INSUFFICIENT_DATA: "NOT ASSESSED",
+    }[assessment.decision]
+    lines: list[str] = [
+        f"Mission status: {verdict} ({assessment.mode.value}).",
+        "",
+        "The generated brief was withheld because it disagreed with this "
+        "assessment. What follows comes from the calculator alone.",
+        "",
+    ]
+    if assessment.reasons:
+        lines.append("Limiting factors:")
+        lines.extend(f"- {reason}" for reason in assessment.reasons)
+        lines.append("")
+    if assessment.blockers:
+        lines.append("Blocking operational use:")
+        lines.extend(f"- {blocker.value}" for blocker in assessment.blockers)
+        lines.append("")
+    lines.append(f"Calculator {assessment.calculator_version}, inputs {assessment.inputs_hash}.")
+    return "\n".join(lines)
 
 
 def find_contradiction(prose: str, decision: Decision) -> str | None:

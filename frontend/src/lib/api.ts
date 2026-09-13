@@ -5,6 +5,7 @@
 // client bundle, so there is no browser-readable credential to leak.
 
 import type {
+  AckRequest,
   AircraftSummary,
   ApiResult,
   MissionRequest,
@@ -62,6 +63,17 @@ export async function planMission(
 ): Promise<ApiResult<PlanResult>> {
   return request<PlanResult>(
     "/api/plan",
+    { method: "POST", body: JSON.stringify(body) },
+    REQUEST_TIMEOUT_MS,
+  );
+}
+
+export async function acknowledgePlan(
+  threadId: string,
+  body: AckRequest,
+): Promise<ApiResult<PlanResult>> {
+  return request<PlanResult>(
+    `/api/plan/${encodeURIComponent(threadId)}/ack`,
     { method: "POST", body: JSON.stringify(body) },
     REQUEST_TIMEOUT_MS,
   );

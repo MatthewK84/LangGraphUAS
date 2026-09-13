@@ -20,6 +20,10 @@ class MissionState(TypedDict, total=False):
     calculations: dict[str, Any] | None
     assessment: dict[str, Any] | None
     requested_mode: str
+    ack_action: str
+    ack_actor: str
+    ack_rounds: int
+    aborted: bool
     is_viable: bool
     seal_violations: list[str]
     report: str

@@ -69,9 +69,21 @@ export interface Assessment {
   readonly calculator_version: string;
 }
 
+export type AckAction = "confirm" | "edit" | "abort";
+
+export interface AckRequest {
+  readonly action: AckAction;
+  readonly actor: string;
+  /** The assessment the operator was shown. Refused if it has since changed. */
+  readonly inputs_hash?: string;
+}
+
 export interface PlanResult {
   readonly is_viable: boolean;
   readonly assessment: Assessment | null;
+  /** True while the run is paused for a signature. No brief exists yet. */
+  readonly awaiting_ack: boolean;
+  readonly aborted: boolean;
   readonly weather: WeatherReading | null;
   readonly calculations: Calculations | null;
   readonly report: string;

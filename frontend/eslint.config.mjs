@@ -47,6 +47,19 @@ export default tseslint.config(
       ],
 
       // P3: no unsafe/legacy features
+      // The safety brief is model-generated text. It is rendered as text, and
+      // this keeps it that way: raw HTML would turn an injected document into
+      // markup in an operator's browser, and an <img src> into exfiltration.
+      // See docs/injection-defense.md.
+      "react/no-danger": "off",
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "JSXAttribute[name.name='dangerouslySetInnerHTML']",
+          message:
+            "Briefs and reference data are untrusted text. Render as text, never as HTML.",
+        },
+      ],
       "no-eval": "error",
       "no-implied-eval": "error",
       "no-new-func": "error",
