@@ -18,36 +18,36 @@ makes a second pass appending real `Blocked by #N` references once numbers are
 known. It appends the Claude Code attribution footer to each body at creation
 time, which is why the files here do not carry one.
 
-**These were not filed from the Claude Code session that wrote them.** That
-session's GitHub app had repository read and pull-request access but not
-`issues: write`, so every create returned
-`403 Resource not accessible by integration`. Run the script from a shell with
-your own `gh` credentials, or grant the app issue write access and ask for them
-to be filed again.
+**The seventeen below are filed as #36-#52.** The script remains useful for
+re-filing them in a fork, or for filing the split-out items named at the bottom
+of this file.
 
 ## The seventeen
 
-| # | Title | Phase |
-|---|---|---|
-| 01 | Seal `DeterministicAssessment` from LLM output | 1 |
-| 02 | `assessment_mode` advisory / operational | 1 |
-| 03 | Provenance fields + `CITATIONS.md` | 1 |
-| 04 | Resolve documented datasheet conflicts | 1 |
-| 05 | HITL interrupt + ack endpoint | 1 |
-| 06 | Flight-log ingest + power estimator | 1 |
-| 07 | `POST /api/replan` + alert schema | 2 |
-| 08 | Weather timeout and fallback contract | 2 |
-| 09 | Load test + kill -9 resume | 2 |
-| 10 | Frozen eval fixture pack + runner + leaderboard | 3 |
-| 11 | Quarantine on ingest + unicode normalization | 2 |
-| 12 | Nonce-fenced evidence + chunk_id citation | 2 |
-| 13 | `BriefOutput` allowlist + contradiction linter | 1 |
-| 14 | Injection test matrix + `eval_trap` corpus kind | 2 |
-| 15 | RAG fixtures + retrieval metrics + statistics | 2 |
-| 16 | CI retrieval gates | 2 |
-| 17 | ADR: node order and empty tool binding | 1 |
+| # | Issue | Title | Phase | Blocked by |
+|---|---|---|---|---|
+| 01 | #36 | Seal `DeterministicAssessment` from LLM output | 1 | — |
+| 02 | #37 | `assessment_mode` advisory / operational | 1 | #36 |
+| 03 | #38 | Provenance fields + `CITATIONS.md` | 1 | #37 |
+| 04 | #39 | Resolve documented datasheet conflicts | 1 | #38 |
+| 05 | #40 | HITL interrupt + ack endpoint | 1 | #36, #37 |
+| 06 | #41 | Flight-log ingest + power estimator | 1 | #38 |
+| 07 | #42 | `POST /api/replan` + alert schema | 2 | #40 |
+| 08 | #43 | Weather timeout and fallback contract | 2 | #37 |
+| 09 | #44 | Load test + kill -9 resume | 2 | #40 |
+| 10 | #45 | Frozen eval fixture pack + runner + leaderboard | 3 | #39, #42 |
+| 11 | #46 | Quarantine on ingest + unicode normalization | 2 | — |
+| 12 | #47 | Nonce-fenced evidence + chunk_id citation | 2 | #46 |
+| 13 | #48 | `BriefOutput` allowlist + contradiction linter | 1 | #36 |
+| 14 | #49 | Injection test matrix + `eval_trap` corpus kind | 2 | #46, #47, #48 |
+| 15 | #50 | RAG fixtures + retrieval metrics + statistics | 2 | #47 |
+| 16 | #51 | CI retrieval gates | 2 | #50 |
+| 17 | #52 | ADR: node order and empty tool binding | 1 | #36 |
 
-Start with 01. Everything else waits on that merge.
+Start with #36. Everything else waits on that merge.
+
+The dependency column is the only place the blocker graph is recorded — deliberately, rather than as fifteen one-line comments scattered across the
+tracker. Keep it current when issues are split or closed.
 
 ## Known gaps in this set
 
