@@ -13,6 +13,7 @@ from fastapi.responses import JSONResponse
 
 from suas.errors import (
     AircraftNotFoundError,
+    FlightLogError,
     ReportGenerationError,
     SeedDataError,
     SuasError,
@@ -23,6 +24,7 @@ logger: Final[logging.Logger] = logging.getLogger(__name__)
 
 _STATUS_MAP: Final[dict[type[SuasError], int]] = {
     AircraftNotFoundError: status.HTTP_404_NOT_FOUND,
+    FlightLogError: status.HTTP_422_UNPROCESSABLE_CONTENT,
     WeatherServiceError: status.HTTP_503_SERVICE_UNAVAILABLE,
     ReportGenerationError: status.HTTP_502_BAD_GATEWAY,
     SeedDataError: status.HTTP_500_INTERNAL_SERVER_ERROR,

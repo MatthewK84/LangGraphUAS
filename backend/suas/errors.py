@@ -27,3 +27,7 @@ class ReportGenerationError(SuasError):
 
 class SeedDataError(SuasError):
     """Raised when reference seed data cannot be loaded."""
+
+
+class FlightLogError(SuasError):
+    """Raised when an uploaded flight log cannot be parsed or is unusable."""
