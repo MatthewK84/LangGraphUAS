@@ -152,3 +152,29 @@ class ThreadStateResponse(BaseModel):
     weather: WeatherReading | None
     assessment: DeterministicAssessment | None = None
     awaiting_ack: bool = False
+
+
+class PowerEstimateSummary(BaseModel):
+    """A measured power figure derived from a flight log."""
+
+    median_w: float
+    sample_count: int
+    confidence: str
+
+
+class FlightLogResponse(BaseModel):
+    """The outcome of ingesting one flight log.
+
+    ``applied_fields`` is empty unless the caller asked for the estimates to be
+    written into the airframe and they cleared the sample-count bar. An estimate
+    that did not clear it still appears above, where it is visible without being
+    load-bearing.
+    """
+
+    log_id: str
+    airframe_id: str
+    row_count: int
+    rejected_rows: int
+    hover: PowerEstimateSummary | None = None
+    cruise: PowerEstimateSummary | None = None
+    applied_fields: list[str] = Field(default_factory=list)

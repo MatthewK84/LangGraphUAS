@@ -54,7 +54,7 @@ DEFAULT_CLIMB_EFFICIENCY: float = 0.6
 # purpose: an automatic hash of the source would churn on a comment edit and
 # stop meaning anything. CI fails a change under calculations/ that does not
 # bump it, so forgetting is not a quiet failure mode.
-CALCULATOR_VERSION: str = "1.2.0"
+CALCULATOR_VERSION: str = "1.3.0"
 
 # Reason text per safety flag, used when that flag is False. Keyed by the field
 # name on SafetyFlags so a new flag that is never mapped shows up immediately as

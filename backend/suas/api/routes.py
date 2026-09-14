@@ -4,7 +4,7 @@ import logging
 from typing import TYPE_CHECKING, Any, Final
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from langgraph.types import Command
 from sqlalchemy import text
 
@@ -12,6 +12,7 @@ from suas import __version__
 from suas.api.dependencies import GraphDep, MetricsDep, SessionFactoryDep
 from suas.api.rate_limit_dep import enforce_rate_limit
 from suas.api.security import require_api_key
+from suas.db.flight_logs import apply_flight_log, store_flight_log
 from suas.db.repository import list_aircraft, list_payloads
 from suas.db.retention import record_acknowledgement, record_thread
 from suas.schemas.assessment import DeterministicAssessment
@@ -19,9 +20,11 @@ from suas.schemas.requests import AckRequest, MissionRequest
 from suas.schemas.responses import (
     AircraftSummary,
     Calculations,
+    FlightLogResponse,
     HealthResponse,
     PayloadSummary,
     PlanResponse,
+    PowerEstimateSummary,
     ReadinessResponse,
     ThreadStateResponse,
     WeatherReading,
@@ -163,6 +166,65 @@ async def plan_mission(
     if isinstance(violations, list):
         metrics.record_seal_violations(len(violations))
     return result
+
+
+def _estimate_summary(
+    median_w: float | None,
+    samples: int | None,
+    confidence: str | None,
+) -> PowerEstimateSummary | None:
+    """Return the response view of a stored estimate, or None when absent."""
+    if median_w is None or samples is None:
+        return None
+    return PowerEstimateSummary(
+        median_w=median_w,
+        sample_count=samples,
+        confidence=confidence or "low",
+    )
+
+
+@router.post(
+    "/api/logs",
+    response_model=FlightLogResponse,
+    tags=["planning"],
+    dependencies=[Depends(require_api_key), Depends(enforce_rate_limit)],
+)
+async def upload_flight_log(
+    request: Request,
+    airframe_id: str,
+    session_factory: SessionFactoryDep,
+    apply: bool = False,
+) -> FlightLogResponse:
+    """Ingest a CSV flight log and derive measured power for one airframe.
+
+    The body is the CSV itself. Ingesting always stores and estimates; ``apply``
+    additionally writes the estimates into the airframe's reference row, which is
+    the only way a measured figure becomes a number plans are built on. It
+    defaults to false because that write should be deliberate.
+    """
+    raw: bytes = await request.body()
+    try:
+        content: str = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise HTTPException(status_code=422, detail="Flight log must be UTF-8 text") from exc
+
+    async with session_factory() as session:
+        log_row = await store_flight_log(session, airframe_id=airframe_id, content=content)
+        applied: list[str] = await apply_flight_log(session, log_row.log_id) if apply else []
+
+    return FlightLogResponse(
+        log_id=log_row.log_id,
+        airframe_id=log_row.airframe_id,
+        row_count=log_row.row_count,
+        rejected_rows=log_row.rejected_rows,
+        hover=_estimate_summary(
+            log_row.hover_median_w, log_row.hover_samples, log_row.hover_confidence
+        ),
+        cruise=_estimate_summary(
+            log_row.cruise_median_w, log_row.cruise_samples, log_row.cruise_confidence
+        ),
+        applied_fields=applied,
+    )
 
 
 @router.post(

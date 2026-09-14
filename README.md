@@ -329,6 +329,42 @@ thread, or `found: false` when the thread is unknown.
 Every response carries an `X-Request-ID` header. Supply your own to correlate a
 client trace with server logs; one is generated when absent.
 
+### Flight logs
+
+`POST /api/logs?airframe_id=<id>` takes a CSV flight log as the request body and
+derives measured hover and cruise power from it. This is the only way a figure in
+the reference data can become `source: flight_log`, which is one of the two
+sources the operational gate accepts.
+
+```bash
+curl -X POST "http://localhost:8000/api/logs?airframe_id=Freefly_Astro_Max&apply=true" \
+  -H "Content-Type: text/csv" -H "X-API-Key: $SUAS_API_KEY" \
+  --data-binary @your-flight.csv
+```
+
+`timestamp` and `alt_m` are required; `power_w`, or `voltage_v` and `current_a`
+together, supply the power figure. The full column list, units, and what gets
+rejected are in
+[`backend/tests/fixtures/logs/README.md`](backend/tests/fixtures/logs/README.md).
+
+**Ingesting is not applying.** An upload always stores the log and reports the
+estimates. `apply=true` additionally writes them into the airframe's reference
+row, and only for fields with at least 30 selected samples. Changing a number
+that plans are built on should be a deliberate act, not a side effect of
+uploading a file.
+
+**What a hover window means.** A sample counts toward hover power only if it is
+not labelled `climb`, `descent`, or `cruise`, **and** its measured vertical rate
+is within ±0.5 m/s, **and** its speed is at or below 1.5 m/s. The label alone is
+not enough: a row marked `hover` while the aircraft was climbing is excluded on
+its measured rate, because averaging climb power into a hover figure understates
+hover draw, which understates the energy budget, which biases the decision toward
+GO. Cruise is the mirror image — level within ±1.0 m/s and at or above 3.0 m/s.
+
+The estimator reports the median rather than the mean, with the interquartile
+range and a sample count beside it, because a log routinely contains brief spikes
+that a mean would let move the figure.
+
 ### Degraded inputs
 
 When the weather provider cannot be reached after retries, the engine proceeds

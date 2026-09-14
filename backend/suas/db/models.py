@@ -7,7 +7,7 @@ Uses the typed 2.0 ``Mapped`` style so column types are visible to mypy
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import JSON, DateTime, Float, String
+from sqlalchemy import JSON, Boolean, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -74,3 +74,52 @@ class MissionThreadRow(Base):
     ack_action: Mapped[str | None] = mapped_column(String, nullable=True)
     ack_inputs_hash: Mapped[str | None] = mapped_column(String, nullable=True)
     ack_calculator_version: Mapped[str | None] = mapped_column(String, nullable=True)
+
+
+class FlightLogRow(Base):
+    """An uploaded flight log and the power estimates derived from it.
+
+    The raw file is kept alongside the estimates. A measured figure that cannot
+    be traced back to the recording it came from is not much better than an
+    estimate, and ``sha256`` is unique so re-uploading the same file cannot
+    produce a second, divergent set of numbers.
+    """
+
+    __tablename__ = "flight_logs"
+
+    log_id: Mapped[str] = mapped_column(String, primary_key=True)
+    airframe_id: Mapped[str] = mapped_column(String, nullable=False, index=True)
+    uploaded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    sha256: Mapped[str] = mapped_column(String, nullable=False, unique=True)
+    raw_csv: Mapped[str] = mapped_column(Text, nullable=False)
+    row_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    rejected_rows: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+    hover_median_w: Mapped[float | None] = mapped_column(Float, nullable=True)
+    hover_samples: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    hover_confidence: Mapped[str | None] = mapped_column(String, nullable=True)
+    cruise_median_w: Mapped[float | None] = mapped_column(Float, nullable=True)
+    cruise_samples: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    cruise_confidence: Mapped[str | None] = mapped_column(String, nullable=True)
+
+    # Whether these estimates were written into the airframe's reference row.
+    # Ingesting a log and changing the numbers a plan is built on are separate
+    # acts, and this records which one happened.
+    applied: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
+
+class FlightLogSampleRow(Base):
+    """One parsed telemetry sample, kept so an estimate can be re-derived."""
+
+    __tablename__ = "flight_log_samples"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    log_id: Mapped[str] = mapped_column(
+        String, ForeignKey("flight_logs.log_id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    sequence: Mapped[int] = mapped_column(Integer, nullable=False)
+    recorded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    alt_m: Mapped[float] = mapped_column(Float, nullable=False)
+    power_w: Mapped[float] = mapped_column(Float, nullable=False)
+    speed_mps: Mapped[float | None] = mapped_column(Float, nullable=True)
+    phase: Mapped[str] = mapped_column(String, nullable=False)
