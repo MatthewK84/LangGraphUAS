@@ -31,6 +31,9 @@ class AircraftRow(Base):
     cruise_power_w: Mapped[float] = mapped_column(Float, nullable=False)
     max_temp_c: Mapped[float] = mapped_column(Float, nullable=False)
     min_temp_c: Mapped[float] = mapped_column(Float, nullable=False, server_default="-20.0")
+    # Nullable: most airframes have no documented pack takeoff procedure, and
+    # absence of a limit is not a limit of zero.
+    pack_min_takeoff_c: Mapped[float | None] = mapped_column(Float, nullable=True)
     # Where each number came from, keyed by field name. Read by the operational
     # gate: a figure that is not from a datasheet or a flight log blocks
     # operational mode. JSON rather than columns because the shape is per-field

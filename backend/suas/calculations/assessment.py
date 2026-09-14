@@ -54,7 +54,7 @@ DEFAULT_CLIMB_EFFICIENCY: float = 0.6
 # purpose: an automatic hash of the source would churn on a comment edit and
 # stop meaning anything. CI fails a change under calculations/ that does not
 # bump it, so forgetting is not a quiet failure mode.
-CALCULATOR_VERSION: str = "1.3.0"
+CALCULATOR_VERSION: str = "1.4.0"
 
 # Reason text per safety flag, used when that flag is False. Keyed by the field
 # name on SafetyFlags so a new flag that is never mapped shows up immediately as
@@ -65,8 +65,25 @@ _FLAG_REASONS: dict[str, str] = {
     "wind_within_limits": "Sustained wind exceeds the airframe limit.",
     "gust_within_limits": "Gusts exceed the airframe wind limit.",
     "temperature_within_limits": "Temperature is outside the airframe operating range.",
+    "pack_temp_within_takeoff_limits": (
+        "Ambient temperature is below the battery pack's documented takeoff minimum."
+    ),
     "cruise_achievable": "Headwind meets or exceeds cruise speed; no ground progress.",
 }
+
+
+def _pack_temp_is_acceptable(aircraft: Aircraft, weather: WeatherReading) -> bool:
+    """Return whether the pack is warm enough to launch on.
+
+    Pack temperature is not measured, so ambient is used as a proxy. That is
+    conservative in the right direction for a cold-soaked aircraft sitting on the
+    ground, which is the case the manufacturer's procedure is written for. An
+    airframe with no documented pack procedure passes: absence of a limit is not
+    a limit of zero.
+    """
+    if aircraft.pack_min_takeoff_c is None:
+        return True
+    return weather.temperature_c >= aircraft.pack_min_takeoff_c
 
 
 def _build_safety_flags(
@@ -82,6 +99,12 @@ def _build_safety_flags(
     The temperature check is two-sided: cold limits airframe and pack behaviour
     just as heat does. Gusts are checked against the same airframe wind limit as
     sustained wind, since it is the gust that actually exceeds control authority.
+
+    The pack takeoff minimum is a separate flag rather than a tighter
+    ``min_temp_c``. They are different limits with different owners -- one is what
+    the airframe tolerates, the other is what the manufacturer's battery procedure
+    requires -- and collapsing them would lose the distinction in the reasons an
+    operator is shown.
     """
     return SafetyFlags(
         battery_viable=battery_viable,
@@ -91,6 +114,7 @@ def _build_safety_flags(
         temperature_within_limits=(
             aircraft.min_temp_c <= weather.temperature_c <= aircraft.max_temp_c
         ),
+        pack_temp_within_takeoff_limits=_pack_temp_is_acceptable(aircraft, weather),
         cruise_achievable=ground_speed_mps > 0.0,
     )
 
@@ -232,6 +256,7 @@ def is_mission_viable(calculations: Calculations) -> bool:
         and flags.wind_within_limits
         and flags.gust_within_limits
         and flags.temperature_within_limits
+        and flags.pack_temp_within_takeoff_limits
         and flags.cruise_achievable
     )
 

@@ -7,6 +7,8 @@ export interface SafetyFlags {
   readonly wind_within_limits: boolean;
   readonly gust_within_limits: boolean;
   readonly temperature_within_limits: boolean;
+  /** Ambient is at or above the pack's documented takeoff minimum, where one exists. */
+  readonly pack_temp_within_takeoff_limits: boolean;
   readonly cruise_achievable: boolean;
 }
 

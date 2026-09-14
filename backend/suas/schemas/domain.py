@@ -29,6 +29,11 @@ class Aircraft(BaseModel):
     cruise_power_w: float = Field(gt=0.0)
     max_temp_c: float
     min_temp_c: float = Field(default=-20.0)
+    # A procedure limit on the battery pack, where the manufacturer documents
+    # one. Distinct from min_temp_c, which is what the airframe tolerates:
+    # an aircraft rated to -20 C can still have a pack that must not launch
+    # below +10 C. None means no such procedure is on record.
+    pack_min_takeoff_c: float | None = Field(default=None)
     provenance: dict[str, FieldProvenance] = Field(default_factory=dict)
 
 

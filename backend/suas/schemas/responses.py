@@ -43,6 +43,7 @@ class SafetyFlags(BaseModel):
     wind_within_limits: bool
     gust_within_limits: bool
     temperature_within_limits: bool
+    pack_temp_within_takeoff_limits: bool
     cruise_achievable: bool
 
 
