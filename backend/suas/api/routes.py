@@ -1,6 +1,7 @@
 """HTTP routes for health, readiness, catalog, planning, and metrics."""
 
 import logging
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, Final
 from uuid import uuid4
 
@@ -9,12 +10,12 @@ from langgraph.types import Command
 from sqlalchemy import text
 
 from suas import __version__
-from suas.api.dependencies import GraphDep, MetricsDep, SessionFactoryDep
+from suas.api.dependencies import GraphDep, MetricsDep, ReplanGraphDep, SessionFactoryDep
 from suas.api.rate_limit_dep import enforce_rate_limit
 from suas.api.security import require_api_key
 from suas.db.flight_logs import apply_flight_log, store_flight_log
 from suas.db.repository import list_aircraft, list_payloads
-from suas.db.retention import record_acknowledgement, record_thread
+from suas.db.retention import next_replan_thread_id, record_acknowledgement, record_thread
 from suas.schemas.assessment import DeterministicAssessment
 from suas.schemas.requests import AckRequest, MissionRequest
 from suas.schemas.responses import (
@@ -22,13 +23,16 @@ from suas.schemas.responses import (
     Calculations,
     FlightLogResponse,
     HealthResponse,
+    LiveEnergyView,
     PayloadSummary,
     PlanResponse,
     PowerEstimateSummary,
     ReadinessResponse,
+    ReplanResponse,
     ThreadStateResponse,
     WeatherReading,
 )
+from suas.schemas.telemetry import TelemetrySnapshot
 
 if TYPE_CHECKING:
     from langchain_core.runnables import RunnableConfig
@@ -293,6 +297,76 @@ async def acknowledge_plan(
     if isinstance(violations, list):
         metrics.record_seal_violations(len(violations))
     return _build_plan_response(state, thread_id)
+
+
+@router.post(
+    "/api/replan",
+    response_model=ReplanResponse,
+    tags=["planning"],
+    dependencies=[Depends(require_api_key), Depends(enforce_rate_limit)],
+)
+async def replan_mission(
+    snapshot: TelemetrySnapshot,
+    graph: GraphDep,
+    replan_graph: ReplanGraphDep,
+    session_factory: SessionFactoryDep,
+) -> ReplanResponse:
+    """Compare a briefed plan against what the aircraft is reporting.
+
+    Runs on a child thread of the briefed one, so the assessment an operator
+    signed stays addressable and unchanged. No language model is involved: this
+    runs while an aircraft is in the air, which is the worst moment to wait on one
+    or to let one influence what the operator is told.
+    """
+    parent = await graph.aget_state(_thread_config(snapshot.thread_id))
+    briefed: dict[str, Any] = dict(parent.values) if parent and parent.values else {}
+    if not briefed:
+        raise HTTPException(status_code=404, detail="Unknown planning thread")
+
+    assessment_dump: dict[str, Any] = dict(briefed.get("assessment") or {})
+    if not assessment_dump:
+        raise HTTPException(
+            status_code=409,
+            detail="That thread has no assessment to replan against",
+        )
+
+    calculations_dump: dict[str, Any] = dict(briefed.get("calculations") or {})
+    battery_check: dict[str, Any] = dict(calculations_dump.get("battery_check") or {})
+    briefed_margin_wh = float(battery_check.get("margin_wh", 0.0))
+    age_s: float = snapshot.age_s(datetime.now(UTC))
+
+    async with session_factory() as session:
+        try:
+            child_thread_id: str = await next_replan_thread_id(session, snapshot.thread_id)
+        except KeyError:
+            # A thread with checkpoints but no retention row predates that table.
+            child_thread_id = f"{snapshot.thread_id}:1"
+
+    initial: dict[str, Any] = {
+        "snapshot": snapshot.model_dump(mode="json"),
+        "aircraft": briefed.get("aircraft"),
+        "payload": briefed.get("payload"),
+        "briefed_assessment": assessment_dump,
+        "briefed_margin_wh": briefed_margin_wh,
+        "snapshot_age_s": age_s,
+    }
+    final = await replan_graph.ainvoke(
+        initial, config=_thread_config(child_thread_id), durability="sync"
+    )
+    state: dict[str, Any] = dict(final)
+    energy_dump = state.get("live_energy")
+
+    return ReplanResponse(
+        thread_id=child_thread_id,
+        parent_thread_id=snapshot.thread_id,
+        severity=state.get("severity", "info"),
+        recommended_action=state.get("recommended_action", "continue"),
+        operational_ok=bool(state.get("operational_ok", False)),
+        live_energy=LiveEnergyView.model_validate(energy_dump) if energy_dump else None,
+        briefed_margin_wh=briefed_margin_wh,
+        snapshot_age_s=round(age_s, 1),
+        alerts=state.get("alerts", []),
+    )
 
 
 @router.get(

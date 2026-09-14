@@ -61,6 +61,24 @@ async def record_acknowledgement(
     await session.commit()
 
 
+async def next_replan_thread_id(session: AsyncSession, parent_thread_id: str) -> str:
+    """Reserve and return the next child thread id for a replan.
+
+    The counter lives on the parent row and is incremented as the id is handed
+    out, so two concurrent replans of the same mission cannot be given the same
+    child thread and overwrite one another's history.
+
+    Raises:
+        KeyError: when the parent thread is unknown.
+    """
+    row: MissionThreadRow | None = await session.get(MissionThreadRow, parent_thread_id)
+    if row is None:
+        raise KeyError(parent_thread_id)
+    row.replan_count += 1
+    await session.commit()
+    return f"{parent_thread_id}:{row.replan_count}"
+
+
 async def get_acknowledgement(session: AsyncSession, thread_id: str) -> MissionThreadRow | None:
     """Return the thread row carrying its acknowledgement, or None if unknown."""
     return await session.get(MissionThreadRow, thread_id)

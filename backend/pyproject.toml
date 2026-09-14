@@ -62,7 +62,7 @@ module = ["alembic.*"]
 ignore_errors = true
 
 [[tool.mypy.overrides]]
-module = ["suas.graph.workflow"]
+module = ["suas.graph.workflow", "suas.graph.replan"]
 disallow_any_generics = false
 disable_error_code = ["call-overload"]
 
