@@ -54,7 +54,7 @@ DEFAULT_CLIMB_EFFICIENCY: float = 0.6
 # purpose: an automatic hash of the source would churn on a comment edit and
 # stop meaning anything. CI fails a change under calculations/ that does not
 # bump it, so forgetting is not a quiet failure mode.
-CALCULATOR_VERSION: str = "1.5.0"
+CALCULATOR_VERSION: str = "1.6.0"
 
 # Reason text per safety flag, used when that flag is False. Keyed by the field
 # name on SafetyFlags so a new flag that is never mapped shows up immediately as
@@ -306,8 +306,8 @@ def build_assessment(
     payload_provenance = payload.provenance if payload else {}
     blockers: list[Blocker] = operational_blockers(
         GateInputs(
-            weather_is_live=weather.is_live if weather else False,
-            weather_degraded=weather is None or not weather.is_live,
+            weather_is_live=weather.is_operational_grade if weather else False,
+            weather_degraded=weather is None or weather.degraded,
             assessment_is_complete=True,
             provenance_is_complete=provenance_is_complete(aircraft_provenance, payload_provenance),
             power_is_operational_grade=power_is_operational_grade(

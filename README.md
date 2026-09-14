@@ -428,11 +428,35 @@ that a mean would let move the figure.
 
 ### Degraded inputs
 
-When the weather provider cannot be reached after retries, the engine proceeds
-with fallback values rather than failing the request, but it never presents them
-as live data. The reading is tagged `source: "fallback"`, the response sets
-`degraded: true` with an explicit warning, and the dashboard renders an amber
-banner. Treat any degraded plan as advisory and confirm conditions independently.
+Weather has five explicit states, because "we could not reach the provider",
+"the provider answered with nonsense", and "this is a reading from forty minutes
+ago" are different situations an operator would act on differently.
+
+| `source` | Meaning | Operational? |
+| --- | --- | --- |
+| `live` | Fetched now, parsed, complete | yes |
+| `cached_fresh` | A recent reading, still inside its freshness window | yes |
+| `cached_stale` | Past its window, used because the live fetch failed | no |
+| `fallback` | Defaults; the provider could not be reached | no |
+| `error` | Defaults; the provider answered and the answer was unusable | no |
+
+The rule the service exists to keep is narrow and absolute: **a degraded reading
+must never be indistinguishable from a live one.** Anything short of the top two
+sets `degraded: true`, names the state in `warnings`, and blocks operational
+mode. The dashboard renders an amber banner.
+
+Parsing is strict. A missing, non-numeric, NaN or infinite field makes the whole
+payload unusable rather than being quietly replaced with a default — substituting
+defaults is how a reading nobody measured ends up labelled `live`.
+
+Timeouts are bounded twice: `SUAS_WEATHER_TIMEOUT_S` (default 3s) per request,
+and `SUAS_WEATHER_DEADLINE_S` (default 6s) across the whole operation including
+retries. Without the second, per-request timeouts multiply by the retry count and
+the endpoint hangs far longer than any single setting suggests.
+
+The cache is per process, like the rate limiter: `SUAS_WEATHER_CACHE_TTL_S`
+(default 600s). Each worker keeps its own, so a fresh reading in one worker is
+not a fresh reading in another.
 
 ## Testing and quality gates
 
