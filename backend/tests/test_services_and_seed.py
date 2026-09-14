@@ -41,6 +41,7 @@ _CALC_STUB = {
         "wind_within_limits": True,
         "gust_within_limits": True,
         "temperature_within_limits": True,
+        "pack_temp_within_takeoff_limits": True,
         "cruise_achievable": True,
     },
 }

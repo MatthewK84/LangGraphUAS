@@ -198,13 +198,14 @@ fails if it drifts from the data.
 | `estimate` | An engineering estimate | no |
 | `unknown` | Provenance not recorded. Nobody vouched for this number | no |
 
-As of this writing: **75 fields, none of them operational-grade.** 35 are
-`secondary`, 14 `derived` (the two power fields, by
+As of this writing: **76 fields, none of them operational-grade.** 36 are
+`secondary`, 15 `derived` (the two power fields, by
 `hover_power_w = battery_wh / no_payload_endurance_hours` and
 `cruise_power_w = 0.90 * hover_power_w`), 14 `estimate` (nominal cruise speed at
-roughly 0.6 to 0.7 of published maximum, and every payload power figure), and 12
+roughly 0.6 to 0.7 of published maximum, and every payload power figure), and 11
 `unknown` (pack energy, payload mass). That is why the operational gate refuses
-every plan today.
+every plan today, and it will keep refusing until a figure is read out of a
+manufacturer document or measured from a flight log.
 
 `secondary` is not a hedge. The figures below were gathered from published
 specification summaries rather than retrieved from the manufacturers' own
@@ -223,24 +224,34 @@ Operating temperature limits are published manufacturer figures:
 | Freefly Alta X | -20 | -20 to 50 C | Freefly Alta X specifications |
 | Inspired Flight IF1200A | -20 | -20 to 45 C | IF1200A specifications |
 
-Two caveats before operational use. First, these were gathered from published
-specification summaries rather than retrieved from the manufacturers' own
-documents directly, so verify each against the current datasheet for your
-airframe. Second, two `max_temp_c` values in the bundled data disagree with the
-figures found alongside the minimums: Parrot ANAFI USA is stored as 43 C against
-a published 49 C, and Inspired Flight IF1200A is stored as 50 C against a
-published 45 C. The IF1200A discrepancy is permissive and worth correcting
-first. Both are left as-is pending confirmation.
+`Freefly_Astro_Max` additionally carries `pack_min_takeoff_c` at 10 C.
 
-Note also that Freefly documents a separate battery guidance of 10 C minimum at
-takeoff for the Astro, well above the airframe's -20 C limit. The model's cold
-capacity derate is not a substitute for that kind of pack-specific procedure.
+#### Where the four documented conflicts stand
+
+| Conflict | Resolution |
+| --- | --- |
+| IF1200A `max_temp_c` stored 50 against a published 45 | **Corrected to 45.** A stored limit more permissive than the published one is the dangerous direction. |
+| ANAFI USA `max_temp_c` stored 43, published figures of 43, 49 and 50 in circulation | **Unresolved; 43 kept.** For an upper limit the most restrictive candidate is the safe one. The disagreement is recorded in the field's notes. |
+| IF1200A `battery_wh` assuming a 12S pack | **Kept, arithmetic recorded.** 1420 Wh is consistent with two 16 Ah packs at 12S (2 x 16 x 44.4 = 1420.8). Pack count and cell count remain unverified, so it stays an `estimate`. |
+| Alta X power figures soft | **Kept, discrepancy recorded.** The stored hover figure implies ~20 minutes of endurance, which matches the published figure at a 20 lb load rather than the no-payload figure its own formula names. It is conservative, so it stays until a flight log settles it. |
+
+None of these became `datasheet`. Every figure above was obtained from a web
+search summary of the manufacturer's page, not by opening the page, so they are
+recorded as `secondary` with the URL and the caveat attached. The operational
+gate is unmoved, which is correct: a citation nobody has read is not evidence.
+
+Freefly documents a separate battery procedure of 10 C minimum at takeoff for
+the Astro, well above the airframe's -20 C limit. That is modelled as
+`pack_min_takeoff_c` and checked as its own safety flag rather than folded into
+`min_temp_c`: they are different limits with different owners, and an airframe
+rated to -20 C can still have a pack that must not launch below +10 C. Ambient
+temperature stands in for pack temperature, which is conservative for the
+cold-soaked aircraft the procedure is written for.
 
 The power fields are engineering estimates, not measurements. Replace them with
-real power logs before operational use. Treat the `Freefly_Alta_X` power values
-and the `Inspired_Flight_IF1200A` `battery_wh` (which assumes a 12S pack) as the
-softest numbers. All payload `power_draw_w` values are estimates. For the
-authoritative live roster, cross-check `bluelist.dcma.mil`.
+real power logs before operational use, which `POST /api/logs` now makes
+possible. All payload `power_draw_w` values are estimates. For the authoritative
+live roster, cross-check `bluelist.dcma.mil`.
 
 ## API
 

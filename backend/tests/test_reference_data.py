@@ -40,6 +40,7 @@ _EXPECTED_UNITS: dict[str, str] = {
     "cruise_power_w": "W",
     "max_temp_c": "C",
     "min_temp_c": "C",
+    "pack_min_takeoff_c": "C",
     "power_draw_w": "W",
 }
 

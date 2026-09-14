@@ -17,14 +17,14 @@ has traced to a primary document, and the operational gate treats it that way.
 
 ## Summary
 
-75 numeric fields across 7 airframes and 6 payloads. **0** are good enough to fly on.
+76 numeric fields across 7 airframes and 6 payloads. **0** are good enough to fly on.
 
 | Source | Fields |
 | --- | --- |
-| `derived` | 14 |
+| `derived` | 15 |
 | `estimate` | 14 |
-| `secondary` | 35 |
-| `unknown` | 12 |
+| `secondary` | 36 |
+| `unknown` | 11 |
 
 ## Airframes
 
@@ -65,9 +65,9 @@ has traced to a primary document, and the operational gate treats it that way.
 | `cruise_speed_mps` | 10.0 | m/s | `estimate` | - | low | Nominal cruise, roughly 0.6 to 0.7 of published maximum speed. |
 | `hover_power_w` | 45.0 | W | `derived` | - | low | hover_power_w = battery_wh / no_payload_endurance_hours. |
 | `max_payload_kg` | 0.0 | kg | `secondary` | - | medium | Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance. |
-| `max_temp_c` | 43.0 | C | `secondary` | - | low | Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance. Stored 43 C disagrees with a published 49 C. Unresolved; see #39. |
+| `max_temp_c` | 43.0 | C | `secondary` | https://www.parrot.com/en/drones/anafi-usa/technical-specifications | low | Unresolved. Three figures are in circulation for this airframe: 43, 49 and 50 C. The most restrictive is kept, because for an upper limit the conservative value is the safe one. Resolving this needs the manufacturer document. Figure obtained from a web search summary of this page on 2026-09-14; this session could not open the page itself (network egress blocked), so it is recorded as secondary rather than datasheet. |
 | `max_wind_mps` | 14.7 | m/s | `secondary` | - | medium | Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance. |
-| `min_temp_c` | -35.0 | C | `secondary` | - | medium | Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance. Source cited in README: ANAFI USA user guide. |
+| `min_temp_c` | -35.0 | C | `secondary` | https://www.parrot.com/en/drones/anafi-usa/technical-specifications | medium | Stored -35 C. A published -36 C also circulates; the higher figure is kept because for a lower limit the conservative value is the safe one. Figure obtained from a web search summary of this page on 2026-09-14; this session could not open the page itself (network egress blocked), so it is recorded as secondary rather than datasheet. |
 | `weight_kg` | 0.5 | kg | `secondary` | - | medium | Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance. |
 
 ### Teal Golden Eagle (Teal 2) (`Teal_Golden_Eagle`)
@@ -96,16 +96,17 @@ has traced to a primary document, and the operational gate treats it that way.
 | `max_temp_c` | 50.0 | C | `secondary` | - | medium | Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance. |
 | `max_wind_mps` | 12.0 | m/s | `secondary` | - | medium | Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance. |
 | `min_temp_c` | -20.0 | C | `secondary` | - | medium | Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance. Source cited in README: Freefly Astro pilot's operating handbook. |
+| `pack_min_takeoff_c` | 10.0 | C | `secondary` | https://docs.freeflysystems.com/astro/pilots-operating-handbook/limitations | medium | Freefly's pilot operating handbook directs that batteries be kept above 10 C at takeoff, after which self-heating maintains them. This is a procedure limit on the pack, not the airframe's -20 C environmental limit, and the cold-capacity derate is not a substitute for it. Figure obtained from a web search summary of this page on 2026-09-14; this session could not open the page itself (network egress blocked), so it is recorded as secondary rather than datasheet. |
 | `weight_kg` | 5.1 | kg | `secondary` | - | medium | Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance. |
 
 ### Freefly Alta X (Blue) (`Freefly_Alta_X`)
 
 | Field | Value | Unit | Source | URL | Confidence | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
-| `battery_wh` | 1420.0 | Wh | `unknown` | - | low | The README records pack energy as estimated where the manufacturer does not state it, but does not say which airframes those are. Unrecorded rather than assumed. |
-| `cruise_power_w` | 3834.0 | W | `derived` | - | low | cruise_power_w = 0.90 * hover_power_w. One of the softest numbers in this file. |
+| `battery_wh` | 1420.0 | Wh | `derived` | https://freeflysystems.com/alta-x/specs | medium | Two 12S 16 Ah packs in parallel at 44.4 V nominal: 2 x 16 x 44.4 = 1420.8 Wh, stored as 1420. Figure obtained from a web search summary of this page on 2026-09-14; this session could not open the page itself (network egress blocked), so it is recorded as secondary rather than datasheet. |
+| `cruise_power_w` | 3834.0 | W | `derived` | https://freeflysystems.com/alta-x/specs | low | cruise_power_w = 0.90 * hover_power_w. The stored value implies roughly 20 minutes of endurance, which matches the published figure at a 20 lb load rather than the no-payload figure the formula names (published: about 41.7 minutes at 5 lb). The number is therefore conservative -- it overstates draw, which understates endurance -- and is left as-is rather than lowered on the strength of a search summary. A flight log settles it. Figure obtained from a web search summary of this page on 2026-09-14; this session could not open the page itself (network egress blocked), so it is recorded as secondary rather than datasheet. |
 | `cruise_speed_mps` | 15.0 | m/s | `estimate` | - | low | Nominal cruise, roughly 0.6 to 0.7 of published maximum speed. |
-| `hover_power_w` | 4260.0 | W | `derived` | - | low | hover_power_w = battery_wh / no_payload_endurance_hours. One of the softest numbers in this file. |
+| `hover_power_w` | 4260.0 | W | `derived` | https://freeflysystems.com/alta-x/specs | low | hover_power_w = battery_wh / no_payload_endurance_hours. The stored value implies roughly 20 minutes of endurance, which matches the published figure at a 20 lb load rather than the no-payload figure the formula names (published: about 41.7 minutes at 5 lb). The number is therefore conservative -- it overstates draw, which understates endurance -- and is left as-is rather than lowered on the strength of a search summary. A flight log settles it. Figure obtained from a web search summary of this page on 2026-09-14; this session could not open the page itself (network egress blocked), so it is recorded as secondary rather than datasheet. |
 | `max_payload_kg` | 15.06 | kg | `secondary` | - | medium | Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance. |
 | `max_temp_c` | 50.0 | C | `secondary` | - | medium | Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance. |
 | `max_wind_mps` | 12.0 | m/s | `secondary` | - | medium | Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance. |
@@ -116,12 +117,12 @@ has traced to a primary document, and the operational gate treats it that way.
 
 | Field | Value | Unit | Source | URL | Confidence | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
-| `battery_wh` | 1420.0 | Wh | `estimate` | - | low | Assumes a 12S pack. One of the softest numbers in this file. |
+| `battery_wh` | 1420.0 | Wh | `estimate` | https://shop.inspiredflight.com/products/battery | low | Consistent with two 16 Ah packs at 12S (44.4 V nominal): 2 x 16 x 44.4 = 1420.8 Wh. Pack count and cell count are both unverified against a manufacturer document, so the 12S assumption stands. One of the softest numbers in this file. |
 | `cruise_power_w` | 1783.3 | W | `derived` | - | low | cruise_power_w = 0.90 * hover_power_w. |
 | `cruise_speed_mps` | 17.0 | m/s | `estimate` | - | low | Nominal cruise, roughly 0.6 to 0.7 of published maximum speed. |
 | `hover_power_w` | 1981.4 | W | `derived` | - | low | hover_power_w = battery_wh / no_payload_endurance_hours. |
 | `max_payload_kg` | 8.7 | kg | `secondary` | - | medium | Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance. |
-| `max_temp_c` | 50.0 | C | `secondary` | - | low | Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance. Stored 50 C disagrees with a published 45 C. Permissive direction, so correct this first. Unresolved; see #39. |
+| `max_temp_c` | 45.0 | C | `secondary` | https://docs.inspiredflight.com/inspired-documentation/products/aircraft/if1200/about-the-if1200 | medium | Corrected from a stored 50 C, which was permissive against a published -20 to 45 C range. Figure obtained from a web search summary of this page on 2026-09-14; this session could not open the page itself (network egress blocked), so it is recorded as secondary rather than datasheet. |
 | `max_wind_mps` | 11.8 | m/s | `secondary` | - | medium | Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance. |
 | `min_temp_c` | -20.0 | C | `secondary` | - | medium | Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance. Source cited in README: IF1200A specifications. |
 | `weight_kg` | 16.3 | kg | `secondary` | - | medium | Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance. |

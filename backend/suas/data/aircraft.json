@@ -239,19 +239,19 @@
       "value": 43.0,
       "unit": "C",
       "source": "secondary",
-      "source_url": null,
-      "retrieved_at": null,
+      "source_url": "https://www.parrot.com/en/drones/anafi-usa/technical-specifications",
+      "retrieved_at": "2026-09-14",
       "confidence": "low",
-      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance. Stored 43 C disagrees with a published 49 C. Unresolved; see #39."
+      "notes": "Unresolved. Three figures are in circulation for this airframe: 43, 49 and 50 C. The most restrictive is kept, because for an upper limit the conservative value is the safe one. Resolving this needs the manufacturer document. Figure obtained from a web search summary of this page on 2026-09-14; this session could not open the page itself (network egress blocked), so it is recorded as secondary rather than datasheet."
     },
     "min_temp_c": {
       "value": -35.0,
       "unit": "C",
       "source": "secondary",
-      "source_url": null,
-      "retrieved_at": null,
+      "source_url": "https://www.parrot.com/en/drones/anafi-usa/technical-specifications",
+      "retrieved_at": "2026-09-14",
       "confidence": "medium",
-      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance. Source cited in README: ANAFI USA user guide."
+      "notes": "Stored -35 C. A published -36 C also circulates; the higher figure is kept because for a lower limit the conservative value is the safe one. Figure obtained from a web search summary of this page on 2026-09-14; this session could not open the page itself (network egress blocked), so it is recorded as secondary rather than datasheet."
     }
   },
   "Teal_Golden_Eagle": {
@@ -422,6 +422,15 @@
       "retrieved_at": null,
       "confidence": "medium",
       "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance. Source cited in README: Freefly Astro pilot's operating handbook."
+    },
+    "pack_min_takeoff_c": {
+      "value": 10.0,
+      "unit": "C",
+      "source": "secondary",
+      "source_url": "https://docs.freeflysystems.com/astro/pilots-operating-handbook/limitations",
+      "retrieved_at": "2026-09-14",
+      "confidence": "medium",
+      "notes": "Freefly's pilot operating handbook directs that batteries be kept above 10 C at takeoff, after which self-heating maintains them. This is a procedure limit on the pack, not the airframe's -20 C environmental limit, and the cold-capacity derate is not a substitute for it. Figure obtained from a web search summary of this page on 2026-09-14; this session could not open the page itself (network egress blocked), so it is recorded as secondary rather than datasheet."
     }
   },
   "Freefly_Alta_X": {
@@ -448,11 +457,11 @@
     "battery_wh": {
       "value": 1420.0,
       "unit": "Wh",
-      "source": "unknown",
-      "source_url": null,
-      "retrieved_at": null,
-      "confidence": "low",
-      "notes": "The README records pack energy as estimated where the manufacturer does not state it, but does not say which airframes those are. Unrecorded rather than assumed."
+      "source": "derived",
+      "source_url": "https://freeflysystems.com/alta-x/specs",
+      "retrieved_at": "2026-09-14",
+      "confidence": "medium",
+      "notes": "Two 12S 16 Ah packs in parallel at 44.4 V nominal: 2 x 16 x 44.4 = 1420.8 Wh, stored as 1420. Figure obtained from a web search summary of this page on 2026-09-14; this session could not open the page itself (network egress blocked), so it is recorded as secondary rather than datasheet."
     },
     "max_wind_mps": {
       "value": 12.0,
@@ -476,19 +485,19 @@
       "value": 4260.0,
       "unit": "W",
       "source": "derived",
-      "source_url": null,
-      "retrieved_at": null,
+      "source_url": "https://freeflysystems.com/alta-x/specs",
+      "retrieved_at": "2026-09-14",
       "confidence": "low",
-      "notes": "hover_power_w = battery_wh / no_payload_endurance_hours. One of the softest numbers in this file."
+      "notes": "hover_power_w = battery_wh / no_payload_endurance_hours. The stored value implies roughly 20 minutes of endurance, which matches the published figure at a 20 lb load rather than the no-payload figure the formula names (published: about 41.7 minutes at 5 lb). The number is therefore conservative -- it overstates draw, which understates endurance -- and is left as-is rather than lowered on the strength of a search summary. A flight log settles it. Figure obtained from a web search summary of this page on 2026-09-14; this session could not open the page itself (network egress blocked), so it is recorded as secondary rather than datasheet."
     },
     "cruise_power_w": {
       "value": 3834.0,
       "unit": "W",
       "source": "derived",
-      "source_url": null,
-      "retrieved_at": null,
+      "source_url": "https://freeflysystems.com/alta-x/specs",
+      "retrieved_at": "2026-09-14",
       "confidence": "low",
-      "notes": "cruise_power_w = 0.90 * hover_power_w. One of the softest numbers in this file."
+      "notes": "cruise_power_w = 0.90 * hover_power_w. The stored value implies roughly 20 minutes of endurance, which matches the published figure at a 20 lb load rather than the no-payload figure the formula names (published: about 41.7 minutes at 5 lb). The number is therefore conservative -- it overstates draw, which understates endurance -- and is left as-is rather than lowered on the strength of a search summary. A flight log settles it. Figure obtained from a web search summary of this page on 2026-09-14; this session could not open the page itself (network egress blocked), so it is recorded as secondary rather than datasheet."
     },
     "max_temp_c": {
       "value": 50.0,
@@ -534,10 +543,10 @@
       "value": 1420.0,
       "unit": "Wh",
       "source": "estimate",
-      "source_url": null,
-      "retrieved_at": null,
+      "source_url": "https://shop.inspiredflight.com/products/battery",
+      "retrieved_at": "2026-09-14",
       "confidence": "low",
-      "notes": "Assumes a 12S pack. One of the softest numbers in this file."
+      "notes": "Consistent with two 16 Ah packs at 12S (44.4 V nominal): 2 x 16 x 44.4 = 1420.8 Wh. Pack count and cell count are both unverified against a manufacturer document, so the 12S assumption stands. One of the softest numbers in this file."
     },
     "max_wind_mps": {
       "value": 11.8,
@@ -576,13 +585,13 @@
       "notes": "cruise_power_w = 0.90 * hover_power_w."
     },
     "max_temp_c": {
-      "value": 50.0,
+      "value": 45.0,
       "unit": "C",
       "source": "secondary",
-      "source_url": null,
-      "retrieved_at": null,
-      "confidence": "low",
-      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance. Stored 50 C disagrees with a published 45 C. Permissive direction, so correct this first. Unresolved; see #39."
+      "source_url": "https://docs.inspiredflight.com/inspired-documentation/products/aircraft/if1200/about-the-if1200",
+      "retrieved_at": "2026-09-14",
+      "confidence": "medium",
+      "notes": "Corrected from a stored 50 C, which was permissive against a published -20 to 45 C range. Figure obtained from a web search summary of this page on 2026-09-14; this session could not open the page itself (network egress blocked), so it is recorded as secondary rather than datasheet."
     },
     "min_temp_c": {
       "value": -20.0,
