@@ -4,14 +4,14 @@ These are the explicit shapes returned to the client and produced by the pure
 calculation layer (Principle 8).
 """
 
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
 from suas.schemas.assessment import DeterministicAssessment
 
 
-class WeatherSource(str, Enum):
+class WeatherSource(StrEnum):
     """Provenance of a weather reading."""
 
     LIVE = "live"
