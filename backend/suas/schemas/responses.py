@@ -4,6 +4,7 @@ These are the explicit shapes returned to the client and produced by the pure
 calculation layer (Principle 8).
 """
 
+from datetime import datetime
 from enum import StrEnum
 
 from pydantic import BaseModel, Field
@@ -13,10 +14,34 @@ from suas.schemas.assessment import DeterministicAssessment
 
 
 class WeatherSource(StrEnum):
-    """Provenance of a weather reading."""
+    """Provenance of a weather reading.
+
+    Five states rather than two, because "we could not reach the provider",
+    "the provider answered with nonsense", and "this is a reading from eight
+    minutes ago" are different situations that an operator would act on
+    differently. Only the first two below are good enough to fly on.
+    """
 
     LIVE = "live"
+    """Fetched now, parsed, and complete."""
+
+    CACHED_FRESH = "cached_fresh"
+    """A recent reading, still inside its freshness window."""
+
+    CACHED_STALE = "cached_stale"
+    """A reading past its freshness window, used because the live fetch failed."""
+
     FALLBACK = "fallback"
+    """Defaults, because the provider could not be reached at all."""
+
+    ERROR = "error"
+    """Defaults, because the provider answered and the answer was unusable."""
+
+
+# The only weather states an operational plan may rest on.
+OPERATIONAL_WEATHER: frozenset[WeatherSource] = frozenset(
+    {WeatherSource.LIVE, WeatherSource.CACHED_FRESH}
+)
 
 
 class WeatherReading(BaseModel):
@@ -29,11 +54,24 @@ class WeatherReading(BaseModel):
     humidity_percent: float
     conditions: str
     source: WeatherSource = WeatherSource.LIVE
+    # When the underlying observation was fetched. None for defaults, which were
+    # never fetched from anything.
+    fetched_at: datetime | None = None
 
     @property
     def is_live(self) -> bool:
-        """Return whether the reading came from the live provider."""
+        """Return whether the reading came from the live provider just now."""
         return self.source is WeatherSource.LIVE
+
+    @property
+    def is_operational_grade(self) -> bool:
+        """Return whether this reading is good enough for an operational plan."""
+        return self.source in OPERATIONAL_WEATHER
+
+    @property
+    def degraded(self) -> bool:
+        """Return whether this reading is anything less than operational grade."""
+        return not self.is_operational_grade
 
 
 class SafetyFlags(BaseModel):

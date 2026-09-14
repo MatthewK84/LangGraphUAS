@@ -30,8 +30,15 @@ class Settings(BaseSettings):
     api_key: str = Field(default="")
     cors_origins: str = Field(default="http://localhost:3000")
     weather_base_url: str = Field(default=DEFAULT_WEATHER_URL)
-    weather_timeout_s: float = Field(default=10.0, gt=0.0)
+    # Per-request. Small, because a planning request is waiting on it.
+    weather_timeout_s: float = Field(default=3.0, gt=0.0)
     weather_retry_attempts: int = Field(default=3, ge=1, le=6)
+    # Hard ceiling on the whole operation. Without it, per-request timeouts
+    # multiply by the retry count and the endpoint hangs for far longer than
+    # any single number in this file suggests.
+    weather_deadline_s: float = Field(default=6.0, gt=0.0)
+    # How long a reading stays good enough to fly on.
+    weather_cache_ttl_s: float = Field(default=600.0, ge=0.0)
     llm_timeout_s: float = Field(default=30.0, gt=0.0)
     llm_max_retries: int = Field(default=2, ge=0, le=6)
     pool_max_size: int = Field(default=10, ge=1, le=100)

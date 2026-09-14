@@ -43,8 +43,8 @@ logger: Final[logging.Logger] = logging.getLogger(__name__)
 
 router: Final[APIRouter] = APIRouter()
 
-_FALLBACK_WEATHER_WARNING: Final[str] = (
-    "Weather is fallback data, not a live feed. Confirm conditions independently before flight."
+_DEGRADED_WEATHER_WARNING: Final[str] = (
+    "Weather is {state}, not a live feed. Confirm conditions independently before flight."
 )
 
 
@@ -54,10 +54,16 @@ def _thread_config(thread_id: str) -> "RunnableConfig":
 
 
 def _collect_warnings(weather: WeatherReading | None) -> list[str]:
-    """Return operator-facing warnings about degraded inputs."""
-    if weather is not None and not weather.is_live:
-        return [_FALLBACK_WEATHER_WARNING]
-    return []
+    """Return operator-facing warnings about degraded inputs.
+
+    A cached-but-fresh reading is not warned about, because it is good enough to
+    fly on. Everything short of that is named explicitly rather than lumped under
+    one word: "cached from 40 minutes ago" and "the provider returned nonsense"
+    call for different reactions.
+    """
+    if weather is None or weather.is_operational_grade:
+        return []
+    return [_DEGRADED_WEATHER_WARNING.format(state=weather.source.value.replace("_", " "))]
 
 
 def _build_plan_response(final_state: dict[str, Any], thread_id: str) -> PlanResponse:

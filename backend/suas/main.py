@@ -59,6 +59,8 @@ async def _build_resources(settings: Settings) -> _Resources:
         client=weather_client,
         base_url=settings.weather_base_url,
         retry_attempts=settings.weather_retry_attempts,
+        deadline_s=settings.weather_deadline_s,
+        cache_ttl_s=settings.weather_cache_ttl_s,
     )
     deps = GraphDependencies(
         session_factory=session_factory,
