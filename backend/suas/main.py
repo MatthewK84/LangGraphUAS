@@ -28,6 +28,7 @@ from suas.db.retention import purge_expired_threads
 from suas.db.seed import seed_reference_data
 from suas.graph.checkpointer import build_checkpointer
 from suas.graph.dependencies import GraphDependencies
+from suas.graph.replan import ReplanDependencies, build_replan_graph
 from suas.graph.workflow import build_mission_graph
 from suas.logging_config import configure_logging
 from suas.services.llm import ReportService
@@ -108,6 +109,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     resources = await _build_resources(settings)
     async with build_checkpointer(settings) as checkpointer:
         app.state.graph = build_mission_graph(resources.deps, checkpointer)
+        # Same checkpointer: a replan is a child thread of the briefed one, so
+        # both live in one durable store and age out under one retention policy.
+        app.state.replan_graph = build_replan_graph(
+            ReplanDependencies(battery_reserve_percent=resources.deps.battery_reserve_percent),
+            checkpointer,
+        )
         app.state.session_factory = resources.session_factory
         await _purge_checkpoints(resources.session_factory, checkpointer, settings)
         try:

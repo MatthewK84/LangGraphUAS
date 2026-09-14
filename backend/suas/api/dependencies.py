@@ -18,6 +18,12 @@ def get_graph(request: Request) -> "CompiledStateGraph":
     return graph
 
 
+def get_replan_graph(request: Request) -> "CompiledStateGraph":
+    """Return the compiled replan graph stored on application state."""
+    graph: CompiledStateGraph = request.app.state.replan_graph
+    return graph
+
+
 def get_session_factory(request: Request) -> async_sessionmaker[AsyncSession]:
     """Return the database session factory stored on application state."""
     factory: async_sessionmaker[AsyncSession] = request.app.state.session_factory
@@ -37,6 +43,7 @@ def get_limiter(request: Request) -> "SlidingWindowLimiter":
 
 
 GraphDep = Annotated["CompiledStateGraph", Depends(get_graph)]
+ReplanGraphDep = Annotated["CompiledStateGraph", Depends(get_replan_graph)]
 SessionFactoryDep = Annotated[async_sessionmaker[AsyncSession], Depends(get_session_factory)]
 MetricsDep = Annotated["MetricsRegistry", Depends(get_metrics)]
 LimiterDep = Annotated["SlidingWindowLimiter", Depends(get_limiter)]

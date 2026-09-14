@@ -17,6 +17,7 @@ from sqlalchemy.pool import StaticPool
 
 from suas.db.models import AircraftRow, Base, PayloadRow
 from suas.graph.dependencies import GraphDependencies
+from suas.graph.replan import ReplanDependencies, build_replan_graph
 from suas.graph.workflow import build_mission_graph
 from suas.reference_data import load_rows
 from suas.schemas.responses import WeatherReading, WeatherSource
@@ -116,5 +117,8 @@ def app_with_graph(
 
     app = create_app()
     app.state.graph = graph
+    # The replan graph shares the checkpointer in production; in tests an
+    # independent in-memory saver is enough, since replans use their own threads.
+    app.state.replan_graph = build_replan_graph(ReplanDependencies(), InMemorySaver())
     app.state.session_factory = session_factory
     return app

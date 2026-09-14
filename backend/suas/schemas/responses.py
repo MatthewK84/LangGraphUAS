@@ -8,6 +8,7 @@ from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
+from suas.schemas.alerts import Alert, RecommendedAction, Severity
 from suas.schemas.assessment import DeterministicAssessment
 
 
@@ -179,3 +180,32 @@ class FlightLogResponse(BaseModel):
     hover: PowerEstimateSummary | None = None
     cruise: PowerEstimateSummary | None = None
     applied_fields: list[str] = Field(default_factory=list)
+
+
+class LiveEnergyView(BaseModel):
+    """The energy picture computed from live telemetry."""
+
+    available_wh: float
+    reserve_wh: float
+    required_wh: float
+    residual_wh: float
+    temperature_factor: float
+
+
+class ReplanResponse(BaseModel):
+    """The result of comparing a briefed plan against live telemetry.
+
+    ``operational_ok`` is false whenever any alert fired, including a watch. An
+    alert means something could not be confirmed, and an unconfirmed replan is
+    advice rather than clearance.
+    """
+
+    thread_id: str
+    parent_thread_id: str
+    severity: Severity
+    recommended_action: RecommendedAction
+    operational_ok: bool
+    live_energy: LiveEnergyView | None = None
+    briefed_margin_wh: float | None = None
+    snapshot_age_s: float
+    alerts: list[Alert] = Field(default_factory=list)

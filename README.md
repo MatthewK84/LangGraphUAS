@@ -340,6 +340,56 @@ thread, or `found: false` when the thread is unknown.
 Every response carries an `X-Request-ID` header. Supply your own to correlate a
 client trace with server logs; one is generated when absent.
 
+### Replanning in flight
+
+`POST /api/replan` takes a telemetry snapshot from an aircraft already flying and
+compares it against the plan that was briefed.
+
+```json
+{
+  "thread_id": "<the briefed thread>",
+  "ts": "2026-09-14T14:03:11Z",
+  "latitude": 34.0, "longitude": -80.0, "alt_m": 100.0,
+  "soc_fraction": 0.42,
+  "remaining_leg_m": 1800.0,
+  "remaining_hover_s": 60.0,
+  "oat_c": 4.0,
+  "wind_mps": 6.0,
+  "payload_attached": true
+}
+```
+
+`remaining_leg_m` is required rather than inferred from the briefed distance. An
+aircraft that has deviated, held, or been retasked is no longer flying the route
+it was briefed on, and assuming otherwise computes a residual for a mission
+nobody is flying.
+
+The response carries the live energy picture, the briefed margin, and a list of
+alerts, each with `briefed`, `live`, and `delta` blocks so the recommendation can
+be checked rather than taken on faith:
+
+| Code | Severity | Action |
+| --- | --- | --- |
+| `ENERGY_BELOW_RESERVE` | abort | land now |
+| `ENERGY_NEAR_RESERVE` | warning | land soon |
+| `WIND_EXCEEDS_LIMIT` | abort | land now |
+| `SOC_STALE` | watch | advisory only |
+| `WEATHER_DEGRADED` | watch | advisory only |
+| `PAYLOAD_MISMATCH` | watch | advisory only |
+
+Three properties worth knowing. **The briefed plan does not move**: a replan runs
+on a child thread (`{parent}:{seq}`), so the assessment an operator signed stays
+addressable and unchanged. **No language model is involved** — this runs while an
+aircraft is airborne, which is the worst moment to wait on one or to let one
+influence what the operator is told. And **any alert at all, including a watch,
+makes the replan advisory**: an alert means something could not be confirmed, and
+an unconfirmed replan is advice rather than clearance.
+
+Remaining capacity is derated for the temperature the aircraft reports, not the
+one it was briefed for, and the reserve is measured against that same derated
+capacity — a reserve computed on nameplate watt-hours is not a reserve on a cold
+day.
+
 ### Flight logs
 
 `POST /api/logs?airframe_id=<id>` takes a CSV flight log as the request body and

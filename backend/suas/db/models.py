@@ -78,6 +78,10 @@ class MissionThreadRow(Base):
     ack_inputs_hash: Mapped[str | None] = mapped_column(String, nullable=True)
     ack_calculator_version: Mapped[str | None] = mapped_column(String, nullable=True)
 
+    # How many replans this briefed thread has spawned. Each gets its own
+    # child thread, so the briefed assessment stays addressable and immutable.
+    replan_count: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
+
 
 class FlightLogRow(Base):
     """An uploaded flight log and the power estimates derived from it.
