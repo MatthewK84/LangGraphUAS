@@ -426,6 +426,30 @@ The estimator reports the median rather than the mean, with the interquartile
 range and a sample count beside it, because a log routinely contains brief spikes
 that a mean would let move the figure.
 
+### Citations
+
+After the calculator runs and before the operator signs, `cite_limits` attaches
+evidence for the limits the assessment used. Citations explain a decision; they
+never change one. The assessment is already sealed by the time retrieval runs,
+and retrieval being unavailable leaves the plan unconfirmed rather than blocked —
+the corpus is not the oracle ([ADR-003](docs/adr/003-rag-cannot-write-numbers.md)).
+
+Queries are built from the field being cited and the airframe configuration, never
+from the operator's free text. Both retrieval legs carry the same filter, so
+fusion cannot mix airframes: returning the Astro's pack limit as evidence for an
+ANAFI would be worse than returning nothing, because a plausible wrong limit
+reaches a human as evidence.
+
+Evidence reaches the model inside a per-request nonce fence, and is cited by
+chunk id — the model never sees or emits a URL. A static delimiter would be
+guessable by anyone reading this repository.
+
+The embedding model is pluggable. `SUAS_EMBEDDING_PROVIDER=http` points at a
+service such as [`services/embeddings/`](services/embeddings), which is
+deployable as its own Railway service; the default is a lexical hashing
+projection that runs anywhere and understands nothing. Deployment is documented
+in [`docs/railway.md`](docs/railway.md).
+
 ### The document corpus
 
 Manufacturer documents that back a citation live in `corpus/`, and nothing enters

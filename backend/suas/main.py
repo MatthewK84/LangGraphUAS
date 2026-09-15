@@ -31,6 +31,7 @@ from suas.graph.dependencies import GraphDependencies
 from suas.graph.replan import ReplanDependencies, build_replan_graph
 from suas.graph.workflow import build_mission_graph
 from suas.logging_config import configure_logging
+from suas.rag.provider import build_embedder
 from suas.services.llm import ReportService
 from suas.services.weather import WeatherService
 
@@ -66,6 +67,10 @@ async def _build_resources(settings: Settings) -> _Resources:
         session_factory=session_factory,
         weather=weather_service,
         report=ReportService(settings),
+        # Retrieval shares the HTTP client with weather. The embedding model
+        # lives wherever configuration says: in this process as a lexical
+        # hash, or behind a URL as a service of its own.
+        embedder=build_embedder(settings, weather_client),
         battery_reserve_percent=settings.battery_reserve_percent,
         vertical_speed_mps=settings.vertical_speed_mps,
         climb_efficiency=settings.climb_efficiency,

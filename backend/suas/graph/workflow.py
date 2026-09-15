@@ -4,6 +4,11 @@ Builds the LangGraph ``StateGraph`` with a conditional edge that skips straight
 to reporting when validation fails, and compiles it with the supplied
 checkpointer for durable, thread-scoped memory.
 
+``cite_limits`` sits between the calculator and the review step. It attaches
+evidence for the limits the assessment used and nothing else: the decision is
+already sealed by the time it runs, and retrieval being unavailable leaves the
+plan unconfirmed rather than blocked. See ADR-003.
+
 ``human_ack`` sits between the calculator and the report, and that order is a
 security control rather than a workflow preference: the operator signs an
 assessment that no retrieved text and no generated prose has touched. See
@@ -20,6 +25,7 @@ from langgraph.graph.state import CompiledStateGraph
 from suas.graph.dependencies import GraphDependencies
 from suas.graph.nodes import (
     make_calculations_node,
+    make_cite_limits_node,
     make_human_ack_node,
     make_report_node,
     make_validate_node,
@@ -59,6 +65,7 @@ def build_mission_graph(
     builder.add_node("validate", make_validate_node(deps))
     builder.add_node("weather", make_weather_node(deps))
     builder.add_node("calculations", make_calculations_node(deps))
+    builder.add_node("cite_limits", make_cite_limits_node(deps))
     builder.add_node("human_ack", make_human_ack_node())
     builder.add_node("report", make_report_node(deps))
 
@@ -69,7 +76,8 @@ def build_mission_graph(
         {"weather": "weather", "report": "report"},
     )
     builder.add_edge("weather", "calculations")
-    builder.add_edge("calculations", "human_ack")
+    builder.add_edge("calculations", "cite_limits")
+    builder.add_edge("cite_limits", "human_ack")
     builder.add_conditional_edges(
         "human_ack",
         route_after_ack,

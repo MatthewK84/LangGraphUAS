@@ -26,5 +26,7 @@ class MissionState(TypedDict, total=False):
     aborted: bool
     is_viable: bool
     seal_violations: list[str]
+    citations: list[dict[str, Any]]
+    citation_status: str
     report: str
     error: str | None

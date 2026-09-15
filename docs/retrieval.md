@@ -1,4 +1,15 @@
-# Retrieval — pgvector hybrid search
+# Retrieval — hybrid search
+
+> **Implemented without pgvector.** This document specified pgvector with an
+> HNSW index. The shipped implementation stores embeddings as JSON text and
+> computes cosine over the filtered candidate set in the application. At this
+> corpus size the filter reduces candidates to tens of rows, so an index buys
+> nothing measurable while costing a required extension, a vector width baked
+> into the schema, and a migration that fails on stock Postgres. The same schema
+> now runs on Railway's stock Postgres, on a pgvector image, and on SQLite with
+> no branch in the code. Revisit at roughly ten thousand chunks per
+> configuration, or when retrieval shows up in the plan's p95. Everything below
+> about filtering, fusion, and ingest still holds; the SQL is illustrative.
 
 Retrieval answers "what does the manufacturer or the list say about this field?"
 It never decides anything. See ADR-003.
