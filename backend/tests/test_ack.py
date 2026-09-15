@@ -67,9 +67,11 @@ def test_ack_precedes_report(session_factory: async_sessionmaker[AsyncSession]) 
     drawn = _graph(session_factory).get_graph()
     edges = {(edge.source, edge.target) for edge in drawn.edges}
 
-    assert ("calculations", "human_ack") in edges
+    assert ("calculations", "cite_limits") in edges
+    assert ("cite_limits", "human_ack") in edges
     assert ("human_ack", "report") in edges
     assert ("calculations", "report") not in edges
+    assert ("cite_limits", "report") not in edges
     # The only other way in is the validation short circuit, which never reaches
     # the model with an assessment at all.
     into_report = {source for source, target in edges if target == "report"}
@@ -85,6 +87,7 @@ def test_graph_has_no_tool_node(session_factory: async_sessionmaker[AsyncSession
         "validate",
         "weather",
         "calculations",
+        "cite_limits",
         "human_ack",
         "report",
     }

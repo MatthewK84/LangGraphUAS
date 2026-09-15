@@ -7,6 +7,7 @@ their presence blocks operational mode for the configuration they belong to
 until a person clears them.
 """
 
+import json
 import logging
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -17,6 +18,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from suas.db.models import CorpusChunkRow, CorpusDocumentRow, CorpusQuarantineRow
+from suas.rag.embedding import EmbeddingProvider
 from suas.rag.manifest import ManifestEntry, verify
 from suas.rag.screening import ScreenResult, screen_chunk
 
@@ -60,6 +62,7 @@ async def ingest_document(
     content: bytes,
     *,
     production: bool = True,
+    embedder: EmbeddingProvider | None = None,
 ) -> IngestSummary:
     """Verify, screen, and store one document.
 
@@ -84,20 +87,11 @@ async def ingest_document(
     )
 
     summary = IngestSummary(path=entry.path, document_id=document_id)
+    clean: list[ScreenResult] = []
     for paragraph in split_paragraphs(content.decode("utf-8", errors="replace")):
         result: ScreenResult = screen_chunk(paragraph)
         if result.is_clean:
-            summary.chunks += 1
-            session.add(
-                CorpusChunkRow(
-                    chunk_id=str(uuid4()),
-                    document_id=document_id,
-                    airframe_config_id=entry.airframe_config_id,
-                    field_path=None,
-                    page=None,
-                    text=result.text,
-                )
-            )
+            clean.append(result)
             continue
 
         summary.quarantined += 1
@@ -110,6 +104,27 @@ async def ingest_document(
                 pattern=result.pattern,
                 text=result.text,
                 quarantined_at=datetime.now(UTC),
+            )
+        )
+
+    # Only screened chunks are embedded. A quarantined paragraph never becomes a
+    # vector, so it cannot be retrieved even by accident.
+    vectors: list[list[float]] = []
+    if embedder is not None and clean:
+        vectors = await embedder.embed([item.text for item in clean])
+
+    for index, item in enumerate(clean):
+        summary.chunks += 1
+        session.add(
+            CorpusChunkRow(
+                chunk_id=str(uuid4()),
+                document_id=document_id,
+                airframe_config_id=entry.airframe_config_id,
+                field_path=entry.field_path,
+                page=None,
+                text=item.text,
+                embedding_json=json.dumps(vectors[index]) if vectors else None,
+                embedding_model=embedder.model_id if (embedder and vectors) else None,
             )
         )
 

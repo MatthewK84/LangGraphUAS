@@ -59,6 +59,10 @@ class ManifestEntry:
     retrieved_at: str
     kind: str
     airframe_config_id: str | None = None
+    # The reference field this document speaks to, when it speaks to exactly
+    # one. Retrieval filters on it, so a document about pack temperature is
+    # not offered as evidence for maximum wind.
+    field_path: str | None = None
     license: str = ""
 
     @property

@@ -19,10 +19,11 @@ from suas.calculations.assessment import (
 )
 from suas.db.corpus import has_open_quarantine
 from suas.db.repository import get_aircraft, get_payload
-from suas.errors import ReportGenerationError
+from suas.errors import ReportGenerationError, SuasError
 from suas.graph.dependencies import GraphDependencies
 from suas.graph.seal import find_contradiction, render_template_brief
 from suas.graph.state import MissionState
+from suas.rag.retrieve import retrieve
 from suas.schemas.assessment import AssessmentMode, DeterministicAssessment
 from suas.schemas.domain import Aircraft, Payload
 from suas.schemas.requests import MissionParams
@@ -144,6 +145,7 @@ def make_report_node(deps: GraphDependencies) -> NodeFn:
                 aircraft_name=str(aircraft_dump.get("name", "unknown")),
                 weather=WeatherReading.model_validate(state["weather"]),
                 calculations=Calculations.model_validate(calc_dump),
+                citations=list(state.get("citations") or []),
             )
         except ReportGenerationError:
             logger.warning("Falling back to deterministic report text")
@@ -246,3 +248,65 @@ def _apply_edits(state: MissionState, edits: dict[str, Any]) -> MissionState:
     if payload_id:
         updates["payload_id"] = str(payload_id)
     return updates
+
+
+# Which reference fields are worth citing, and what to ask the corpus for. The
+# query is built from these rather than from the operator's text: a free-text
+# query against the whole corpus is how an injected document becomes the brief.
+CITED_FIELDS: Final[dict[str, str]] = {
+    "pack_min_takeoff_c": "battery pack minimum temperature at takeoff",
+    "max_wind_mps": "maximum wind speed limit",
+    "max_temp_c": "maximum operating temperature",
+    "min_temp_c": "minimum operating temperature",
+    "battery_wh": "battery pack energy capacity",
+}
+
+
+def make_cite_limits_node(deps: GraphDependencies) -> NodeFn:
+    """Return a node that attaches evidence for the limits this plan used.
+
+    Citations explain the decision; they never change it. The assessment is
+    already sealed by the time this runs, and this node writes only ``citations``
+    and ``citation_status``. Retrieval being unavailable is a supported outcome:
+    the plan proceeds, unconfirmed, because the corpus is not the oracle.
+    """
+
+    async def cite_limits(state: MissionState) -> MissionState:
+        aircraft_dump = state.get("aircraft")
+        if aircraft_dump is None or deps.embedder is None:
+            return {"citations": [], "citation_status": "unavailable"}
+
+        aircraft = Aircraft.model_validate(aircraft_dump)
+        found: list[dict[str, Any]] = []
+        try:
+            async with deps.session_factory() as session:
+                for field_path, question in CITED_FIELDS.items():
+                    if getattr(aircraft, field_path, None) is None:
+                        continue
+                    evidence = await retrieve(
+                        session,
+                        query=question,
+                        airframe_config_id=aircraft.id,
+                        embedder=deps.embedder,
+                        field_path=None,
+                        top_k=1,
+                    )
+                    found.extend(
+                        {
+                            "chunk_id": item.chunk_id,
+                            "field_path": field_path,
+                            "text": item.text,
+                            "page": item.page,
+                        }
+                        for item in evidence
+                    )
+        except SuasError as exc:
+            logger.warning("Citation lookup failed, continuing unconfirmed: %s", exc)
+            return {"citations": [], "citation_status": "unavailable"}
+
+        return {
+            "citations": found,
+            "citation_status": "confirmed" if found else "unconfirmed",
+        }
+
+    return cite_limits

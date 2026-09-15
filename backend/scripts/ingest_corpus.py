@@ -17,6 +17,8 @@ import asyncio
 import sys
 from pathlib import Path
 
+import httpx
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from suas.config import get_settings
@@ -24,6 +26,7 @@ from suas.db.corpus import IngestSummary, ingest_document
 from suas.db.engine import create_engine, create_session_factory
 from suas.errors import SuasError
 from suas.rag.manifest import load_manifest
+from suas.rag.provider import build_embedder
 
 
 async def ingest_all(corpus_root: Path, *, production: bool) -> list[IngestSummary]:
@@ -32,6 +35,8 @@ async def ingest_all(corpus_root: Path, *, production: bool) -> list[IngestSumma
     settings = get_settings()
     engine = create_engine(settings.database_url)
     session_factory = create_session_factory(engine)
+    client = httpx.AsyncClient()
+    embedder = build_embedder(settings, client)
 
     summaries: list[IngestSummary] = []
     try:
@@ -39,9 +44,16 @@ async def ingest_all(corpus_root: Path, *, production: bool) -> list[IngestSumma
             for path, entry in sorted(entries.items()):
                 content = (corpus_root / path).read_bytes()
                 summaries.append(
-                    await ingest_document(session, entry, content, production=production)
+                    await ingest_document(
+                        session,
+                        entry,
+                        content,
+                        production=production,
+                        embedder=embedder,
+                    )
                 )
     finally:
+        await client.aclose()
         await engine.dispose()
     return summaries
 

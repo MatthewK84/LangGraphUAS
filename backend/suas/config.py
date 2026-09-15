@@ -39,6 +39,16 @@ class Settings(BaseSettings):
     weather_deadline_s: float = Field(default=6.0, gt=0.0)
     # How long a reading stays good enough to fly on.
     weather_cache_ttl_s: float = Field(default=600.0, ge=0.0)
+    # Retrieval. 'hashing' needs nothing and understands nothing; 'http' calls
+    # a model service such as the one in services/embeddings/.
+    embedding_provider: str = Field(default="hashing", pattern="^(hashing|http)$")
+    embedding_url: str = Field(default="")
+    embedding_model_id: str = Field(default="sentence-transformers/all-MiniLM-L6-v2")
+    embedding_dimension: int = Field(default=384, ge=8, le=4096)
+    embedding_timeout_s: float = Field(default=30.0, gt=0.0)
+    # How many candidates each retrieval leg considers before fusion.
+    retrieval_candidates: int = Field(default=20, ge=1, le=200)
+    retrieval_top_k: int = Field(default=4, ge=1, le=20)
     llm_timeout_s: float = Field(default=30.0, gt=0.0)
     llm_max_retries: int = Field(default=2, ge=0, le=6)
     pool_max_size: int = Field(default=10, ge=1, le=100)

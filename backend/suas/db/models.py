@@ -168,6 +168,16 @@ class CorpusChunkRow(Base):
     page: Mapped[int | None] = mapped_column(Integer, nullable=True)
     text: Mapped[str] = mapped_column(Text, nullable=False)
 
+    # The vector, stored as JSON text rather than a native vector type. See
+    # docs/retrieval.md: at this corpus size a filtered scan beats an index, and
+    # portable storage means the planner runs on stock Postgres and on SQLite
+    # without a schema that differs between them.
+    embedding_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Vectors from two different models are not comparable. Recording which one
+    # produced this row is what makes a model change detectable instead of
+    # silently corrupting every similarity score.
+    embedding_model: Mapped[str | None] = mapped_column(String, nullable=True)
+
 
 class CorpusQuarantineRow(Base):
     """A chunk that tripped the screener, kept rather than discarded.

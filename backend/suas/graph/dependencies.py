@@ -14,6 +14,7 @@ from suas.calculations.assessment import (
     DEFAULT_VERTICAL_SPEED_MPS,
 )
 from suas.calculations.battery import DEFAULT_RESERVE_PERCENT
+from suas.rag.embedding import EmbeddingProvider
 from suas.services.llm import ReportService
 from suas.services.weather import WeatherService
 
@@ -25,6 +26,7 @@ class GraphDependencies:
     session_factory: async_sessionmaker[AsyncSession]
     weather: WeatherService
     report: ReportService
+    embedder: EmbeddingProvider | None = None
     battery_reserve_percent: float = DEFAULT_RESERVE_PERCENT
     vertical_speed_mps: float = DEFAULT_VERTICAL_SPEED_MPS
     climb_efficiency: float = DEFAULT_CLIMB_EFFICIENCY
