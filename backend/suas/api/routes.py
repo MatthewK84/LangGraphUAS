@@ -14,6 +14,7 @@ from suas.api.dependencies import GraphDep, MetricsDep, ReplanGraphDep, SessionF
 from suas.api.rate_limit_dep import enforce_rate_limit
 from suas.api.security import require_api_key
 from suas.api.thread_locks import thread_lock
+from suas.db.corpus import open_quarantine_configs
 from suas.db.flight_logs import apply_flight_log, store_flight_log
 from suas.db.repository import list_aircraft, list_payloads
 from suas.db.retention import (
@@ -126,8 +127,18 @@ async def readiness_check(
 
 
 @router.get("/metrics", tags=["ops"])
-async def metrics_endpoint(metrics: MetricsDep) -> Response:
-    """Return metrics in Prometheus text exposition format."""
+async def metrics_endpoint(
+    metrics: MetricsDep,
+    session_factory: SessionFactoryDep,
+) -> Response:
+    """Return metrics in Prometheus text exposition format.
+
+    The quarantine gauge is read from the database on scrape. Ingest is an
+    offline act, so nothing in this process would otherwise know that a document
+    had been held back since the last restart.
+    """
+    async with session_factory() as session:
+        metrics.set_quarantine_open(len(await open_quarantine_configs(session)))
     return Response(content=metrics.render(), media_type="text/plain; version=0.0.4")
 
 

@@ -80,6 +80,9 @@ class GateInputs:
     assessment_is_complete: bool
     provenance_is_complete: bool = False
     power_is_operational_grade: bool = False
+    # True when this configuration has corpus chunks awaiting human review.
+    # Default False: no corpus at all is not the same as a poisoned one.
+    corpus_quarantined: bool = False
 
 
 def operational_blockers(inputs: GateInputs) -> list[Blocker]:
@@ -96,6 +99,8 @@ def operational_blockers(inputs: GateInputs) -> list[Blocker]:
         blockers.append(Blocker.PROVENANCE_INCOMPLETE)
     if not inputs.power_is_operational_grade:
         blockers.append(Blocker.POWER_NOT_OPERATIONAL_GRADE)
+    if inputs.corpus_quarantined:
+        blockers.append(Blocker.CORPUS_QUARANTINED)
 
     # Still not verifiable: no Blue List snapshot is stored, so configuration
     # clearance cannot be asserted at all. Retired by the snapshot work split out

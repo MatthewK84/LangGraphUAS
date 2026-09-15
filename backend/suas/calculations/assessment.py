@@ -54,7 +54,7 @@ DEFAULT_CLIMB_EFFICIENCY: float = 0.6
 # purpose: an automatic hash of the source would churn on a comment edit and
 # stop meaning anything. CI fails a change under calculations/ that does not
 # bump it, so forgetting is not a quiet failure mode.
-CALCULATOR_VERSION: str = "1.6.0"
+CALCULATOR_VERSION: str = "1.7.0"
 
 # Reason text per safety flag, used when that flag is False. Keyed by the field
 # name on SafetyFlags so a new flag that is never mapped shows up immediately as
@@ -294,6 +294,7 @@ def build_assessment(
     weather: WeatherReading | None = None,
     aircraft: Aircraft | None = None,
     payload: Payload | None = None,
+    corpus_quarantined: bool = False,
 ) -> DeterministicAssessment:
     """Return the sealed assessment for a completed calculation.
 
@@ -313,6 +314,7 @@ def build_assessment(
             power_is_operational_grade=power_is_operational_grade(
                 aircraft_provenance, payload_provenance
             ),
+            corpus_quarantined=corpus_quarantined,
         )
     )
     return DeterministicAssessment(

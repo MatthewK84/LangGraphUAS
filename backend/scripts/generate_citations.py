@@ -17,14 +17,14 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from suas.reference_data import (  # noqa: E402
+from suas.reference_data import (
     AIRCRAFT_FILE,
     DATA_DIR,
     PAYLOAD_FILE,
     ReferenceEntry,
     load_entries,
 )
-from suas.schemas.provenance import OPERATIONAL_GRADE  # noqa: E402
+from suas.schemas.provenance import OPERATIONAL_GRADE
 
 OUTPUT: Path = DATA_DIR / "CITATIONS.md"
 
@@ -92,8 +92,7 @@ def render() -> str:
     lines.append("")
     lines.append("| Source | Fields |")
     lines.append("| --- | --- |")
-    for source in sorted(counts):
-        lines.append(f"| `{source}` | {counts[source]} |")
+    lines.extend(f"| `{source}` | {counts[source]} |" for source in sorted(counts))
     lines.append("")
     lines.append("## Airframes")
     lines.append("")

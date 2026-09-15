@@ -130,3 +130,60 @@ class FlightLogSampleRow(Base):
     power_w: Mapped[float] = mapped_column(Float, nullable=False)
     speed_mps: Mapped[float | None] = mapped_column(Float, nullable=True)
     phase: Mapped[str] = mapped_column(String, nullable=False)
+
+
+class CorpusDocumentRow(Base):
+    """A document the manifest vouched for, and that passed verification."""
+
+    __tablename__ = "corpus_documents"
+
+    document_id: Mapped[str] = mapped_column(String, primary_key=True)
+    path: Mapped[str] = mapped_column(String, nullable=False, unique=True)
+    sha256: Mapped[str] = mapped_column(String, nullable=False, unique=True)
+    source_url: Mapped[str] = mapped_column(String, nullable=False)
+    retrieved_at: Mapped[str] = mapped_column(String, nullable=False)
+    kind: Mapped[str] = mapped_column(String, nullable=False)
+    airframe_config_id: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
+    ingested_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class CorpusChunkRow(Base):
+    """One screened, normalised chunk of a document.
+
+    No embedding column yet. Retrieval is a later change, and a nullable vector
+    on every row would imply this table already supports a search it does not.
+    """
+
+    __tablename__ = "corpus_chunks"
+
+    chunk_id: Mapped[str] = mapped_column(String, primary_key=True)
+    document_id: Mapped[str] = mapped_column(
+        String,
+        ForeignKey("corpus_documents.document_id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    airframe_config_id: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
+    field_path: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
+    page: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    text: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class CorpusQuarantineRow(Base):
+    """A chunk that tripped the screener, kept rather than discarded.
+
+    Its presence blocks operational mode for the configuration it belongs to.
+    A document containing something that reads as an instruction to a model is
+    not paperwork anyone should fly on until a person has looked at it.
+    """
+
+    __tablename__ = "corpus_quarantine"
+
+    quarantine_id: Mapped[str] = mapped_column(String, primary_key=True)
+    document_path: Mapped[str] = mapped_column(String, nullable=False, index=True)
+    airframe_config_id: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
+    pattern: Mapped[str] = mapped_column(String, nullable=False)
+    text: Mapped[str] = mapped_column(Text, nullable=False)
+    quarantined_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    cleared_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    cleared_by: Mapped[str | None] = mapped_column(String, nullable=True)

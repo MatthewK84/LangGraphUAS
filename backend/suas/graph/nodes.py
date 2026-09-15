@@ -17,6 +17,7 @@ from suas.calculations.assessment import (
     insufficient_data_assessment,
     is_mission_viable,
 )
+from suas.db.corpus import has_open_quarantine
 from suas.db.repository import get_aircraft, get_payload
 from suas.errors import ReportGenerationError
 from suas.graph.dependencies import GraphDependencies
@@ -94,6 +95,11 @@ def make_calculations_node(deps: GraphDependencies) -> NodeFn:
             vertical_speed_mps=deps.vertical_speed_mps,
             climb_efficiency=deps.climb_efficiency,
         )
+        # Paperwork containing something that reads as an instruction to a model
+        # is not paperwork to fly on until a person has looked at it.
+        async with deps.session_factory() as session:
+            quarantined: bool = await has_open_quarantine(session, aircraft.id)
+
         requested_mode = AssessmentMode(
             str(state.get("requested_mode", AssessmentMode.ADVISORY.value))
         )
@@ -103,6 +109,7 @@ def make_calculations_node(deps: GraphDependencies) -> NodeFn:
             weather=weather,
             aircraft=aircraft,
             payload=payload,
+            corpus_quarantined=quarantined,
             inputs={
                 "aircraft": aircraft.model_dump(mode="json"),
                 "payload": payload.model_dump(mode="json"),

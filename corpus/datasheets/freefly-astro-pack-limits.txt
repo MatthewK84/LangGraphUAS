@@ -1,0 +1,14 @@
+Freefly Astro - battery pack limitations (extract)
+
+Operating temperature. Astro can operate between -20 and 50 C. Performance and
+endurance degrade at both ends of that range, and the figures published for
+endurance assume conditions near the middle of it.
+
+Battery temperature at takeoff. Batteries should be kept warm, above 10 C at
+takeoff. Once flying, self-heating keeps them warm. This is a limit on the pack
+and its procedure, not on the airframe: the aircraft tolerates far colder air
+than the pack tolerates being launched at.
+
+Cold behaviour. If batteries become too cold, state of charge will decline
+quickly and the aircraft will enter Return or Land mode. A capacity derate
+applied in planning is not a substitute for warming the pack before flight.
