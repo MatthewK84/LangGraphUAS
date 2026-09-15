@@ -287,3 +287,45 @@ def test_every_action_is_accepted_by_the_schema(action: str) -> None:
 
     request = AckRequest.model_validate({"action": action, "actor": "a"})
     assert request.action == action
+
+
+# --- the per-thread lock ----------------------------------------------------
+
+
+def test_the_thread_lock_asks_postgres_for_a_row_lock() -> None:
+    """The mutex that stops two workers resuming one interrupt.
+
+    Verified against a real four-worker deployment during #44: without this
+    clause, six of eight racing pairs both resumed the same interrupt and two
+    briefs were generated for one signature. The statement is compiled here
+    rather than raced, because a race is not a test anyone can trust to fail.
+    """
+    from sqlalchemy import select
+    from sqlalchemy.dialects import postgresql
+
+    from suas.db.models import MissionThreadRow
+
+    statement = select(MissionThreadRow).where(MissionThreadRow.thread_id == "x").with_for_update()
+    compiled = str(statement.compile(dialect=postgresql.dialect()))
+    assert "FOR UPDATE" in compiled
+
+
+async def test_concurrent_acknowledgements_produce_one_brief(
+    app_with_graph: FastAPI,
+) -> None:
+    """Two acknowledgements of one plan: one proceeds, one is refused."""
+    import asyncio
+
+    async with _client(app_with_graph) as client:
+        created = await client.post("/api/plan", json=_BODY)
+        thread_id = created.json()["thread_id"]
+        payload = {"action": "confirm", "actor": "racer"}
+        first, second = await asyncio.gather(
+            client.post(f"/api/plan/{thread_id}/ack", json=payload),
+            client.post(f"/api/plan/{thread_id}/ack", json=payload),
+        )
+
+    codes = sorted([first.status_code, second.status_code])
+    assert codes == [200, 409]
+    briefs = [r for r in (first, second) if r.status_code == 200 and r.json()["report"]]
+    assert len(briefs) == 1

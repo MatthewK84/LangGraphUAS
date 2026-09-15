@@ -13,9 +13,15 @@ from suas import __version__
 from suas.api.dependencies import GraphDep, MetricsDep, ReplanGraphDep, SessionFactoryDep
 from suas.api.rate_limit_dep import enforce_rate_limit
 from suas.api.security import require_api_key
+from suas.api.thread_locks import thread_lock
 from suas.db.flight_logs import apply_flight_log, store_flight_log
 from suas.db.repository import list_aircraft, list_payloads
-from suas.db.retention import next_replan_thread_id, record_acknowledgement, record_thread
+from suas.db.retention import (
+    lock_thread_for_update,
+    next_replan_thread_id,
+    record_acknowledgement,
+    record_thread,
+)
 from suas.schemas.assessment import DeterministicAssessment
 from suas.schemas.requests import AckRequest, MissionRequest
 from suas.schemas.responses import (
@@ -255,49 +261,57 @@ async def acknowledge_plan(
     Nothing downstream of this runs until it does: the report node sits after the
     review step precisely so a brief cannot exist without a signature.
     """
-    snapshot = await graph.aget_state(_thread_config(thread_id))
-    values: dict[str, Any] = dict(snapshot.values) if snapshot and snapshot.values else {}
-    if not values:
-        raise HTTPException(status_code=404, detail="Unknown planning thread")
-    if not (snapshot and snapshot.next):
-        raise HTTPException(status_code=409, detail="This plan is not awaiting acknowledgement")
+    # Everything below runs under two locks on this one thread: an in-process
+    # mutex, and a row lock on the mission row. Two workers handed the same
+    # acknowledgement therefore serialise rather than both resuming the
+    # interrupt, and the second to get in finds the graph no longer awaiting and
+    # is refused. Both cover one mission and block nothing else.
+    async with thread_lock(thread_id), session_factory() as session:
+        locked = await lock_thread_for_update(session, thread_id)
 
-    assessment_dump: dict[str, Any] = dict(values.get("assessment") or {})
-    current_hash: str = str(assessment_dump.get("inputs_hash", ""))
-    if request.inputs_hash and request.inputs_hash != current_hash:
-        raise HTTPException(
-            status_code=409,
-            detail=(
-                "The assessment changed after it was shown. Re-read the plan and "
-                "acknowledge the current one."
-            ),
+        snapshot = await graph.aget_state(_thread_config(thread_id))
+        values: dict[str, Any] = dict(snapshot.values) if snapshot and snapshot.values else {}
+        if not values:
+            raise HTTPException(status_code=404, detail="Unknown planning thread")
+        if not (snapshot and snapshot.next):
+            raise HTTPException(
+                status_code=409, detail="This plan is not awaiting acknowledgement"
+            )
+
+        assessment_dump: dict[str, Any] = dict(values.get("assessment") or {})
+        current_hash: str = str(assessment_dump.get("inputs_hash", ""))
+        if request.inputs_hash and request.inputs_hash != current_hash:
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    "The assessment changed after it was shown. Re-read the plan and "
+                    "acknowledge the current one."
+                ),
+            )
+
+        resume: dict[str, Any] = {
+            "action": request.action,
+            "actor": request.actor,
+            "edits": request.edits.model_dump(exclude_none=True) if request.edits else {},
+        }
+        final_state = await graph.ainvoke(
+            Command(resume=resume), config=_thread_config(thread_id), durability="sync"
         )
+        state: dict[str, Any] = dict(final_state)
 
-    resume: dict[str, Any] = {
-        "action": request.action,
-        "actor": request.actor,
-        "edits": request.edits.model_dump(exclude_none=True) if request.edits else {},
-    }
-    final_state = await graph.ainvoke(
-        Command(resume=resume), config=_thread_config(thread_id), durability="sync"
-    )
-    state: dict[str, Any] = dict(final_state)
-
-    # Only a signature that a run actually proceeded on is recorded. An edit
-    # produces a new assessment, which is a new thing to sign.
-    if request.action == "confirm" and current_hash:
-        async with session_factory() as session:
-            try:
-                await record_acknowledgement(
-                    session,
-                    thread_id=thread_id,
-                    actor=request.actor,
-                    action=request.action,
-                    inputs_hash=current_hash,
-                    calculator_version=str(assessment_dump.get("calculator_version", "")),
-                )
-            except KeyError:
-                logger.warning("Acknowledged thread %s has no retention row", thread_id)
+        # Only a signature that a run actually proceeded on is recorded. An edit
+        # produces a new assessment, which is a new thing to sign.
+        if request.action == "confirm" and current_hash and locked is not None:
+            await record_acknowledgement(
+                session,
+                thread_id=thread_id,
+                actor=request.actor,
+                action=request.action,
+                inputs_hash=current_hash,
+                calculator_version=str(assessment_dump.get("calculator_version", "")),
+            )
+        elif request.action == "confirm" and locked is None:
+            logger.warning("Acknowledged thread %s has no retention row", thread_id)
 
     violations = state.get("seal_violations")
     if isinstance(violations, list):

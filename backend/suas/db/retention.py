@@ -36,6 +36,29 @@ async def record_thread(session: AsyncSession, thread_id: str) -> None:
     await session.commit()
 
 
+async def lock_thread_for_update(
+    session: AsyncSession,
+    thread_id: str,
+) -> MissionThreadRow | None:
+    """Take an exclusive row lock on a thread, or return None if unknown.
+
+    This is the per-thread mutex that stops two workers resuming the same
+    interrupt. It is deliberately scoped to one row: it blocks a duplicate
+    acknowledgement of *this* mission and nothing else, so holding it across the
+    resume -- including the model call the resume triggers -- serialises only the
+    request that must be serialised. The model client's own timeout bounds how
+    long it can be held.
+
+    On SQLite ``FOR UPDATE`` is a no-op and SQLite's database-level write lock
+    does the serialising instead. The guarantee holds on both; only the mechanism
+    differs.
+    """
+    result = await session.execute(
+        select(MissionThreadRow).where(MissionThreadRow.thread_id == thread_id).with_for_update()
+    )
+    return result.scalars().first()
+
+
 async def record_acknowledgement(
     session: AsyncSession,
     *,
