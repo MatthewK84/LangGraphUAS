@@ -544,6 +544,14 @@ docker-compose.yml
   effective cluster ceiling is `SUAS_RATE_LIMIT_REQUESTS * worker_count`. It is a
   spend guard against runaway model calls, not an exact global quota. Put a
   shared limiter (Redis or the ingress) in front when you need a hard ceiling.
+- **Resuming an interrupt is not per process.** Two workers handed the same
+  acknowledgement serialise on a per-thread mutex and a `FOR UPDATE` row lock;
+  one proceeds, the other gets 409. Measured, not assumed: see
+  [`docs/ops.md`](docs/ops.md).
+- **Load and crash-recovery figures are recorded** in [`docs/ops.md`](docs/ops.md),
+  including the concurrency at which this service stops keeping up and the
+  `kill -9` drill transcript. Reproduce with
+  `python3 backend/scripts/load_plan.py --requests 100 --concurrency 100`.
 - **Metrics are per process too.** Scrape every replica and aggregate in
   Prometheus rather than assuming one endpoint reports the whole fleet.
 - **Migrations are not run automatically on boot.** The app can create its own
