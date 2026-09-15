@@ -1,0 +1,14 @@
+{
+  "_comment": "The corpus allowlist. A file is ingested only if it is listed here, its bytes hash to sha256 below, and source_url's host is in ALLOWED_HOSTS. Adding a document is a reviewed commit, not a file copy.",
+  "documents": [
+    {
+      "path": "datasheets/freefly-astro-pack-limits.txt",
+      "sha256": "a7f877a9ffbae25e333a5df095cc1b166c665f156f5efa071523235c5bdeafda",
+      "source_url": "https://docs.freeflysystems.com/astro/pilots-operating-handbook/limitations",
+      "retrieved_at": "2026-09-14",
+      "kind": "procedure",
+      "airframe_config_id": "Freefly_Astro_Max",
+      "license": "Manufacturer documentation, quoted extract"
+    }
+  ]
+}

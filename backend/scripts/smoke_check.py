@@ -22,11 +22,14 @@ async def _run() -> int:
     """Boot the app, probe key endpoints, and return an exit code."""
     app = create_app()
     transport = httpx.ASGITransport(app=app)
-    async with app.router.lifespan_context(app), httpx.AsyncClient(
-        transport=transport,
-        base_url="http://smoke",
-        timeout=_TIMEOUT_S,
-    ) as client:
+    async with (
+        app.router.lifespan_context(app),
+        httpx.AsyncClient(
+            transport=transport,
+            base_url="http://smoke",
+            timeout=_TIMEOUT_S,
+        ) as client,
+    ):
         health = await client.get("/health")
         ready = await client.get("/ready")
         aircraft = await client.get("/api/aircraft")

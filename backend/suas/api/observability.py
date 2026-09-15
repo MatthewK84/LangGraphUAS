@@ -53,6 +53,10 @@ class MetricsRegistry:
         # Expected to stay at zero. A non-zero value means a brief was produced
         # that disagrees with the sealed assessment, which is an incident.
         self._seal_violations: int = 0
+        # Corpus chunks held back by the ingest screener and not yet cleared.
+        # A gauge rather than a counter: ingest is an offline act, so what
+        # matters at runtime is how much paperwork is currently untrusted.
+        self._quarantine_open: int = 0
 
     def record_request(self, method: str, path: str, code: int, duration_s: float) -> None:
         """Record one completed HTTP request."""
@@ -74,6 +78,11 @@ class MetricsRegistry:
             return
         with self._lock:
             self._seal_violations += count
+
+    def set_quarantine_open(self, count: int) -> None:
+        """Record how many corpus chunks are currently awaiting review."""
+        with self._lock:
+            self._quarantine_open = max(0, count)
 
     def render(self) -> str:
         """Return the current metrics in Prometheus text exposition format."""
@@ -113,6 +122,12 @@ class MetricsRegistry:
                 "sealed assessment.",
                 "# TYPE suas_llm_field_violations_total counter",
                 f"suas_llm_field_violations_total {self._seal_violations}",
+            ]
+            lines += [
+                "# HELP suas_corpus_quarantine_open Corpus chunks held back by the "
+                "ingest screener.",
+                "# TYPE suas_corpus_quarantine_open gauge",
+                f"suas_corpus_quarantine_open {self._quarantine_open}",
             ]
             return "\n".join(lines) + "\n"
 

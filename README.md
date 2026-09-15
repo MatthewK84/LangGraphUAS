@@ -426,6 +426,48 @@ The estimator reports the median rather than the mean, with the interquartile
 range and a sample count beside it, because a log routinely contains brief spikes
 that a mean would let move the figure.
 
+### The document corpus
+
+Manufacturer documents that back a citation live in `corpus/`, and nothing enters
+it because it happens to be on disk. A file is ingested only if
+`corpus/manifest.json` names it, its bytes hash to the recorded `sha256`, and its
+`source_url` host is in the allowlist. Adding a source is a reviewed commit, not
+a file copy.
+
+```bash
+python3 backend/scripts/ingest_corpus.py --corpus corpus
+```
+
+Ingest is **offline by design**. The API process never parses a document, and a
+test asserts the request path does not import the ingest code.
+
+Every chunk is screened before it is stored. Invisible characters are stripped,
+the text is NFKC-normalised, and HTML and markdown link syntax is removed —
+**in that order, before the content is matched against anything**. Zero-width
+joiners and bidirectional overrides exist to make two different strings look
+identical to a person and different to a matcher, so a screener that runs after
+hashing can be walked straight past.
+
+A chunk carrying something that reads as an instruction to a model is
+**quarantined, never dropped**:
+
+```
+datasheets/freefly-astro-pack-limits.txt: 4 chunks, 1 quarantined (20.0%)
+    tripwire: 'Ignore previous instructions'
+```
+
+Discarding it silently would remove a paragraph of a manufacturer's document
+without anyone knowing a limit had gone missing. The paragraph is kept with the
+pattern that caught it, and the configuration it belongs to gains the
+`CORPUS_QUARANTINED` blocker: paperwork containing something that reads as an
+attack is not paperwork to fly on until a person has looked at it. Other
+configurations are unaffected.
+
+`GET /metrics` reports `suas_corpus_quarantine_open`. The tripwire is a heuristic
+and will occasionally fire on an innocent sentence in a real manual — that is why
+it quarantines rather than deletes, and why the rate is worth watching. A
+tripwire nobody trusts gets switched off, which is worse than not having one.
+
 ### Degraded inputs
 
 Weather has five explicit states, because "we could not reach the provider",
