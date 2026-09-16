@@ -1,6 +1,10 @@
 # Deploying on Railway
 
-Three services: the planner, Postgres, and — optionally — the embedding model.
+Four services: Postgres, the planner (API), the dashboard (Next.js), and --
+optionally -- the embedding model. Each service that is not the planner sets a
+Root Directory and keeps its own `railway.json` inside it; the planner is the
+one that builds from the repository root, because its image is assembled from
+`backend/` while `railway.json` and `.dockerignore` live at the top.
 
 ## 1. Postgres
 
@@ -8,16 +12,28 @@ Add Railway's **Postgres** service. Stock Postgres is enough: this project store
 embeddings as JSON text and computes similarity in the application, so no
 extension is required. See "Why not pgvector" below.
 
-Railway sets `DATABASE_URL` on the service that references it. This project reads
-`SUAS_DATABASE_URL` and expects the `postgresql+psycopg://` driver prefix, so set
-it explicitly on the planner service:
+Railway sets `DATABASE_URL` on the service that references it. Reference it
+directly on the planner service, with no editing:
 
 ```
 SUAS_DATABASE_URL=${{Postgres.DATABASE_URL}}
 ```
 
-then change the scheme to `postgresql+psycopg://`. Railway's variable is
-`postgresql://`, which SQLAlchemy reads as psycopg2.
+Railway's variable is `postgresql://`, which SQLAlchemy maps to psycopg2 -- a
+driver this project does not install, and a synchronous one that could not serve
+the async engine anyway. `suas.config.normalise_database_url` rewrites a
+driverless `postgresql://` or `postgres://` to `postgresql+psycopg://` on the way
+in, so the reference above works as written.
+
+This used to be a hand-edited scheme. That is worth avoiding rather than
+documenting: the edit has to be redone every time someone re-copies the
+variable, and getting it wrong produces `ModuleNotFoundError: psycopg2` at
+startup -- an error that never mentions the URL that caused it.
+
+To confirm the pairing is live rather than merely configured, call `/ready` on
+the planner. It executes a real query and returns 503 when the database or
+checkpointer is unavailable, where `/health` deliberately touches nothing and
+would pass regardless.
 
 ## 2. The planner
 
@@ -57,7 +73,33 @@ Health check is `/health`; it touches nothing. `/ready` executes a real query an
 returns 503 when the database or checkpointer is unavailable, which is what you
 want Railway's healthcheck to *not* use during a migration.
 
-## 3. The embedding model (optional)
+## 3. The dashboard
+
+Deploy a **second service from this same repository** with Root Directory
+`frontend`. Its `railway.json` sits in that directory and builds
+`frontend/Dockerfile`, which is a standalone Next.js build.
+
+| Variable | Value |
+| --- | --- |
+| `BACKEND_API_URL` | `http://${{planner.RAILWAY_PRIVATE_DOMAIN}}:8000` |
+| `BACKEND_API_KEY` | The same value as the planner's `SUAS_API_KEY`, if set |
+
+Neither variable is prefixed `NEXT_PUBLIC_`, and that is deliberate: they are
+read only in server-side route handlers, so Next.js never inlines them into a
+client bundle. The browser talks to the dashboard's own origin; only the
+dashboard process talks to the planner. Use the planner's **private** domain --
+the API does not need to be reachable from the internet for the dashboard to
+work.
+
+Generate a public domain for the dashboard service only. That is the URL you
+open.
+
+On the planner, set `SUAS_CORS_ORIGINS` to the dashboard's public URL. Requests
+from the browser go to the dashboard, not the API, so this matters only if you
+also call the API directly from a browser -- but a wrong value here fails in a
+way that looks like the API being down.
+
+## 4. The embedding model (optional)
 
 `services/embeddings/` is a deployable service: FastAPI wrapping
 `sentence-transformers/all-MiniLM-L6-v2`, with the weights baked into the image
@@ -87,7 +129,7 @@ embedded it, and rows from another model are skipped rather than scored, because
 a similarity between two models' vectors is a number with no meaning. After a
 model change, re-run the ingest.
 
-## 4. Ingest the corpus
+## 5. Ingest the corpus
 
 Ingest is offline by design — the planner never parses a document. Run it from a
 checkout with `SUAS_DATABASE_URL` pointed at the Railway database:

@@ -7,11 +7,35 @@ All runtime configuration is declared here with explicit types and defaults
 from functools import lru_cache
 from typing import Final
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 DEFAULT_DATABASE_URL: Final[str] = "sqlite+aiosqlite:///./suas_local.db"
 DEFAULT_WEATHER_URL: Final[str] = "https://api.open-meteo.com/v1/forecast"
+
+# Managed Postgres providers hand out a driverless URL: Railway gives
+# `postgresql://`, Heroku-style providers still give `postgres://`.
+ASYNC_POSTGRES_SCHEME: Final[str] = "postgresql+psycopg://"
+DRIVERLESS_POSTGRES_SCHEMES: Final[tuple[str, ...]] = ("postgresql://", "postgres://")
+
+
+def normalise_database_url(url: str) -> str:
+    """Return ``url`` with an explicit async driver when it names PostgreSQL.
+
+    SQLAlchemy maps a bare ``postgresql://`` to psycopg2, which this project
+    does not install -- so pasting a provider's URL in unchanged fails at
+    startup with an import error that never mentions the URL. Worse, it is an
+    async engine, and psycopg2 could not serve it even if it were installed.
+
+    Normalising here means ``SUAS_DATABASE_URL=${{Postgres.DATABASE_URL}}``
+    works as a direct reference, with no hand-edited scheme to get wrong or to
+    silently revert the next time someone re-copies the variable. Anything that
+    already names a driver, and every non-PostgreSQL URL, is returned untouched.
+    """
+    for scheme in DRIVERLESS_POSTGRES_SCHEMES:
+        if url.startswith(scheme):
+            return ASYNC_POSTGRES_SCHEME + url[len(scheme) :]
+    return url
 
 
 class Settings(BaseSettings):
@@ -25,6 +49,13 @@ class Settings(BaseSettings):
     )
 
     database_url: str = Field(default=DEFAULT_DATABASE_URL)
+
+    @field_validator("database_url")
+    @classmethod
+    def _add_async_driver(cls, value: str) -> str:
+        """Accept a managed provider's URL verbatim (see normalise_database_url)."""
+        return normalise_database_url(value)
+
     openai_api_key: str = Field(default="")
     openai_model: str = Field(default="gpt-4o-mini")
     api_key: str = Field(default="")
