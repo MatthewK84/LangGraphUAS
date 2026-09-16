@@ -1,5 +1,19 @@
 # syntax=docker/dockerfile:1
 
+# Build context is the REPOSITORY ROOT, not backend/. Every COPY source below is
+# prefixed accordingly, and .dockerignore at the root keeps the context small.
+#
+# This is not a style choice. Railway resolves `dockerfilePath` relative to the
+# service's Root Directory; with that left empty, `backend/Dockerfile` resolves
+# and the context is the repo root. A backend/-relative COPY then fails on a file
+# that is plainly committed, which reads as a missing file and is not one.
+# `COPY scripts ./scripts` was the quiet one: the repo root has its own scripts/,
+# so that line would have succeeded and shipped the wrong directory.
+#
+# Keep CI (.github/workflows/ci.yml), docker-compose.yml and railway.json using
+# the root as context. If you ever move to a backend/ context, every path here
+# changes with it.
+
 # ---- Builder: install dependencies into a virtual environment ----
 FROM python:3.11-slim AS builder
 
@@ -12,8 +26,8 @@ WORKDIR /build
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:${PATH}"
 
-COPY pyproject.toml ./
-COPY suas ./suas
+COPY backend/pyproject.toml ./
+COPY backend/suas ./suas
 RUN pip install --upgrade pip && pip install .
 
 # ---- Runtime: copy the venv and app, run as a non-root user ----
@@ -29,10 +43,10 @@ RUN groupadd --system app && useradd --system --gid app --home /app app
 WORKDIR /app
 
 COPY --from=builder /opt/venv /opt/venv
-COPY --chown=app:app suas ./suas
-COPY --chown=app:app alembic ./alembic
-COPY --chown=app:app alembic.ini ./alembic.ini
-COPY --chown=app:app scripts ./scripts
+COPY --chown=app:app backend/suas ./suas
+COPY --chown=app:app backend/alembic ./alembic
+COPY --chown=app:app backend/alembic.ini ./alembic.ini
+COPY --chown=app:app backend/scripts ./scripts
 
 USER app
 

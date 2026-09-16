@@ -1,0 +1,43 @@
+# The backend image builds with the repository root as its context, so this file
+# is what keeps the upload small. backend/.dockerignore is NOT consulted for a
+# root-context build -- Docker reads the .dockerignore beside the context root.
+
+.git/
+.github/
+
+# Other services and the site: not part of the backend image.
+frontend/
+services/
+docs/
+corpus/
+
+# Repo-level tooling. The image gets backend/scripts, which is a different
+# directory that happens to share a name.
+scripts/
+Makefile
+docker-compose.yml
+README.md
+LICENSE
+
+# Tests do not ship. The image is the runtime, not the check.
+backend/tests/
+
+# Caches and build artifacts.
+**/__pycache__/
+**/*.py[cod]
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+**/*.egg-info/
+**/.venv/
+**/venv/
+**/node_modules/
+
+# Local state and secrets.
+**/*.db
+**/*.sqlite3
+.env
+.env.*
+!.env.example
+**/.coverage
+**/htmlcov/

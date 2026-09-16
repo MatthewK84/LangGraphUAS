@@ -21,24 +21,29 @@ then change the scheme to `postgresql+psycopg://`. Railway's variable is
 
 ## 2. The planner
 
-Deploy this repository and set the service's **Root Directory to `backend`**
-(Settings -> Source). That setting is not optional and it is not cosmetic:
-Railway resolves both the config file and `dockerfilePath` relative to the root
-directory, so with it set, the file Railway reads is `backend/railway.json`. A
-`railway.json` at the repository root is silently ignored -- not merged, not
-warned about -- which means the start command below would never run and the
-service would serve an unmigrated database.
+Deploy this repository and **leave the service's Root Directory empty**
+(Settings -> Source). Railway resolves `dockerfilePath` relative to the root
+directory, so with it empty, `railway.json` at the repository root resolves
+`backend/Dockerfile` and the build context is the repository root.
 
-`backend/railway.json` runs migrations before serving:
+That context is what `backend/Dockerfile` is written for: every `COPY` source in
+it is prefixed `backend/`, and `.dockerignore` at the root bounds the upload.
+Setting the Root Directory to `backend` breaks the build -- Railway would then
+look for `backend/backend/Dockerfile`.
+
+`railway.json` runs migrations before serving:
 
 ```
 alembic upgrade head && uvicorn suas.main:app --host 0.0.0.0 --port ${PORT}
 ```
 
-The `COPY` paths in `backend/Dockerfile` are relative to `backend/` too, so the
-root directory setting is what makes the build work at all. The embedding
-service follows the same convention with its own root directory, one directory
-deeper.
+CI and `docker-compose.yml` build the same image the same way, from the same
+context, so a green CI build is evidence about the image Railway builds.
+
+The embedding service is different and deliberately so: it *does* set a root
+directory (`services/embeddings`) and its `railway.json` lives inside it, because
+it is a self-contained service whose Dockerfile needs nothing from the rest of
+the repository.
 
 Minimum variables:
 
@@ -114,15 +119,23 @@ development, with no branch in the code.
 
 ## Troubleshooting
 
-**`"/alembic.ini": not found` during build, or any `failed to compute cache key`
-on a file that is plainly committed.** Check the Root Directory first: if it is
-empty, the build context is the repository root, where `alembic.ini`,
-`pyproject.toml` and `suas/` do not exist at the top level. If the Root Directory
-is correctly `backend`, this is a stale layer cache on Railway's builder --
-redeploy without cache (service -> Deployments -> the three-dot menu on the
-latest deploy -> **Redeploy without cache**). The tell is a `COPY` failing with
-"not found" while an adjacent `COPY` of a file in the same directory reports
-`cached`: a genuinely missing file fails consistently, not next to a cache hit.
+**`"/alembic.ini": not found`, or any `COPY` failing on a file that is plainly
+committed.** The build context is not what the Dockerfile expects. Check the
+Root Directory is empty and that `railway.json` is at the repository root.
+
+Read the leading slash in that error: `"/alembic.ini"` is a path at the *context
+root*, so the message is "the context root has no alembic.ini" -- which is true
+of the repository root and false of `backend/`. It is not a missing file, and it
+is not a stale cache. Two details make this failure read as something it is not:
+
+- Only one `COPY` reports an error even when several are wrong. BuildKit runs
+  them in parallel and aborts the siblings on the first failure, so the others
+  show `0ms` and no error.
+- Unrelated steps report `cached` from an older build, which makes the one
+  failing step look like a cache fault rather than a path fault.
+
+The way to confirm it is the context and not the file: `git ls-files` the path,
+then compare against what the context root actually contains.
 
 **Briefs come back as deterministic fallback text.** `SUAS_OPENAI_API_KEY` is
 unset. That is a supported state, not an error -- the numbers are unaffected,
