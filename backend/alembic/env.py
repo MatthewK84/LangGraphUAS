@@ -16,7 +16,13 @@ from suas.db.models import Base
 
 config = context.config
 if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
+    # disable_existing_loggers defaults to True, which would silently switch off
+    # every logger configured before this runs. Migrations run as their own
+    # process on deploy, so today that costs nothing -- but running them
+    # in-process would take the application's JSON logging down with it, and the
+    # failure would look like "logs stopped" rather than anything to do with
+    # Alembic.
+    fileConfig(config.config_file_name, disable_existing_loggers=False)
 
 config.set_main_option("sqlalchemy.url", get_settings().database_url)
 target_metadata = Base.metadata
