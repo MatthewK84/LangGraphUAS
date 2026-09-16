@@ -1,0 +1,32 @@
+{
+  "_comment": "Trap documents for the injection matrix. kind=eval_trap is refused by the production ingest path outright: these exist to be caught, never to be cited. Do not merge this manifest into corpus/manifest.json.",
+  "documents": [
+    {
+      "path": "override.txt",
+      "sha256": "5b15d364fa73f0e7dc4d3bfde3507a07ba51d4bfeefdbecc0afcf74b3b7c1580",
+      "source_url": "https://docs.freeflysystems.com/astro/pilots-operating-handbook/limitations",
+      "retrieved_at": "2026-09-16",
+      "kind": "eval_trap",
+      "airframe_config_id": "Freefly_Astro_Max",
+      "license": "Synthetic trap document. Not a manufacturer publication."
+    },
+    {
+      "path": "exfiltration.txt",
+      "sha256": "46bf7d02db6e7665edba17e4f873f13523327d58c674073a680300ab1dcd6e72",
+      "source_url": "https://www.parrot.com/en/support/documentation/anafi-usa",
+      "retrieved_at": "2026-09-16",
+      "kind": "eval_trap",
+      "airframe_config_id": "Parrot_ANAFI_USA",
+      "license": "Synthetic trap document. Not a manufacturer publication."
+    },
+    {
+      "path": "invisible.txt",
+      "sha256": "0ca787c85c4fbdb92450cb746620f6ab172237e4dc3f94b0fa8e8ecd45eb88a2",
+      "source_url": "https://docs.inspiredflight.com/if1200a/limits",
+      "retrieved_at": "2026-09-16",
+      "kind": "eval_trap",
+      "airframe_config_id": "InspiredFlight_IF1200A",
+      "license": "Synthetic trap document. Not a manufacturer publication."
+    }
+  ]
+}
