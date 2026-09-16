@@ -21,12 +21,24 @@ then change the scheme to `postgresql+psycopg://`. Railway's variable is
 
 ## 2. The planner
 
-Deploy this repository. `railway.json` at the root points at
-`backend/Dockerfile` and runs migrations before serving:
+Deploy this repository and set the service's **Root Directory to `backend`**
+(Settings -> Source). That setting is not optional and it is not cosmetic:
+Railway resolves both the config file and `dockerfilePath` relative to the root
+directory, so with it set, the file Railway reads is `backend/railway.json`. A
+`railway.json` at the repository root is silently ignored -- not merged, not
+warned about -- which means the start command below would never run and the
+service would serve an unmigrated database.
+
+`backend/railway.json` runs migrations before serving:
 
 ```
 alembic upgrade head && uvicorn suas.main:app --host 0.0.0.0 --port ${PORT}
 ```
+
+The `COPY` paths in `backend/Dockerfile` are relative to `backend/` too, so the
+root directory setting is what makes the build work at all. The embedding
+service follows the same convention with its own root directory, one directory
+deeper.
 
 Minimum variables:
 
@@ -99,3 +111,22 @@ passes roughly ten thousand chunks per configuration, or when retrieval latency
 shows up in the plan's p95. Until then, portable storage means the same schema
 runs on Railway's stock Postgres, on a pgvector image, and on SQLite in
 development, with no branch in the code.
+
+## Troubleshooting
+
+**`"/alembic.ini": not found` during build, or any `failed to compute cache key`
+on a file that is plainly committed.** Check the Root Directory first: if it is
+empty, the build context is the repository root, where `alembic.ini`,
+`pyproject.toml` and `suas/` do not exist at the top level. If the Root Directory
+is correctly `backend`, this is a stale layer cache on Railway's builder --
+redeploy without cache (service -> Deployments -> the three-dot menu on the
+latest deploy -> **Redeploy without cache**). The tell is a `COPY` failing with
+"not found" while an adjacent `COPY` of a file in the same directory reports
+`cached`: a genuinely missing file fails consistently, not next to a cache hit.
+
+**Briefs come back as deterministic fallback text.** `SUAS_OPENAI_API_KEY` is
+unset. That is a supported state, not an error -- the numbers are unaffected,
+since no model writes them.
+
+**Retrieval quality is poor and `SUAS_EMBEDDING_PROVIDER` is unset.** The
+planner is using the hashing fallback. See section 3.
