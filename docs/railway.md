@@ -92,8 +92,22 @@ Deploy a **second service from this same repository** with Root Directory
 
 | Variable | Value |
 | --- | --- |
-| `BACKEND_API_URL` | `http://${{planner.RAILWAY_PRIVATE_DOMAIN}}:8000` |
+| `BACKEND_API_URL` | `http://${{planner.RAILWAY_PRIVATE_DOMAIN}}:${{planner.PORT}}` |
 | `BACKEND_API_KEY` | The same value as the planner's `SUAS_API_KEY`, if set |
+
+Replace `planner` with the backend service's actual name in Railway; a reference
+that names no existing service resolves to an empty string rather than failing,
+and the dashboard then calls its own origin and 502s.
+
+Two details decide whether this connects at all:
+
+- **Use `${{planner.PORT}}`, not a literal.** Railway assigns the port and the
+  entrypoint binds whatever it is assigned. Hardcoding 8000 was right only until
+  Railway picked 8080.
+- **The planner must listen on IPv6.** Railway's private network is IPv6-only,
+  so `<name>.railway.internal` resolves to an AAAA record. A server bound to
+  `0.0.0.0` listens on IPv4 alone and refuses the connection. The entrypoint
+  binds `::` wherever the kernel has IPv6, which covers both stacks.
 
 Neither variable is prefixed `NEXT_PUBLIC_`, and that is deliberate: they are
 read only in server-side route handlers, so Next.js never inlines them into a
@@ -200,6 +214,13 @@ fails naming `SUAS_DATABASE_URL`, the variable did not reach the service.
 is serving a port the platform is not routing to. The image's entrypoint binds
 `${PORT:-8000}`, so this means something is overriding the entrypoint -- check
 for a Start Command set in the service settings.
+
+**The dashboard loads but shows "Backend returned status 502".** The dashboard
+reached you; its server-side call to the planner did not. That 502 is generated
+by the dashboard when the `fetch` throws, so it means unreachable, not an error
+response -- a bad API key would surface as 401, not this. Check, in order:
+`BACKEND_API_URL` names the real service; the port is `${{planner.PORT}}`; and
+the planner is listening on IPv6 (see above).
 
 **Briefs come back as deterministic fallback text.** `SUAS_OPENAI_API_KEY` is
 unset. That is a supported state, not an error -- the numbers are unaffected,
