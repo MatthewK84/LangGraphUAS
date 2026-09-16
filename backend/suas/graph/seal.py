@@ -89,6 +89,26 @@ def seal_brief(raw: dict[str, Any]) -> tuple[BriefOutput | None, list[str]]:
         return None, violations
 
 
+def resolve_citations(
+    cited_chunk_ids: list[str],
+    retrieved_chunk_ids: set[str],
+) -> tuple[list[str], list[str]]:
+    """Split cited ids into those actually retrieved and those invented.
+
+    A model that cites a chunk nobody gave it has not made a formatting mistake.
+    Either it is repeating an id from somewhere it should not have, or it made one
+    up; both mean the citation points at nothing, and a citation that cannot be
+    followed is worse than none because it looks like evidence.
+
+    Returns:
+        A pair of (resolvable ids, invented ids). Invented ids are returned rather
+        than discarded so the caller can count them.
+    """
+    kept: list[str] = [item for item in cited_chunk_ids if item in retrieved_chunk_ids]
+    invented: list[str] = [item for item in cited_chunk_ids if item not in retrieved_chunk_ids]
+    return kept, invented
+
+
 def render_template_brief(assessment: DeterministicAssessment) -> str:
     """Return a brief built only from the sealed assessment.
 
