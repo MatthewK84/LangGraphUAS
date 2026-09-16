@@ -33,10 +33,17 @@ RUN pip install --upgrade pip && pip install .
 # ---- Runtime: copy the venv and app, run as a non-root user ----
 FROM python:3.11-slim AS runtime
 
+# SUAS_REQUIRE_POSTGRES: the container refuses to start on SQLite. A container
+# has no durable filesystem to keep a SQLite file on, and this image's non-root
+# user cannot write /app anyway -- so the fallback produced "unable to open
+# database file" forty frames deep, never naming the variable that was missing.
+# Failing by name at startup is the whole point. Local development and the test
+# suite leave this unset and keep SQLite.
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PATH="/opt/venv/bin:${PATH}" \
-    LANGGRAPH_STRICT_MSGPACK=true
+    LANGGRAPH_STRICT_MSGPACK=true \
+    SUAS_REQUIRE_POSTGRES=true
 
 RUN groupadd --system app && useradd --system --gid app --home /app app
 
@@ -52,7 +59,10 @@ USER app
 
 EXPOSE 8000
 
+# The healthcheck follows PORT for the same reason the entrypoint does: when the
+# platform moves the port, a probe hardcoded to 8000 reports a healthy container
+# as sick, or a sick one as healthy.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-    CMD python -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health').status==200 else 1)"
+    CMD python -c "import os,urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:'+os.environ.get('PORT','8000')+'/health').status==200 else 1)"
 
-CMD ["uvicorn", "suas.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]
+ENTRYPOINT ["/app/scripts/docker-entrypoint.sh"]
