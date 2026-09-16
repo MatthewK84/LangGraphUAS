@@ -1,171 +1,276 @@
 # Deploying on Railway
 
-Four services: Postgres, the planner (API), the dashboard (Next.js), and --
-optionally -- the embedding model. Each service that is not the planner sets a
-Root Directory and keeps its own `railway.json` inside it; the planner is the
-one that builds from the repository root, because its image is assembled from
-`backend/` while `railway.json` and `.dockerignore` live at the top.
+A from-zero runbook. Follow it in order; each step ends with something you can
+check, so a mistake surfaces at the step that caused it rather than three steps
+later as a 502.
+
+## The shape of the deployment
+
+One public HTTPS endpoint. Everything else is reachable only from inside the
+Railway project.
+
+```
+        internet
+           |
+           | HTTPS  (the only public domain)
+           v
+    +--------------+
+    |  dashboard   |   Next.js. Holds the API key. Talks to nothing else.
+    +--------------+
+           |
+           | private network, IPv6
+           v
+    +--------------+        +--------------+
+    |   planner    |------->|  embeddings  |   private, optional
+    |   (FastAPI)  |        +--------------+
+    +--------------+
+           |
+           | private network
+           v
+    +--------------+
+    |   Postgres   |   private
+    +--------------+
+```
+
+The browser only ever talks to the dashboard's own origin. The dashboard's
+server-side route handlers are the only thing that talks to the planner, and
+they attach the API key. This is why `BACKEND_API_KEY` is not prefixed
+`NEXT_PUBLIC_`: Next.js inlines prefixed variables into the client bundle, and
+this key must never reach a browser.
+
+Two consequences worth stating, because they remove work:
+
+- **The planner needs no public domain.** Do not generate one. An API with no
+  route at `/` invites exactly the "404 on the homepage" confusion, and a public
+  domain puts `/docs`, `/health` and `/metrics` in front of anyone who finds the
+  URL.
+- **CORS stops mattering.** No browser makes a cross-origin call, so
+  `SUAS_CORS_ORIGINS` can keep its default. Set it only if you later expose the
+  API directly.
+
+## Two facts that decide whether the wiring works
+
+Both caused real failures in this project. Everything in the runbook follows
+from them.
+
+**Railway's private network is IPv6-only.** `<service>.railway.internal`
+resolves to an AAAA record. A server bound to `0.0.0.0` listens on IPv4 alone,
+so a caller connects to an address with nothing behind it and the connection is
+refused. The planner and the embedding service both bind `::` where the kernel
+has IPv6 (see their entrypoints); you do not need to configure this, but it is
+why a service that "is running" can still be unreachable.
+
+**Railway assigns the port.** Each service binds `$PORT`. Never hardcode a port
+in a service reference; use `${{service.PORT}}`. A literal `:8000` was correct
+here until Railway picked 8080.
 
 ## 1. Postgres
 
-Add Railway's **Postgres** service. Stock Postgres is enough: this project stores
-embeddings as JSON text and computes similarity in the application, so no
-extension is required. See "Why not pgvector" below.
+**+ New -> Database -> Add PostgreSQL.** Nothing to configure.
 
-Railway sets `DATABASE_URL` on the service that references it. Reference it
-directly on the planner service, with no editing:
+Stock Postgres is enough: this project stores embeddings as JSON text and
+computes similarity in the application, so no extension is required. See "Why
+not pgvector" below.
 
-```
-SUAS_DATABASE_URL=${{Postgres.DATABASE_URL}}
-```
+Do not generate a public domain for it.
 
-The planner also reads a plain `DATABASE_URL`, the name Railway and Heroku set
-by convention, so a linked Postgres service is enough on its own. Where both are
-present, `SUAS_DATABASE_URL` wins: it is the one someone set deliberately.
+> **Check:** the service shows as deployed and its Variables tab lists
+> `DATABASE_URL`.
 
-**The image refuses to start on anything but PostgreSQL.** It sets
-`SUAS_REQUIRE_POSTGRES=true`, so a missing URL fails at startup with one line
-naming the variable, instead of falling back to a SQLite file the container
-cannot write and dying forty frames deep inside `aiosqlite` with "unable to open
-database file". SQLite stays the default for local development and the tests,
-which is the only place it is appropriate.
+## 2. The planner (API)
 
-Railway's variable is `postgresql://`, which SQLAlchemy maps to psycopg2 -- a
-driver this project does not install, and a synchronous one that could not serve
-the async engine anyway. `suas.config.normalise_database_url` rewrites a
-driverless `postgresql://` or `postgres://` to `postgresql+psycopg://` on the way
-in, so the reference above works as written.
+**+ New -> GitHub Repo -> this repository.**
 
-This used to be a hand-edited scheme. That is worth avoiding rather than
-documenting: the edit has to be redone every time someone re-copies the
-variable, and getting it wrong produces `ModuleNotFoundError: psycopg2` at
-startup -- an error that never mentions the URL that caused it.
+| Setting | Value |
+| --- | --- |
+| Settings -> Source -> Root Directory | **leave empty** |
+| Settings -> Networking | **do not** generate a domain |
 
-To confirm the pairing is live rather than merely configured, call `/ready` on
-the planner. It executes a real query and returns 503 when the database or
-checkpointer is unavailable, where `/health` deliberately touches nothing and
-would pass regardless.
+The empty root directory is deliberate and load-bearing. Railway resolves
+`dockerfilePath` relative to the root directory; with it empty, `railway.json`
+at the repository root resolves `backend/Dockerfile` and the build context is
+the repository root, which is what that Dockerfile is written for. Setting it to
+`backend` breaks the build -- Railway would look for `backend/backend/Dockerfile`.
 
-## 2. The planner
+Rename the service something stable, e.g. `planner`. Other services reference it
+by name, and a reference to a name that does not exist resolves to an **empty
+string** rather than failing.
 
-Deploy this repository and **leave the service's Root Directory empty**
-(Settings -> Source). Railway resolves `dockerfilePath` relative to the root
-directory, so with it empty, `railway.json` at the repository root resolves
-`backend/Dockerfile` and the build context is the repository root.
-
-That context is what `backend/Dockerfile` is written for: every `COPY` source in
-it is prefixed `backend/`, and `.dockerignore` at the root bounds the upload.
-Setting the Root Directory to `backend` breaks the build -- Railway would then
-look for `backend/backend/Dockerfile`.
-
-`railway.json` runs migrations before serving:
-
-```
-alembic upgrade head && uvicorn suas.main:app --host 0.0.0.0 --port ${PORT}
-```
-
-CI and `docker-compose.yml` build the same image the same way, from the same
-context, so a green CI build is evidence about the image Railway builds.
-
-The embedding service is different and deliberately so: it *does* set a root
-directory (`services/embeddings`) and its `railway.json` lives inside it, because
-it is a self-contained service whose Dockerfile needs nothing from the rest of
-the repository.
-
-Minimum variables:
+Variables:
 
 | Variable | Value |
 | --- | --- |
-| `SUAS_DATABASE_URL` | `postgresql+psycopg://...` from the Postgres service |
-| `SUAS_API_KEY` | A key of your choosing. Empty disables auth entirely. |
-| `SUAS_OPENAI_API_KEY` | Optional. Without it, briefs fall back to deterministic text. |
+| `SUAS_DATABASE_URL` | `${{Postgres.DATABASE_URL}}` |
+| `SUAS_API_KEY` | a long random string you generate (see below) |
+| `SUAS_OPENAI_API_KEY` | optional; without it briefs are deterministic text |
 
-Health check is `/health`; it touches nothing. `/ready` executes a real query and
-returns 503 when the database or checkpointer is unavailable, which is what you
-want Railway's healthcheck to *not* use during a migration.
+Reference the database variable directly, with no hand-editing. Railway's value
+is `postgresql://`, which SQLAlchemy maps to psycopg2 -- a driver this project
+does not install, and a synchronous one that could not serve the async engine
+anyway. `suas.config.normalise_database_url` rewrites the scheme on the way in.
+A plain `DATABASE_URL` is read too, so a linked Postgres service is sufficient
+on its own; where both exist, `SUAS_DATABASE_URL` wins.
 
-## 3. The dashboard
+Generate the API key with either of these, and keep it -- the dashboard needs
+the same value:
 
-Deploy a **second service from this same repository** with Root Directory
-`frontend`. Its `railway.json` sits in that directory and builds
-`frontend/Dockerfile`, which is a standalone Next.js build.
+```bash
+python3 -c "import secrets; print(secrets.token_urlsafe(32))"
+openssl rand -base64 32
+```
 
-| Variable | Value |
-| --- | --- |
-| `BACKEND_API_URL` | `http://${{planner.RAILWAY_PRIVATE_DOMAIN}}:${{planner.PORT}}` |
-| `BACKEND_API_KEY` | The same value as the planner's `SUAS_API_KEY`, if set |
+The key guards `/api/plan`, `/api/logs`, `/api/plan/{id}/ack`, `/api/replan` and
+`/api/plan/{id}`. Leave it unset and authentication is a no-op on all of them,
+including the acknowledgement endpoint -- the operator sign-off the whole design
+treats as its trust boundary. `/health` and `/ready` stay unguarded so the
+platform can probe them.
 
-Replace `planner` with the backend service's actual name in Railway; a reference
-that names no existing service resolves to an empty string rather than failing,
-and the dashboard then calls its own origin and 502s.
+The image sets `SUAS_REQUIRE_POSTGRES=true`, so a missing database URL fails at
+startup naming the variable rather than falling back to a SQLite file the
+container cannot write.
 
-Two details decide whether this connects at all:
+> **Check** the deploy log, reading the first lines rather than the last:
+> - `Running upgrade ... -> 0010` on the first deploy (migrations ran)
+> - `Uvicorn running on http://[::]:8080` -- **square brackets** mean it bound
+>   IPv6, which is what the private network needs
+> - `Database: postgresql+psycopg://...railway.internal:5432/railway`
+> - `Using Postgres checkpointer`
+> - **no** `API authentication is disabled` warning
+> - `Application startup complete`
 
-- **Use `${{planner.PORT}}`, not a literal.** Railway assigns the port and the
-  entrypoint binds whatever it is assigned. Hardcoding 8000 was right only until
-  Railway picked 8080.
-- **The planner must listen on IPv6.** Railway's private network is IPv6-only,
-  so `<name>.railway.internal` resolves to an AAAA record. A server bound to
-  `0.0.0.0` listens on IPv4 alone and refuses the connection. The entrypoint
-  binds `::` wherever the kernel has IPv6, which covers both stacks.
+## 3. The embedding model (optional, but do it before ingest)
 
-Neither variable is prefixed `NEXT_PUBLIC_`, and that is deliberate: they are
-read only in server-side route handlers, so Next.js never inlines them into a
-client bundle. The browser talks to the dashboard's own origin; only the
-dashboard process talks to the planner. Use the planner's **private** domain --
-the API does not need to be reachable from the internet for the dashboard to
-work.
+**+ New -> GitHub Repo -> this repository**, Root Directory
+`services/embeddings`. No public domain.
 
-Generate a public domain for the dashboard service only. That is the URL you
-open.
+FastAPI wrapping `sentence-transformers/all-MiniLM-L6-v2`, with the weights
+baked into the image so the first request after a deploy does not pay a cold
+download. The image is large and the first build is slow.
 
-On the planner, set `SUAS_CORS_ORIGINS` to the dashboard's public URL. Requests
-from the browser go to the dashboard, not the API, so this matters only if you
-also call the API directly from a browser -- but a wrong value here fails in a
-way that looks like the API being down.
-
-## 4. The embedding model (optional)
-
-`services/embeddings/` is a deployable service: FastAPI wrapping
-`sentence-transformers/all-MiniLM-L6-v2`, with the weights baked into the image
-so the first request after a deploy does not pay a cold download.
-
-Deploy it as a **second service from this same repository** with root directory
-`services/embeddings`. Then point the planner at it:
+Then, on the **planner**:
 
 | Variable | Value |
 | --- | --- |
 | `SUAS_EMBEDDING_PROVIDER` | `http` |
-| `SUAS_EMBEDDING_URL` | `http://${{embeddings.RAILWAY_PRIVATE_DOMAIN}}:8080/embed` |
+| `SUAS_EMBEDDING_URL` | `http://${{embeddings.RAILWAY_PRIVATE_DOMAIN}}:${{embeddings.PORT}}/embed` |
 | `SUAS_EMBEDDING_MODEL_ID` | `sentence-transformers/all-MiniLM-L6-v2` |
 | `SUAS_EMBEDDING_DIMENSION` | `384` |
 
-Use the private domain: the planner is the only thing that should reach it, and
-a private URL keeps it off the public internet without any auth of its own.
-
 **Without this service the planner still runs.** It falls back to a hashing
-projection that matches shared vocabulary rather than shared meaning — see
-`backend/suas/rag/embedding.py`. That is a real reduction in recall, and
-`SUAS_EMBEDDING_PROVIDER=http` with an empty URL logs an error rather than
-degrading silently.
+projection that matches shared vocabulary rather than shared meaning -- a real
+reduction in recall. `SUAS_EMBEDDING_PROVIDER=http` with an empty URL logs an
+error rather than degrading silently.
 
 **Changing the model means re-ingesting.** Every chunk records the model that
 embedded it, and rows from another model are skipped rather than scored, because
-a similarity between two models' vectors is a number with no meaning. After a
-model change, re-run the ingest.
+a similarity between two models' vectors is a number with no meaning.
+
+Decide on the embedder **before** step 5. Ingesting first and adding the model
+afterwards means ingesting twice.
+
+## 4. The dashboard -- the only public service
+
+**+ New -> GitHub Repo -> this repository.**
+
+| Setting | Value |
+| --- | --- |
+| Settings -> Source -> Root Directory | `frontend` |
+| Settings -> Networking | **Generate Domain** -- this one, and only this one |
+
+Variables:
+
+| Variable | Value |
+| --- | --- |
+| `BACKEND_API_URL` | `http://${{planner.RAILWAY_PRIVATE_DOMAIN}}:${{planner.PORT}}` |
+| `BACKEND_API_KEY` | the **same value** as the planner's `SUAS_API_KEY` |
+
+Substitute your planner service's actual name for `planner` in that reference.
+`http`, not `https`: the private network is unencrypted by design and there is no
+certificate for `.railway.internal`.
+
+> **Check:** open the generated domain. The form renders and the aircraft and
+> payload dropdowns populate with 7 airframes and 6 payloads. If the dropdowns
+> are empty with "Backend returned status 502", see Troubleshooting.
 
 ## 5. Ingest the corpus
 
-Ingest is offline by design — the planner never parses a document. Run it from a
-checkout with `SUAS_DATABASE_URL` pointed at the Railway database:
+Until this runs, retrieval returns nothing and citations read `unconfirmed`.
+Plans still work -- the corpus is not the oracle, the calculator is -- but no
+brief will cite a document.
+
+Ingest is offline by design: the planner never parses a document. Run it from a
+checkout against a connection string that reaches Railway from your machine. The
+private URL will not work from a laptop; use the public connection string from
+the Postgres service's **Connect** tab (Railway exposes one through a TCP
+proxy).
 
 ```bash
-SUAS_DATABASE_URL='postgresql+psycopg://...' \
+SUAS_DATABASE_URL='<public connection string from the Connect tab>' \
   python3 backend/scripts/ingest_corpus.py --corpus corpus
 ```
 
 Anything quarantined is reported, and blocks operational mode for the
 configuration it belongs to until a person clears it.
+
+If you enabled the TCP proxy only for this, turn it off afterwards.
+
+## 6. Verify end to end
+
+1. Open the dashboard's public URL.
+2. Pick an airframe and payload, leave the defaults, **Analyze flight
+   feasibility**.
+3. You should get a decision, an energy budget, and an acknowledgement prompt.
+
+Decisions and numbers come from `backend/suas/calculations/`, never from a
+model, so step 3 works with no `SUAS_OPENAI_API_KEY` set. Without that key the
+prose is deterministic template text; the numbers are identical either way.
+
+## Troubleshooting
+
+Read these by signature, not by guesswork.
+
+**Dashboard shows "Backend returned status 502".** The dashboard reached you; its
+server-side call to the planner did not. That 502 is generated by the dashboard
+when its `fetch` **throws**, so it means unreachable, not an error response -- a
+wrong API key surfaces as **401**, not this. Check in order:
+
+1. `BACKEND_API_URL` names the planner service **exactly** as Railway spells it.
+   A wrong name resolves to an empty string and the dashboard calls its own origin.
+2. The port is `${{planner.PORT}}`, not a literal.
+3. The planner's log says `http://[::]:PORT`, not `0.0.0.0`.
+
+**Dashboard shows 401.** `BACKEND_API_KEY` does not match `SUAS_API_KEY` exactly.
+Check for a trailing space or newline from copy-paste; the comparison is exact.
+
+**Build fails with `"/alembic.ini": not found`,** or any `COPY` failing on a
+file that is plainly committed. The build context is not what the Dockerfile
+expects. Check the planner's Root Directory is empty and `railway.json` is at
+the repository root. The leading slash in `"/alembic.ini"` means "the context
+root has no alembic.ini", which is true of the repository root and false of
+`backend/`. Two things disguise this: BuildKit runs `COPY` steps in parallel and
+aborts siblings on the first failure, so only one of several wrong paths reports
+an error; and unrelated steps report `cached` from an older build, which makes a
+path fault look like a cache fault.
+
+**Startup fails naming `SUAS_DATABASE_URL`.** The variable did not reach the
+service. If this is a service you meant to be the dashboard, its Root Directory
+is empty, so Railway built the planner from the root `railway.json` instead --
+set it to `frontend`.
+
+**`{"detail":"Not Found"}` in a browser.** You are on the planner, which has no
+route at `/`. It is a JSON API. Use `/ready`, or `/docs` for the browsable UI.
+If you can reach it from a browser at all, it has a public domain it does not
+need.
+
+**502 with no traceback and the log shows a hardcoded port.** Something is
+overriding the image's entrypoint -- check for a Start Command in the service
+settings. The image owns startup; `railway.json` carries no `startCommand`.
+
+**Briefs are deterministic fallback text.** `SUAS_OPENAI_API_KEY` is unset. A
+supported state, not an error: no model writes a number.
+
+**Retrieval is poor and `SUAS_EMBEDDING_PROVIDER` is unset.** The planner is
+using the hashing fallback. See step 3.
 
 ## Why not pgvector
 
@@ -183,48 +288,3 @@ passes roughly ten thousand chunks per configuration, or when retrieval latency
 shows up in the plan's p95. Until then, portable storage means the same schema
 runs on Railway's stock Postgres, on a pgvector image, and on SQLite in
 development, with no branch in the code.
-
-## Troubleshooting
-
-**`"/alembic.ini": not found`, or any `COPY` failing on a file that is plainly
-committed.** The build context is not what the Dockerfile expects. Check the
-Root Directory is empty and that `railway.json` is at the repository root.
-
-Read the leading slash in that error: `"/alembic.ini"` is a path at the *context
-root*, so the message is "the context root has no alembic.ini" -- which is true
-of the repository root and false of `backend/`. It is not a missing file, and it
-is not a stale cache. Two details make this failure read as something it is not:
-
-- Only one `COPY` reports an error even when several are wrong. BuildKit runs
-  them in parallel and aborts the siblings on the first failure, so the others
-  show `0ms` and no error.
-- Unrelated steps report `cached` from an older build, which makes the one
-  failing step look like a cache fault rather than a path fault.
-
-The way to confirm it is the context and not the file: `git ls-files` the path,
-then compare against what the context root actually contains.
-
-**502 from the generated domain, and the deploy log ends in a traceback.** The
-container started but the app never finished starting, so nothing is listening.
-Read the first lines rather than the traceback: the planner logs `Database: ...`
-(credentials stripped) before it connects. If that line names SQLite, or startup
-fails naming `SUAS_DATABASE_URL`, the variable did not reach the service.
-
-**502 with no traceback, and the log shows uvicorn on port 8000.** The container
-is serving a port the platform is not routing to. The image's entrypoint binds
-`${PORT:-8000}`, so this means something is overriding the entrypoint -- check
-for a Start Command set in the service settings.
-
-**The dashboard loads but shows "Backend returned status 502".** The dashboard
-reached you; its server-side call to the planner did not. That 502 is generated
-by the dashboard when the `fetch` throws, so it means unreachable, not an error
-response -- a bad API key would surface as 401, not this. Check, in order:
-`BACKEND_API_URL` names the real service; the port is `${{planner.PORT}}`; and
-the planner is listening on IPv6 (see above).
-
-**Briefs come back as deterministic fallback text.** `SUAS_OPENAI_API_KEY` is
-unset. That is a supported state, not an error -- the numbers are unaffected,
-since no model writes them.
-
-**Retrieval quality is poor and `SUAS_EMBEDDING_PROVIDER` is unset.** The
-planner is using the hashing fallback. See section 3.
