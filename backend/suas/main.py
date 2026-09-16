@@ -22,7 +22,7 @@ from suas.api.exception_handlers import register_exception_handlers
 from suas.api.observability import MetricsRegistry, RequestContextMiddleware
 from suas.api.ratelimit import SlidingWindowLimiter
 from suas.api.routes import router
-from suas.config import Settings, get_settings
+from suas.config import Settings, describe_database_url, get_settings
 from suas.db.engine import create_engine, create_schema, create_session_factory
 from suas.db.retention import purge_expired_threads
 from suas.db.seed import seed_reference_data
@@ -113,6 +113,17 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     configure_logging(settings.log_level, json_output=settings.json_logs)
     if not settings.auth_enabled:
         logger.warning("API authentication is disabled; set SUAS_API_KEY in production")
+    logger.info("Database: %s", describe_database_url(settings.database_url))
+    if not settings.uses_postgres:
+        # Reaching this in a deployment means SUAS_DATABASE_URL never arrived and
+        # the built-in default was used. The container filesystem is ephemeral
+        # and, for a non-root user, largely unwritable -- so this either loses
+        # every plan on restart or fails to open the file at all, and the
+        # traceback for the second one names sqlite3, never the missing variable.
+        logger.warning(
+            "Not using PostgreSQL. If this is a deployment, SUAS_DATABASE_URL is "
+            "unset and this database is ephemeral; set it to the Postgres service URL."
+        )
     resources = await _build_resources(settings)
     async with build_checkpointer(settings) as checkpointer:
         app.state.graph = build_mission_graph(resources.deps, checkpointer)

@@ -7,7 +7,7 @@ All runtime configuration is declared here with explicit types and defaults
 from functools import lru_cache
 from typing import Final
 
-from pydantic import Field, field_validator
+from pydantic import AliasChoices, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 DEFAULT_DATABASE_URL: Final[str] = "sqlite+aiosqlite:///./suas_local.db"
@@ -17,6 +17,22 @@ DEFAULT_WEATHER_URL: Final[str] = "https://api.open-meteo.com/v1/forecast"
 # `postgresql://`, Heroku-style providers still give `postgres://`.
 ASYNC_POSTGRES_SCHEME: Final[str] = "postgresql+psycopg://"
 DRIVERLESS_POSTGRES_SCHEMES: Final[tuple[str, ...]] = ("postgresql://", "postgres://")
+
+
+def describe_database_url(url: str) -> str:
+    """Return a credential-free description of ``url`` for logging.
+
+    A deployment that silently uses the wrong database is the expensive kind of
+    wrong, and the cheapest guard against it is saying out loud which one was
+    chosen. Credentials are stripped rather than masked in place: a log line is
+    copied into issues and screenshots, so the safe thing is for the secret
+    never to be on it.
+    """
+    scheme, separator, remainder = url.partition("://")
+    if not separator:
+        return scheme
+    location: str = remainder.rpartition("@")[2]
+    return f"{scheme}://{location}" if location else scheme
 
 
 def normalise_database_url(url: str) -> str:
@@ -46,15 +62,48 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         env_prefix="SUAS_",
         extra="ignore",
+        # database_url declares an explicit validation_alias, which would
+        # otherwise stop Settings(database_url=...) working by field name --
+        # the form the tests and every caller use.
+        populate_by_name=True,
     )
 
-    database_url: str = Field(default=DEFAULT_DATABASE_URL)
+    # Read SUAS_DATABASE_URL first, then the DATABASE_URL that Railway, Heroku and
+    # most managed providers set by convention. Without the second name, linking a
+    # Postgres service is not enough on its own and the app falls back to SQLite --
+    # which is how a deployment ends up on an ephemeral file nobody chose.
+    database_url: str = Field(
+        default=DEFAULT_DATABASE_URL,
+        validation_alias=AliasChoices("SUAS_DATABASE_URL", "DATABASE_URL"),
+    )
+    # The image sets this true (see backend/Dockerfile). SQLite is for local
+    # development and the test suite; a container has no durable filesystem to put
+    # it on, and on Railway it is not an option at all.
+    require_postgres: bool = Field(default=False)
 
     @field_validator("database_url")
     @classmethod
     def _add_async_driver(cls, value: str) -> str:
         """Accept a managed provider's URL verbatim (see normalise_database_url)."""
         return normalise_database_url(value)
+
+    @model_validator(mode="after")
+    def _refuse_non_postgres_when_required(self) -> "Settings":
+        """Fail at startup, by name, rather than at the first query by traceback.
+
+        Without this the app starts on the SQLite default and dies inside
+        aiosqlite with "unable to open database file" -- forty frames that never
+        mention the variable that was missing. One line that names it is worth
+        more than any amount of that.
+        """
+        if self.require_postgres and not self.uses_postgres:
+            raise ValueError(
+                "PostgreSQL is required here but the configured database is "
+                f"{describe_database_url(self.database_url)!r}. Set SUAS_DATABASE_URL "
+                "(or DATABASE_URL) to the Postgres service URL -- on Railway, "
+                "reference it as ${{Postgres.DATABASE_URL}}."
+            )
+        return self
 
     openai_api_key: str = Field(default="")
     openai_model: str = Field(default="gpt-4o-mini")

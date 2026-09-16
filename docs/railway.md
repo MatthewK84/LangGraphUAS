@@ -19,6 +19,17 @@ directly on the planner service, with no editing:
 SUAS_DATABASE_URL=${{Postgres.DATABASE_URL}}
 ```
 
+The planner also reads a plain `DATABASE_URL`, the name Railway and Heroku set
+by convention, so a linked Postgres service is enough on its own. Where both are
+present, `SUAS_DATABASE_URL` wins: it is the one someone set deliberately.
+
+**The image refuses to start on anything but PostgreSQL.** It sets
+`SUAS_REQUIRE_POSTGRES=true`, so a missing URL fails at startup with one line
+naming the variable, instead of falling back to a SQLite file the container
+cannot write and dying forty frames deep inside `aiosqlite` with "unable to open
+database file". SQLite stays the default for local development and the tests,
+which is the only place it is appropriate.
+
 Railway's variable is `postgresql://`, which SQLAlchemy maps to psycopg2 -- a
 driver this project does not install, and a synchronous one that could not serve
 the async engine anyway. `suas.config.normalise_database_url` rewrites a
@@ -178,6 +189,17 @@ is not a stale cache. Two details make this failure read as something it is not:
 
 The way to confirm it is the context and not the file: `git ls-files` the path,
 then compare against what the context root actually contains.
+
+**502 from the generated domain, and the deploy log ends in a traceback.** The
+container started but the app never finished starting, so nothing is listening.
+Read the first lines rather than the traceback: the planner logs `Database: ...`
+(credentials stripped) before it connects. If that line names SQLite, or startup
+fails naming `SUAS_DATABASE_URL`, the variable did not reach the service.
+
+**502 with no traceback, and the log shows uvicorn on port 8000.** The container
+is serving a port the platform is not routing to. The image's entrypoint binds
+`${PORT:-8000}`, so this means something is overriding the entrypoint -- check
+for a Start Command set in the service settings.
 
 **Briefs come back as deterministic fallback text.** `SUAS_OPENAI_API_KEY` is
 unset. That is a supported state, not an error -- the numbers are unaffected,
