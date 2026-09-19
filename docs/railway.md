@@ -198,21 +198,53 @@ Until this runs, retrieval returns nothing and citations read `unconfirmed`.
 Plans still work -- the corpus is not the oracle, the calculator is -- but no
 brief will cite a document.
 
-Ingest is offline by design: the planner never parses a document. Run it from a
-checkout against a connection string that reaches Railway from your machine. The
-private URL will not work from a laptop; use the public connection string from
-the Postgres service's **Connect** tab (Railway exposes one through a TCP
-proxy).
+**Ingest must use the same embedding settings as the planner.** Every chunk
+records the model that embedded it, and `retrieve()` scores only the rows whose
+`embedding_model` matches the embedder the planner is running
+(`backend/suas/rag/retrieve.py`). Ingest with the default hashing embedder while
+the planner is configured for `http`, and the corpus is stored under
+`hashing-v1-384`, queried under `sentence-transformers/...`, and every row is
+skipped. Retrieval returns nothing and nothing reports an error -- it looks
+exactly like an empty corpus.
+
+Ingest is offline by design: the planner never parses a document. Both the
+database and, if you are using it, the embedding service have to be reachable
+from wherever you run it.
+
+**If the planner uses the hashing embedder** (you skipped step 3), only the
+database is needed:
 
 ```bash
-SUAS_DATABASE_URL='<public connection string from the Connect tab>' \
+SUAS_DATABASE_URL='<public connection string from Postgres -> Connect>' \
   python3 backend/scripts/ingest_corpus.py --corpus corpus
 ```
+
+**If the planner uses the embedding service**, that service is private and a
+laptop cannot reach it. Temporarily generate a domain for it, ingest, then
+remove the domain again:
+
+```bash
+SUAS_DATABASE_URL='<public connection string from Postgres -> Connect>' \
+SUAS_EMBEDDING_PROVIDER=http \
+SUAS_EMBEDDING_URL='https://<temporary embeddings domain>/embed' \
+SUAS_EMBEDDING_MODEL_ID='sentence-transformers/all-MiniLM-L6-v2' \
+SUAS_EMBEDDING_DIMENSION=384 \
+  python3 backend/scripts/ingest_corpus.py --corpus corpus
+```
+
+`SUAS_EMBEDDING_MODEL_ID` and `SUAS_EMBEDDING_DIMENSION` must match the
+planner's exactly. They are what the chunks are filed under.
+
+The embedding service has no authentication of its own -- it is built to sit on
+a private network. While that temporary domain exists, anyone who finds it can
+use it. Remove it as soon as the ingest finishes, along with the Postgres TCP
+proxy if you enabled that only for this.
 
 Anything quarantined is reported, and blocks operational mode for the
 configuration it belongs to until a person clears it.
 
-If you enabled the TCP proxy only for this, turn it off afterwards.
+> **Check:** the ingest prints a per-document summary. Then, in the dashboard,
+> a plan's citations should read `confirmed` rather than `unconfirmed`.
 
 ## 6. Verify end to end
 
@@ -271,6 +303,12 @@ supported state, not an error: no model writes a number.
 
 **Retrieval is poor and `SUAS_EMBEDDING_PROVIDER` is unset.** The planner is
 using the hashing fallback. See step 3.
+
+**Retrieval returns nothing at all, and the corpus was ingested.** The planner
+and the ingest run disagree about the embedder. Chunks are filed under the
+model that embedded them and scored only against a matching one, so a mismatch
+skips every row without erroring. The planner logs how many it skipped. Re-run
+the ingest with the same `SUAS_EMBEDDING_*` values the planner has.
 
 ## Why not pgvector
 
