@@ -109,6 +109,59 @@ def resolve_citations(
     return kept, invented
 
 
+# Numbers that carry a unit are the ones that can fly an aircraft into the
+# ground. A bare integer in prose ("the 3 limiting factors") is not a claim about
+# the world; "90 W" is.
+_UNIT_NUMERIC: Final[re.Pattern[str]] = re.compile(
+    # (?!\w) rather than \b as the trailing guard: \b after "%" requires a word
+    # character next, so "55 %." never matched and percentages went unchecked.
+    r"(?<![\w.])(\d+(?:\.\d+)?)\s*(Wh|W|mAh|V|A|m/s|km/h|kph|mph|km|m|min|s|%|C)(?!\w)"
+)
+_ANY_NUMERIC: Final[re.Pattern[str]] = re.compile(r"(?<![\w.])(\d+(?:\.\d+)?)")
+
+
+def _supported_values(supporting_text: str) -> set[float]:
+    """Return every number appearing in text the brief is allowed to draw from."""
+    return {float(match) for match in _ANY_NUMERIC.findall(supporting_text)}
+
+
+def _is_supported(literal: str, supported: set[float]) -> bool:
+    """Return whether a prose number is a rounding of some supported number.
+
+    Rounding is legitimate: a calculator producing 119.94 W and prose saying
+    "120 W" is the model writing readably, not inventing. Matching at the
+    precision the prose chose accepts that without accepting 90 W.
+    """
+    decimals: int = len(literal.partition(".")[2])
+    target: float = float(literal)
+    return any(round(value, decimals) == target for value in supported)
+
+
+def unsupported_numerics(prose: str, supporting_text: str) -> list[str]:
+    """Return unit-bearing numbers in prose that trace to nothing.
+
+    The model is told to state no number that is not in the assessment or
+    verbatim in evidence; this verifies it rather than trusting it. Every
+    instance is returned so the caller can log each one -- see the
+    unsupported_numeric_rate row in docs/rag-eval.md.
+
+    **This is a tripwire, not a proof, and it is unit-blind.** Matching is on the
+    numeric value alone, so a wind speed of 6.9 m/s in the supporting text will
+    accept "7 W" in prose. Making it unit-aware would mean inferring units from
+    JSON key suffixes, which cannot work for numbers quoted out of citation text
+    -- free prose carries no key. It catches the case it exists for, a wattage
+    the calculator never produced, and it will miss a fabricated number that
+    happens to collide with an unrelated quantity. The seal is what makes that
+    survivable: no number here can change a decision or a stored field.
+    """
+    supported: set[float] = _supported_values(supporting_text)
+    found: list[str] = []
+    for literal, unit in _UNIT_NUMERIC.findall(prose):
+        if not _is_supported(literal, supported):
+            found.append(f"{literal} {unit}")
+    return found
+
+
 def render_template_brief(assessment: DeterministicAssessment) -> str:
     """Return a brief built only from the sealed assessment.
 

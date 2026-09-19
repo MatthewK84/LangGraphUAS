@@ -5,6 +5,7 @@ carry no global state and are individually testable. Nodes return only the state
 keys they update, which LangGraph merges into the running state.
 """
 
+import json
 import logging
 from collections.abc import Awaitable, Callable
 from typing import Any, Final
@@ -21,7 +22,7 @@ from suas.db.corpus import has_open_quarantine
 from suas.db.repository import get_aircraft, get_payload
 from suas.errors import ReportGenerationError, SuasError
 from suas.graph.dependencies import GraphDependencies
-from suas.graph.seal import find_contradiction, render_template_brief
+from suas.graph.seal import find_contradiction, render_template_brief, unsupported_numerics
 from suas.graph.state import MissionState
 from suas.rag.retrieve import retrieve
 from suas.schemas.assessment import AssessmentMode, DeterministicAssessment
@@ -169,14 +170,42 @@ def _vet_prose(report: str, state: MissionState) -> tuple[str, list[str]]:
         return report, []
     assessment = DeterministicAssessment.model_validate(assessment_dump)
     found: str | None = find_contradiction(report, assessment.decision)
-    if found is None:
-        return report, []
-    logger.warning(
-        "Brief contradicts sealed decision %s: found %r. Substituting template.",
-        assessment.decision.value,
-        found,
-    )
-    return render_template_brief(assessment), [f"contradiction:{found.lower()}"]
+    if found is not None:
+        logger.warning(
+            "Brief contradicts sealed decision %s: found %r. Substituting template.",
+            assessment.decision.value,
+            found,
+        )
+        return render_template_brief(assessment), [f"contradiction:{found.lower()}"]
+
+    invented: list[str] = unsupported_numerics(report, _supporting_text(state))
+    if invented:
+        # Not a rate check. A brief is short, and one wattage the calculator did
+        # not produce is the entire failure mode this exists to catch -- see the
+        # unsupported_numeric_rate row in docs/rag-eval.md for the corpus-level
+        # version of the same measurement.
+        for value in invented:
+            logger.warning("Brief states unsupported numeric %r. Substituting template.", value)
+        return render_template_brief(assessment), [
+            f"unsupported_numeric:{value.lower()}" for value in invented
+        ]
+    return report, []
+
+
+def _supporting_text(state: MissionState) -> str:
+    """Return every source a brief may legitimately draw a number from.
+
+    The sealed assessment, the calculator's own output, the weather reading it
+    was computed against, and the text of the chunks retrieved for this request.
+    Anything outside this is the model writing from memory.
+    """
+    parts: list[str] = []
+    for key in ("assessment", "calculations", "weather"):
+        value = state.get(key)
+        if value is not None:
+            parts.append(json.dumps(value, default=str))
+    parts.extend(str(citation.get("text", "")) for citation in state.get("citations") or [])
+    return " ".join(parts)
 
 
 # An operator may revise and re-review, but not forever. The loop exists so a
