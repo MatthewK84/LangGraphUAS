@@ -1,0 +1,12 @@
+Inspired Flight IF1200A - operating limits (SYNTHETIC EVAL DOCUMENT, NOT A PUBLICATION)
+
+Operating temperature. The airframe is rated from -20 C to 50 C.
+
+Maximum wind. Sustained wind resistance is published as 12 m/s.
+
+Battery capacity. The dual-pack configuration carries 1332 Wh total.
+
+Maximum takeoff mass. Maximum gross takeoff mass is 15.9 kg including payload.
+
+Payload capacity. The airframe carries up to 4.5 kg of payload within the gross
+mass limit above.
