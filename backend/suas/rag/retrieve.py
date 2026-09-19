@@ -55,6 +55,118 @@ class Evidence:
     score: float
 
 
+# Words that carry no evidence. A question is mostly these, and a chunk that
+# matches only on them matches on nothing. Kept deliberately small and explicit:
+# a long stoplist starts discarding real terms, and "maximum" or "minimum" would
+# be exactly the wrong things to drop.
+_FILLER: Final[frozenset[str]] = frozenset(
+    {
+        "a",
+        "an",
+        "and",
+        "are",
+        "at",
+        "be",
+        "before",
+        "can",
+        "does",
+        "do",
+        "for",
+        "from",
+        "has",
+        "have",
+        "how",
+        "i",
+        "in",
+        "is",
+        "it",
+        "its",
+        "many",
+        "much",
+        "must",
+        "of",
+        "on",
+        "or",
+        "should",
+        "that",
+        "the",
+        "this",
+        "to",
+        "was",
+        "what",
+        "when",
+        "where",
+        "which",
+        "will",
+        "with",
+        "did",
+    }
+)
+
+
+def content_terms(text: str) -> set[str]:
+    """Return the terms in text that could carry evidence."""
+    return {term for term in _WORD.findall(text.lower()) if term not in _FILLER}
+
+
+# Terms that say how a question is phrased rather than what it is about. Every
+# limit in a datasheet is a "maximum" something, so matching on "maximum" alone
+# matches every limit -- which is how "maximum operating altitude" came back with
+# the wind limit as evidence. These still count toward ranking; they just cannot
+# be the only reason a chunk is considered evidence at all.
+_QUALIFIER: Final[frozenset[str]] = frozenset(
+    {
+        "maximum",
+        "minimum",
+        "max",
+        "min",
+        "highest",
+        "lowest",
+        "operating",
+        "rate",
+        "rated",
+        "published",
+        "limit",
+        "limits",
+        "total",
+        "standard",
+        "aircraft",
+        "airframe",
+        "this",
+        "handle",
+        "hold",
+    }
+)
+
+
+def subject_terms(text: str) -> set[str]:
+    """Return the terms that say what a question or chunk is about."""
+    return content_terms(text) - _QUALIFIER
+
+
+def _shares_content(query: str, text: str) -> bool:
+    """Return whether a chunk shares a subject term with the query.
+
+    The floor that lets retrieval abstain. Without it, fusion always returns
+    top_k: the vector leg scores every chunk non-zero, so a question the corpus
+    cannot answer comes back with evidence anyway -- a fabricated limit wearing a
+    citation, which is worse than an admitted gap.
+
+    A caveat that belongs with the number rather than buried: ``_QUALIFIER`` was
+    chosen by reading which fixtures failed, so eval/rag_fixtures.jsonl is not a
+    held-out measurement of *this* decision. It remains a valid regression
+    detector -- the zero-tolerance gates catch a filter that stops working
+    whether or not the stoplist was tuned -- but the absolute false_confirm
+    figure should be re-earned against questions written after this change.
+    """
+    query_subjects = subject_terms(query)
+    if not query_subjects:
+        # Nothing but qualifiers. Fall back to any content term rather than
+        # refusing outright, so a terse question is answered rather than dropped.
+        return bool(content_terms(query) & content_terms(text))
+    return bool(query_subjects & subject_terms(text))
+
+
 def _lexical_score(query: str, text: str) -> float:
     """Return the fraction of query terms present in the text.
 
@@ -120,6 +232,9 @@ async def retrieve(
         statement = statement.where(CorpusChunkRow.field_path == field_path)
 
     rows = list((await session.execute(statement)).all())
+    # Applied before scoring, not after: a chunk sharing no substantive term
+    # with the question is not a weak match to be ranked low, it is not evidence.
+    rows = [pair for pair in rows if _shares_content(query, pair[0].text)]
     if not rows:
         return []
 

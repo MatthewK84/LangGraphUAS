@@ -1,0 +1,32 @@
+{
+  "_comment": "Synthetic documents for the retrieval evaluation. kind=eval_fixture is refused by the production ingest path. The figures here are written to resemble real datasheets so retrieval logic can be measured; they are NOT a source of truth and must never be cited operationally. Do not merge this manifest into corpus/manifest.json.",
+  "documents": [
+    {
+      "path": "astro-limits.txt",
+      "sha256": "d29e9b1d894edb867c9492799a63d4d59eb2f826e145b05afa718c3854fb6b43",
+      "source_url": "https://docs.freeflysystems.com/astro/limits",
+      "retrieved_at": "2026-09-19",
+      "kind": "eval_fixture",
+      "airframe_config_id": "Freefly_Astro_Max",
+      "license": "Synthetic evaluation document. Not a manufacturer publication."
+    },
+    {
+      "path": "anafi-limits.txt",
+      "sha256": "7e8d27c4deeac89a90f5f4f5a8e762e1812d0516a0a54211aa6f42d1374a8425",
+      "source_url": "https://www.parrot.com/en/support/documentation/anafi-usa",
+      "retrieved_at": "2026-09-19",
+      "kind": "eval_fixture",
+      "airframe_config_id": "Parrot_ANAFI_USA",
+      "license": "Synthetic evaluation document. Not a manufacturer publication."
+    },
+    {
+      "path": "if1200a-limits.txt",
+      "sha256": "6b7b1e890881afc5b21f5e9c5c5493b63888f4f31529270d54089fd793d3d925",
+      "source_url": "https://docs.inspiredflight.com/if1200a/limits",
+      "retrieved_at": "2026-09-19",
+      "kind": "eval_fixture",
+      "airframe_config_id": "InspiredFlight_IF1200A",
+      "license": "Synthetic evaluation document. Not a manufacturer publication."
+    }
+  ]
+}

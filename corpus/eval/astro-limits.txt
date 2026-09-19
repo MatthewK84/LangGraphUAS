@@ -1,0 +1,17 @@
+Freefly Astro - operating limits (SYNTHETIC EVAL DOCUMENT, NOT A PUBLICATION)
+
+Operating temperature. The airframe is rated from -20 C to 50 C. Endurance
+figures published elsewhere assume conditions near the middle of that band and
+degrade at both ends.
+
+Battery temperature at takeoff. Do not launch with pack temperature below 10 C.
+Once airborne, self-heating sustains the pack. This is a limit on the pack and
+its procedure, not on the airframe, and the two are frequently confused.
+
+Maximum wind. Sustained wind of 12 m/s is the published limit for the airframe.
+Gusts beyond that figure are outside the tested envelope.
+
+Battery capacity. The standard pack is rated 274 Wh. Usable capacity below that
+figure should be assumed whenever the pack is cold.
+
+Maximum takeoff mass. The airframe is rated to 6.8 kg including payload.

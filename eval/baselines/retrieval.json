@@ -1,0 +1,95 @@
+{
+  "retriever_version": "9581deb817bb2697",
+  "embedder": "hashing-v1-384",
+  "fixtures": 40,
+  "answerable": 32,
+  "unanswerable": 8,
+  "gated": {
+    "wrong_config_leak": {
+      "rate": 0.0,
+      "ci95": [
+        0.0,
+        0.0876
+      ],
+      "n": 40
+    },
+    "hard_negative_above_positive": {
+      "rate": 0.0312,
+      "ci95": [
+        0.0055,
+        0.1574
+      ],
+      "n": 32
+    },
+    "false_confirm_rate": {
+      "rate": 0.0,
+      "ci95": [
+        0.0,
+        0.3244
+      ],
+      "n": 8
+    },
+    "recall_at_4": {
+      "rate": 0.9375,
+      "ci95": [
+        0.7985,
+        0.9827
+      ],
+      "n": 32
+    },
+    "mrr": 0.9219
+  },
+  "reported": {
+    "precision_at_4": 0.7005,
+    "abstain_rate": {
+      "rate": 0.0312,
+      "ci95": [
+        0.0055,
+        0.1574
+      ],
+      "n": 32
+    },
+    "field_path_purity": null
+  },
+  "per_class_recall": {
+    "battery_capacity": {
+      "n": 6,
+      "recall": 6
+    },
+    "endurance": {
+      "n": 2,
+      "recall": 1
+    },
+    "max_wind": {
+      "n": 6,
+      "recall": 6
+    },
+    "operating_temperature": {
+      "n": 8,
+      "recall": 7
+    },
+    "pack_takeoff_temperature": {
+      "n": 3,
+      "recall": 3
+    },
+    "payload_capacity": {
+      "n": 2,
+      "recall": 2
+    },
+    "takeoff_mass": {
+      "n": 5,
+      "recall": 5
+    },
+    "unanswerable": {
+      "n": 8,
+      "recall": 0
+    }
+  },
+  "notes": [
+    "Measured with HashingEmbedder, a deterministic lexical projection, because CI cannot run sentence-transformers. recall_at_4 and mrr are therefore a REGRESSION FLOOR for retrieval logic, not a claim about retrieval quality. Re-measure once the embedding service is deployed, and do not compare across retriever_version.",
+    "The corpus under corpus/eval/ is synthetic, written to resemble datasheet structure. Its figures are not a source of truth and must never be cited operationally.",
+    "field_path_purity is null because no document in this corpus declares a field_path. Null is not zero and must not be averaged.",
+    "hard_negative_above_positive is non-zero on one fixture, tm-05 ('gross weight limit'), which ranks the payload paragraph above the gross-mass paragraph. Resolving it needs weight/mass synonymy, which a lexical projection cannot do and a real embedding model can. Recorded rather than removed: tuning the corpus until the metric reads zero measures the corpus, not the retriever.",
+    "The _QUALIFIER stoplist in suas/rag/retrieve.py was chosen by reading which fixtures failed, so these fixtures are not a held-out measurement of that decision. The gates remain valid regression detectors; the absolute false_confirm figure should be re-earned against questions written after that change."
+  ]
+}

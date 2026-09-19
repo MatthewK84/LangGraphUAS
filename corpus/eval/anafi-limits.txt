@@ -1,0 +1,14 @@
+Parrot ANAFI USA - operating limits (SYNTHETIC EVAL DOCUMENT, NOT A PUBLICATION)
+
+Operating temperature. The aircraft operates from -10 C to 43 C. The upper
+figure is the conservative one carried in the reference pack.
+
+Maximum wind. The published resistance figure is 14.7 m/s for level flight.
+
+Battery capacity. The smart battery is rated 3400 mAh at 11.55 V, which is
+approximately 39 Wh.
+
+Maximum takeoff mass. Total mass is 500 g with no external payload fitted.
+
+Flight time. Published endurance is 32 minutes under the manufacturer's test
+profile, which is not a mission profile.

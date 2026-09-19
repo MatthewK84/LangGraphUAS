@@ -395,12 +395,21 @@ async def test_the_invisible_trap_is_quarantined_at_ingest(
             airframe_config_id="InspiredFlight_IF1200A",
             embedder=embedder,
         )
+        # The ordinary paragraph survives: a screener that quarantines
+        # everything proves nothing, and would take every real datasheet with
+        # it. Asked for with its own terms, because retrieval now abstains on a
+        # query that shares no subject with the corpus rather than returning
+        # its best guess.
+        survivors = await retrieve(
+            session,
+            query="maximum wind speed",
+            airframe_config_id="InspiredFlight_IF1200A",
+            embedder=embedder,
+        )
 
     assert quarantined, "a zero-width-padded imperative reached the corpus clean"
     assert all("nore prev" not in hit.text for hit in hits)
-    # The ordinary paragraph survives: a screener that quarantines everything
-    # proves nothing, and would take every real datasheet down with it.
-    assert any("Maximum wind speed" in hit.text for hit in hits)
+    assert any("Maximum wind speed" in hit.text for hit in survivors)
 
 
 _SECTION = re.compile(r"^# --- \d+\. (?P<label>.+?) -+$", re.MULTILINE)

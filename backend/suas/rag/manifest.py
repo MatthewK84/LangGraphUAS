@@ -37,12 +37,12 @@ ALLOWED_HOSTS: Final[frozenset[str]] = frozenset(
 )
 
 DOCUMENT_KINDS: Final[frozenset[str]] = frozenset(
-    {"datasheet", "blue_list", "procedure", "eval_trap"}
+    {"datasheet", "blue_list", "procedure", "eval_trap", "eval_fixture"}
 )
 
 # Never ingested by the production path, whatever the manifest says. Trap
 # documents exist to be retrieved in the evaluation harness and nowhere else.
-PRODUCTION_FORBIDDEN_KINDS: Final[frozenset[str]] = frozenset({"eval_trap"})
+PRODUCTION_FORBIDDEN_KINDS: Final[frozenset[str]] = frozenset({"eval_trap", "eval_fixture"})
 
 
 class ManifestError(SuasError):

@@ -11,6 +11,7 @@ import json
 import logging
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
+from hashlib import sha256
 from typing import Final
 from uuid import uuid4
 
@@ -54,6 +55,20 @@ def split_paragraphs(text: str) -> list[str]:
     """
     parts = [part.strip() for part in text.split("\n\n")]
     return [part for part in parts if len(part) >= MIN_CHUNK_CHARS]
+
+
+def chunk_identifier(document_path: str, ordinal: int) -> str:
+    """Return a stable id for the nth surviving chunk of a document.
+
+    Derived rather than random so that a chunk keeps its id across re-ingests.
+    An evaluation fixture names the chunks it expects to be retrieved, and a
+    fixture naming a uuid4 is a fixture that expires the next time anyone runs
+    the ingest. The ordinal counts screened chunks, so quarantining a paragraph
+    renumbers what follows it -- acceptable, because a corpus document changing
+    is exactly when fixtures should be re-checked.
+    """
+    digest = sha256(f"{document_path}\x00{ordinal}".encode()).hexdigest()
+    return f"c-{digest[:16]}"
 
 
 async def ingest_document(
@@ -117,7 +132,7 @@ async def ingest_document(
         summary.chunks += 1
         session.add(
             CorpusChunkRow(
-                chunk_id=str(uuid4()),
+                chunk_id=chunk_identifier(entry.path, index),
                 document_id=document_id,
                 airframe_config_id=entry.airframe_config_id,
                 field_path=entry.field_path,
