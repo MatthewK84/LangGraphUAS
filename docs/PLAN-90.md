@@ -18,6 +18,58 @@ beside it:
 | `docs/adr/` | The four decisions that everything else assumes |
 | `docs/backlog/` | The seventeen opening issues, ready to file |
 
+## Status as of 2026-09-19
+
+Calendar day 7 of 90. The calendar is not the progress bar: all seventeen
+opening issues are merged, including the Phase 3 eval work, so the backlog is
+ahead of the dates. What follows is measured from `main`, not from the plan.
+
+### On main
+
+- **Sealed decision layer.** `decision` and every watt come from
+  `backend/suas/calculations/`. The model writes prose and nothing else.
+- **Human acknowledgement before the brief.** `human_ack` precedes `report`,
+  asserted by a test that fails if the edge is rewired (ADR-004).
+- **Replan against live telemetry**, as a child thread of the briefed one.
+- **Explicit weather states.** `live | cached_fresh | cached_stale | fallback |
+  error`, each one distinguishable on the wire.
+- **Injection matrix**, thirteen rows, run against a trap corpus production
+  refuses by `kind`.
+- **Retrieval gates** in CI: configuration leak and false-confirm at zero.
+- **Offline eval harness**: 40 retrieval fixtures, 30 frozen mission fixtures,
+  both with committed baselines.
+
+### Blocking operational mode
+
+Two blockers fire on every plan today, even given live weather and a complete
+assessment. Both are emitted by `operational_blockers()` in
+`backend/suas/calculations/gate.py`; the names below are `Blocker` enum values,
+not prose.
+
+| Blocker | Why it fires | What clears it |
+|---|---|---|
+| `POWER_NOT_OPERATIONAL_GRADE` | Every energy-budget figure in the bundled data is `derived` or `estimate`. None is read from a manufacturer document or a measured flight log. | Issues #75 and #76: one field promoted to `datasheet`, and one flight log that can move a power field. |
+| `BLUE_LIST_SNAPSHOT_UNAVAILABLE` | No Blue List snapshot is stored, so configuration clearance cannot be asserted at all. This one is unconditional -- the gate appends it on every call. | Issue #78: a stored snapshot plus a freshness blocker, which turns a standing blocker into a real check. |
+
+`PROVENANCE_INCOMPLETE` does **not** fire: every field that must carry a
+provenance record has one. The records exist; what they say is not yet good
+enough.
+
+**Operational mode is therefore unreachable today, and that is the honest
+state.** The gate fails closed by design: a condition this codebase cannot
+verify is a blocker rather than a pass. Issue #77 closes this either by making
+one lab configuration pass, or by writing the refusal down.
+
+### Next three PRs
+
+1. **#72** — this status block.
+2. **#73** — split `engineering-practices.md` into Enforced in CI and
+   Aspirational, and reconcile the README's Known Limitations against it.
+3. **#74** — a live issue for the 76 reference fields, replacing the dead link,
+   with `CITATIONS.md` regenerated from the seed JSON so the two cannot drift.
+
+Updated in any PR that changes what is on `main`.
+
 ## Standing rules (all 90 days)
 
 1. The LLM may write `brief_markdown`, `suggested_contingencies`, and
