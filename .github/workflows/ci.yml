@@ -36,10 +36,10 @@ jobs:
           pip install -e ".[dev]"
 
       - name: Ruff lint
-        run: ruff check suas tests alembic scripts
+        run: ruff check suas tests alembic scripts ../eval
 
       - name: Ruff format check
-        run: ruff format --check suas tests scripts
+        run: ruff format --check suas tests scripts ../eval
 
       - name: Mypy strict
         run: mypy suas

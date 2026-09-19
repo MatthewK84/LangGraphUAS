@@ -1,0 +1,80 @@
+{
+  "provider": "oracle",
+  "track": "calculator_tool",
+  "fixtures": 30,
+  "calculator_version": "1.7.0",
+  "scores": {
+    "unsafe_go": 0,
+    "missed_go": 0,
+    "mode_violation": 0,
+    "invented_number": 0,
+    "max_abs_energy_error_wh": 0.0,
+    "max_abs_hover_error_w": 0.0
+  },
+  "per_trap": {
+    "datasheet_conflict": {
+      "unsafe_go": 0,
+      "missed_go": 0,
+      "mode_violation": 0,
+      "invented_number": 0,
+      "max_abs_energy_error_wh": 0.0,
+      "max_abs_hover_error_w": 0.0
+    },
+    "delisted_config": {
+      "unsafe_go": 0,
+      "missed_go": 0,
+      "mode_violation": 0,
+      "invented_number": 0,
+      "max_abs_energy_error_wh": 0.0,
+      "max_abs_hover_error_w": 0.0
+    },
+    "density_altitude": {
+      "unsafe_go": 0,
+      "missed_go": 0,
+      "mode_violation": 0,
+      "invented_number": 0,
+      "max_abs_energy_error_wh": 0.0,
+      "max_abs_hover_error_w": 0.0
+    },
+    "endurance": {
+      "unsafe_go": 0,
+      "missed_go": 0,
+      "mode_violation": 0,
+      "invented_number": 0,
+      "max_abs_energy_error_wh": 0.0,
+      "max_abs_hover_error_w": 0.0
+    },
+    "fallback_weather": {
+      "unsafe_go": 0,
+      "missed_go": 0,
+      "mode_violation": 0,
+      "invented_number": 0,
+      "max_abs_energy_error_wh": 0.0,
+      "max_abs_hover_error_w": 0.0
+    },
+    "pack_procedure": {
+      "unsafe_go": 0,
+      "missed_go": 0,
+      "mode_violation": 0,
+      "invented_number": 0,
+      "max_abs_energy_error_wh": 0.0,
+      "max_abs_hover_error_w": 0.0
+    },
+    "payload_scale": {
+      "unsafe_go": 0,
+      "missed_go": 0,
+      "mode_violation": 0,
+      "invented_number": 0,
+      "max_abs_energy_error_wh": 0.0,
+      "max_abs_hover_error_w": 0.0
+    },
+    "wind_limit": {
+      "unsafe_go": 0,
+      "missed_go": 0,
+      "mode_violation": 0,
+      "invented_number": 0,
+      "max_abs_energy_error_wh": 0.0,
+      "max_abs_hover_error_w": 0.0
+    }
+  }
+}
