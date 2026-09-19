@@ -57,6 +57,8 @@ class MetricsRegistry:
         # A gauge rather than a counter: ingest is an offline act, so what
         # matters at runtime is how much paperwork is currently untrusted.
         self._quarantine_open: int = 0
+        self._brief_suppressed: dict[str, int] = {}
+        self._hallucinated_citations: int = 0
 
     def record_request(self, method: str, path: str, code: int, duration_s: float) -> None:
         """Record one completed HTTP request."""
@@ -78,6 +80,24 @@ class MetricsRegistry:
             return
         with self._lock:
             self._seal_violations += count
+
+    def record_brief_suppressed(self, reason: str) -> None:
+        """Count a brief replaced by a template, by why it was replaced.
+
+        Non-zero is an incident, not a statistic: it means generated prose
+        disagreed with the sealed assessment or stated a number that traces to
+        nothing. The reason is the label because the two causes need different
+        responses -- see docs/ops.md.
+        """
+        with self._lock:
+            self._brief_suppressed[reason] = self._brief_suppressed.get(reason, 0) + 1
+
+    def record_hallucinated_citations(self, count: int) -> None:
+        """Count citations naming a chunk this request never retrieved."""
+        if count <= 0:
+            return
+        with self._lock:
+            self._hallucinated_citations += count
 
     def set_quarantine_open(self, count: int) -> None:
         """Record how many corpus chunks are currently awaiting review."""
@@ -122,6 +142,19 @@ class MetricsRegistry:
                 "sealed assessment.",
                 "# TYPE suas_llm_field_violations_total counter",
                 f"suas_llm_field_violations_total {self._seal_violations}",
+            ]
+            lines += [
+                "# HELP suas_brief_suppressed_total Briefs replaced by a template "
+                "rendered from the sealed assessment.",
+                "# TYPE suas_brief_suppressed_total counter",
+            ]
+            for reason, count in sorted(self._brief_suppressed.items()):
+                lines.append(f'suas_brief_suppressed_total{{reason="{reason}"}} {count}')
+            lines += [
+                "# HELP suas_hallucinated_citation_total Citations naming a chunk that "
+                "was never retrieved.",
+                "# TYPE suas_hallucinated_citation_total counter",
+                f"suas_hallucinated_citation_total {self._hallucinated_citations}",
             ]
             lines += [
                 "# HELP suas_corpus_quarantine_open Corpus chunks held back by the "

@@ -21,3 +21,22 @@ Corollaries: hard `max_tokens` and wall-clock timeout on the LLM client; `/api/r
 - [ ] Both tests fail when the invariant is removed — verify by removing each once
 - [ ] `docs/ops.md` records that a suppressed brief does not invalidate an ack
 - [ ] ADR reviewed and marked Accepted
+
+## Shipped
+
+ADR-004 is Accepted. `docs/ops.md` records that a suppressed brief does not
+invalidate an acknowledgement. Both invariants are asserted by tests that live
+in `backend/tests/test_injection.py` as matrix rows 12 and 13, rather than in a
+file of their own -- they are injection controls, and keeping them in the matrix
+means the drift test counts them.
+
+Both were verified by removing the invariant once, which is the acceptance
+criterion that matters:
+
+- Rewiring `cite_limits -> report` (the "move report earlier to hide latency"
+  refactor the ADR names) fails `test_human_ack_precedes_report`.
+- Binding a `search_corpus` tool to the report model fails
+  `test_the_report_node_has_no_tools_bound`, which reads the bound-tool list
+  rather than trusting the model type.
+
+Both pass again once restored.

@@ -11,6 +11,7 @@ from sqlalchemy import text
 
 from suas import __version__
 from suas.api.dependencies import GraphDep, MetricsDep, ReplanGraphDep, SessionFactoryDep
+from suas.api.observability import MetricsRegistry
 from suas.api.rate_limit_dep import enforce_rate_limit
 from suas.api.security import require_api_key
 from suas.api.thread_locks import thread_lock
@@ -189,10 +190,23 @@ async def plan_mission(
         is_viable=result.is_viable,
         weather_live=result.weather is None or result.weather.is_live,
     )
-    violations = final_state.get("seal_violations")
-    if isinstance(violations, list):
-        metrics.record_seal_violations(len(violations))
+    _record_violations(metrics, final_state.get("seal_violations"))
     return result
+
+
+def _record_violations(metrics: MetricsRegistry, violations: object) -> None:
+    """Record seal violations, split by the reason encoded in each code.
+
+    Codes are "<reason>:<detail>". The reason is what an operator needs: a
+    contradiction and an invented number are both suppressions, but one suggests
+    an injected document and the other a model writing from memory.
+    """
+    if not isinstance(violations, list):
+        return
+    metrics.record_seal_violations(len(violations))
+    for code in violations:
+        reason: str = str(code).partition(":")[0] or "unknown"
+        metrics.record_brief_suppressed(reason)
 
 
 def _estimate_summary(
@@ -324,9 +338,7 @@ async def acknowledge_plan(
         elif request.action == "confirm" and locked is None:
             logger.warning("Acknowledged thread %s has no retention row", thread_id)
 
-    violations = state.get("seal_violations")
-    if isinstance(violations, list):
-        metrics.record_seal_violations(len(violations))
+    _record_violations(metrics, state.get("seal_violations"))
     return _build_plan_response(state, thread_id)
 
 
