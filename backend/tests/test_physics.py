@@ -207,3 +207,39 @@ def test_descent_energy_takes_no_credit_for_recovered_energy() -> None:
     )
     assert energy > 0.0
     assert abs(energy - (1000.0 * 40.0) / 3600.0) < 0.01
+
+
+def test_air_density_ratio_floors_when_the_base_is_exactly_zero() -> None:
+    """At the top of the ISA relation the base is 0.0 exactly, and the floor holds."""
+    assert calculate_air_density_ratio(1 / 2.25577e-5) == 0.01
+
+
+def test_power_scaling_returns_the_reference_for_non_physical_ratios() -> None:
+    assert scale_power_for_conditions(100.0, 0.0, 1.0) == 100.0
+    assert scale_power_for_conditions(100.0, 1.0, 0.0) == 100.0
+    assert scale_power_for_conditions(100.0, -1.0, 1.0) == 100.0
+
+
+def test_climb_energy_is_zero_for_a_degenerate_profile() -> None:
+    """A negative height, no climb rate, or no efficiency charges nothing rather than raising."""
+    base = {
+        "height_m": 100.0,
+        "mass_kg": 6.0,
+        "hover_power_w": 800.0,
+        "payload_power_w": 20.0,
+        "vertical_speed_mps": 3.0,
+        "efficiency": 0.6,
+    }
+    for override in ({"height_m": -10.0}, {"vertical_speed_mps": 0.0}, {"efficiency": 0.0}):
+        assert calculate_climb_energy(**{**base, **override}) == 0.0
+
+
+def test_descent_energy_is_zero_for_a_degenerate_profile() -> None:
+    base = {
+        "height_m": 100.0,
+        "hover_power_w": 800.0,
+        "payload_power_w": 20.0,
+        "vertical_speed_mps": 3.0,
+    }
+    for override in ({"height_m": -10.0}, {"vertical_speed_mps": 0.0}):
+        assert calculate_descent_energy(**{**base, **override}) == 0.0

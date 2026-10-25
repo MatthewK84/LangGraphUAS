@@ -28,7 +28,7 @@ from suas.graph.seal import (
     render_template_brief,
     seal_brief,
 )
-from suas.schemas.assessment import Decision, DeterministicAssessment
+from suas.schemas.assessment import AssessmentMode, Blocker, Decision, DeterministicAssessment
 from suas.schemas.domain import Aircraft, Payload
 from suas.schemas.requests import MissionParams
 from suas.schemas.responses import WeatherReading
@@ -277,3 +277,31 @@ async def test_report_node_substitutes_the_template_on_a_contradiction(
     assert "Cleared for takeoff" not in written["report"]
     assert "NO-GO" in written["report"]
     assert written["seal_violations"] != []
+
+
+def test_insufficient_data_names_every_input_blocker() -> None:
+    assessment = insufficient_data_assessment(reason="Unknown aircraft.", inputs={})
+    assert assessment.mode is AssessmentMode.ADVISORY
+    assert assessment.blockers == [
+        Blocker.WEATHER_NOT_LIVE,
+        Blocker.WEATHER_DEGRADED,
+        Blocker.ASSESSMENT_INCOMPLETE,
+        Blocker.PROVENANCE_INCOMPLETE,
+        Blocker.POWER_NOT_OPERATIONAL_GRADE,
+        Blocker.BLUE_LIST_SNAPSHOT_UNAVAILABLE,
+    ]
+
+
+def test_an_assessment_without_weather_is_degraded_but_complete() -> None:
+    """No reading is a degraded one; the calculation itself still ran to completion."""
+    calculations = assess_mission(
+        aircraft=_AIRCRAFT, payload=_PAYLOAD, params=_PARAMS, weather=CALM_WEATHER
+    )
+    assessment = build_assessment(calculations=calculations, inputs={})
+    assert assessment.blockers == [
+        Blocker.WEATHER_NOT_LIVE,
+        Blocker.WEATHER_DEGRADED,
+        Blocker.PROVENANCE_INCOMPLETE,
+        Blocker.POWER_NOT_OPERATIONAL_GRADE,
+        Blocker.BLUE_LIST_SNAPSHOT_UNAVAILABLE,
+    ]
