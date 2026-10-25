@@ -42,6 +42,13 @@ include = ["suas*"]
 asyncio_mode = "auto"
 testpaths = ["tests"]
 
+[tool.coverage.run]
+# SQLAlchemy's async engine runs on greenlets. Without this, coverage stops
+# tracing after the first greenlet switch inside a request, so lines that run
+# after an awaited database call are reported as uncovered even when tests
+# execute them.
+concurrency = ["greenlet", "thread"]
+
 [tool.mypy]
 python_version = "3.11"
 strict = true
