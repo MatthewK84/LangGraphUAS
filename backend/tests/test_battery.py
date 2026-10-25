@@ -57,3 +57,10 @@ def test_cold_can_flip_a_viable_mission_to_not_viable() -> None:
     cold = check_battery_viability(300.0, 500.0, 20.0, -10.0)
     assert warm.is_viable is True
     assert cold.is_viable is False
+
+
+def test_battery_exactly_at_budget_is_viable() -> None:
+    """A zero margin is within the budget: the reserve is already withheld."""
+    check = check_battery_viability(80.0, 100.0, reserve_percent=20.0)
+    assert check.margin_wh == 0.0
+    assert check.is_viable is True
