@@ -29,6 +29,7 @@ Security and safety gates, each a job in `.github/workflows/ci.yml`:
 | Workflow lint | `workflow-lint` ("Workflow lint (actionlint, zizmor)") | actionlint finds no error, and zizmor finds no issue in `.github/`: every action pinned to a commit SHA, no `${{ }}` expansion inside `run:`, no persisted checkout credentials, a read-only default token, and a Dependabot cooldown |
 | Python SAST | `backend` ("Backend (py3.11, py3.12, py3.13)"), step "Ruff lint" | ruff's flake8-bandit `S` rules over `suas`, `tests`, `alembic`, `scripts`, `eval`; only asserts and fixed subprocess calls are ignored, and only in tests and scripts |
 | Trojan Source | `backend`, step "Pytest with coverage" | `tests/test_source_hygiene.py` fails on any zero-width, bidi or BOM character in backend, eval, or frontend source; patterns spell them as `\u` escapes |
+| Secret scan | `secrets-scan` ("Secret scan (gitleaks)") | gitleaks, a checksum-verified pinned release, finds no secret in any commit of the full history |
 
 Added by this plan:
 
@@ -40,15 +41,17 @@ Added by this plan:
 | Graph tests | Run against real Postgres, not SQLite |
 | Retrieval gates | Wrong-config leak, hard-negative inversion, false-confirm all at 0 (`docs/rag-eval.md`) |
 | Injection matrix | Every row in `docs/injection-defense.md` green |
-| Secret scan | `gitleaks` |
+| ~~Secret scan~~ | **Shipped.** `gitleaks`; see the security and safety gates table above |
 | SBOM | Generated on tag |
 
 Dependency auditing is deliberately not a merge gate: `pip-audit --strict`
 failed on transitive advisories this project cannot fix, and a gate that is red
-for reasons nobody can act on teaches people to ignore red. It runs on demand
-instead. The tradeoff is real and unmitigated — nothing currently notices a
-vulnerable dependency on its own. If that bites, the fix is a scheduled
-non-blocking job that opens an issue, not a restored merge gate.
+for reasons nobody can act on teaches people to ignore red. Instead
+`.github/workflows/audit.yml` ("Dependency audit") runs every Monday and on
+demand: `pip-audit` over the backend's runtime dependency set and `npm audit`
+over the frontend. It is report-only for now: findings go to the job summary
+and as warnings, and the run stays green. Issue #88 turns the fixable part into
+a gate once today's findings are cleared.
 
 ### ub-mode (crapper and dryer)
 

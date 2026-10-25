@@ -48,6 +48,7 @@ text.
 | Hybrid search without a configuration filter | Same `WHERE` on both fusion legs | A query for the Astro cannot return ANAFI chunks |
 | Compromised CI-only analysis tool (crapper, dryer) | Installed from commit-pinned refs into a separate venv; the `ub-mode` job reads no secrets, has a read-only token, and is not part of any image | `ci.yml`: the job has `permissions: contents: read` and no `secrets.` reference |
 | Compromised or retagged GitHub Action, or a workflow lint tool (actionlint, zizmor) | Every `uses:` pinned to a full commit SHA, with Dependabot proposing new SHAs after a 7-day cooldown; the lint tools are pinned PyPI releases in their own venv, run `--offline`, and get the workflow-wide read-only token and no secrets | `workflow-lint` job: zizmor fails on any unpinned `uses:`; `ci.yml` sets `permissions: contents: read` at the top |
+| Compromised secret or audit tool (gitleaks, pip-audit) | gitleaks is a pinned release whose SHA-256 is checked before it runs; pip-audit is a pinned PyPI release in its own venv; both jobs get the read-only token and no secrets, and neither is part of any image | `ci.yml` `secrets-scan` runs `sha256sum --check`; `audit.yml` sets `permissions: contents: read` |
 
 ## Repudiation
 
@@ -65,6 +66,7 @@ There are no debug endpoints that skip the ack.
 | Threat | Mitigation | Test |
 |---|---|---|
 | Thread enumeration | UUIDs; no unauthenticated list endpoint | Sequential guess returns 404 |
+| Credential committed to the repository | gitleaks over the full history on every pull request | A planted AWS key pair fails `secrets-scan` (gitleaks exit 1) |
 | Coordinates in logs or checkpoints | Redacted at `info`; minimal state; encryption option | Log fixture carries no raw coordinates |
 | Corpus exfiltration via the brief | Top-4 spans, `field_path` filtered | A brief cannot quote another airframe |
 | Open metrics endpoint | Bound to the internal network | Compose test |
