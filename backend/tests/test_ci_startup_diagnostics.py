@@ -1,6 +1,7 @@
-"""CI runs the seed-race test on Postgres; the Compose smoke is local only.
+"""CI runs the startup-race tests on Postgres; the Compose smoke is local only.
 
-The Postgres job must run the concurrent-seed test against real Postgres.
+The Postgres job must run the concurrent-startup tests (schema, seed,
+checkpointer setup) against real Postgres.
 The Compose quickstart job was removed from CI at the owner's request after
 repeated startup failures; the stack, `scripts/compose_smoke.py`, and the
 note on running it locally must stay.
@@ -20,9 +21,9 @@ def _job(name: str) -> dict[str, Any]:
     return jobs[name]
 
 
-def test_postgres_job_runs_the_concurrent_seed_test_on_postgres() -> None:
+def test_postgres_job_runs_the_concurrent_startup_tests_on_postgres() -> None:
     steps = _job("postgres-integration")["steps"]
-    runs = [s for s in steps if "test_seed_concurrency.py" in s.get("run", "")]
+    runs = [s for s in steps if "test_startup_concurrency.py" in s.get("run", "")]
     assert len(runs) == 1
     assert runs[0]["env"]["SUAS_TEST_POSTGRES_URL"].startswith("postgresql://")
 

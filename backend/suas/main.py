@@ -82,7 +82,11 @@ async def _purge_checkpoints(
     checkpointer: BaseCheckpointSaver[Any],
     settings: Settings,
 ) -> None:
-    """Age out old checkpoints on boot. Never blocks startup on failure."""
+    """Age out old checkpoints on boot. Never blocks startup on failure.
+
+    Every worker runs this, unlocked on purpose: the deletes are idempotent, so
+    concurrent passes only repeat work and cannot fail on a unique key.
+    """
     try:
         purged: int = await purge_expired_threads(
             session_factory, checkpointer, settings.checkpoint_retention_days

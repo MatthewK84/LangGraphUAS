@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import (
 )
 
 from suas.db.models import Base
+from suas.db.startup_lock import hold_startup_lock
 
 
 def create_engine(database_url: str) -> AsyncEngine:
@@ -26,6 +27,11 @@ def create_session_factory(engine: AsyncEngine) -> async_sessionmaker[AsyncSessi
 
 
 async def create_schema(engine: AsyncEngine) -> None:
-    """Create all tables if they do not already exist."""
+    """Create all tables if they do not already exist.
+
+    Serialised across workers: create_all inspects then creates, so two
+    workers on an empty Postgres database collide on the table's type name.
+    """
     async with engine.begin() as connection:
+        await hold_startup_lock(connection)
         await connection.run_sync(Base.metadata.create_all)
