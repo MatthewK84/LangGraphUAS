@@ -46,7 +46,7 @@ Added by this plan:
 | Retrieval gates | Wrong-config leak, hard-negative inversion, false-confirm all at 0 (`docs/rag-eval.md`) |
 | Injection matrix | Every row in `docs/injection-defense.md` green |
 | ~~Secret scan~~ | **Shipped.** `gitleaks`; see the security and safety gates table above |
-| SBOM | Generated on tag |
+| ~~SBOM~~ | **Shipped.** `sbom.yml` ("SBOM"), job `sbom`: a CycloneDX SBOM of each image on every `v*` tag, attached to that release by the tag-only `attach` job; `workflow_dispatch` or a PR touching it is the dry run (artifact only) |
 
 Dependency auditing is deliberately not a merge gate: `pip-audit --strict`
 failed on transitive advisories this project cannot fix, and a gate that is red
@@ -56,6 +56,15 @@ demand: `pip-audit` over the backend's runtime dependency set and `npm audit`
 over the frontend. It is report-only for now: findings go to the job summary
 and as warnings, and the run stays green. Issue #88 turns the fixable part into
 a gate once today's findings are cleared.
+
+Image scanning is report-only for the same reason. The `docker` job ("Docker
+images build") in `.github/workflows/ci.yml`, step "Image scan (trivy,
+report-only)", scans both built images with trivy (a checksum-verified pinned
+release, `scripts/install-trivy.sh`) for HIGH and CRITICAL vulnerabilities that
+have a fix, and writes them to the job summary with `--exit-code 0`. On day one
+the frontend image has CRITICAL findings in `next` that need a major bump
+(#100), so a blocking scan would be red for reasons a PR cannot act on. The scan
+step still fails if trivy itself cannot run.
 
 ### ub-mode (crapper and dryer)
 
@@ -177,5 +186,5 @@ Enforced and Aspirational; this section only covers ub-mode.
 
 The rest of the [ub-mode](#ub-mode-crapper-and-dryer) discipline (TDD,
 small edits, behavior tests, commit messages) is held at review, not by a tool.
-Mutation survivors are reported but do not block a merge. The frontend holds cyclomatic complexity at 10
+Mutation survivors are reported but do not block a merge. Image scan findings (`docker` job) are reported but do not block a merge. The frontend holds cyclomatic complexity at 10
 or below but has no coverage report, so its CRAP is not measured.
