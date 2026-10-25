@@ -15,10 +15,10 @@ from alembic.script import ScriptDirectory
 from fastapi import FastAPI
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
-from suas.db.migrations import EXPECTED_REVISION, MigrationState, migration_state
 
 from suas.api.security import require_api_key
 from suas.config import Settings, get_settings
+from suas.db.migrations import EXPECTED_REVISION, MigrationState, migration_state
 from tests.conftest import stamp_revision
 
 _VALID_BODY: dict[str, Any] = {

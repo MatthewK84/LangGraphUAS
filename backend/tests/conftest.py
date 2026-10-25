@@ -22,8 +22,8 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 from sqlalchemy.pool import StaticPool
-from suas.db.migrations import EXPECTED_REVISION
 
+from suas.db.migrations import EXPECTED_REVISION
 from suas.db.models import AircraftRow, Base, PayloadRow
 from suas.graph.dependencies import GraphDependencies
 from suas.graph.replan import ReplanDependencies, build_replan_graph

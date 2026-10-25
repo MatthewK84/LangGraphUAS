@@ -32,6 +32,7 @@ Security and safety gates, each a job in `.github/workflows/ci.yml`:
 | Safety properties | `backend`, step "Pytest with coverage" | `tests/test_safety_properties.py`: Hypothesis (100 examples per property, fixed seed in CI) shows worse wind, gust, payload or battery never turns NO_GO into GO, any failed flag is NO_GO, limits are inclusive, and the gate never grants more than was requested |
 | Secret scan | `secrets-scan` ("Secret scan (gitleaks)") | gitleaks, a checksum-verified pinned release, finds no secret in any commit of the full history |
 | Frontend complexity | `frontend` ("Frontend (tsc, eslint, build)"), step "Lint" | ESLint `complexity: ["error", 10]` on `src/`, the half of CRAP the frontend can hold until it measures coverage; `src/lib/lint-rules.test.ts` proves 11 fails and 10 passes |
+| Honest readiness | `postgres-integration` ("Postgres integration (py3.12)"), steps "Smoke test app against Postgres" and "Smoke test /ready refuses an unmigrated database" | `/ready` is 200 on a migrated Postgres with database, migrations and checkpointer all `ok`, and 503 with migrations `pending` on a database alembic never touched; `EXPECTED_REVISION` is pinned to the alembic head by `tests/test_api.py` |
 
 Added by this plan:
 
