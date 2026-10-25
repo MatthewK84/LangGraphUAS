@@ -26,6 +26,7 @@ dev = [
     "pytest==8.4.2",
     "pytest-asyncio==1.2.0",
     "pytest-cov==7.1.0",
+    "hypothesis==6.170.9",
     "pip-audit==2.10.1",
     "ruff==0.14.4",
     "mypy==2.3.1",
