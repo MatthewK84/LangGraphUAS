@@ -1,0 +1,85 @@
+name: Dependency audit
+
+# Scheduled, not a merge gate (see "CI gates that block merge" in
+# docs/engineering-practices.md). Report-only for now: findings land in the
+# job summary and as warnings, and the run stays green, so an advisory nobody
+# can fix yet does not train anyone to ignore red. Issue #88 gates what can
+# actually be fixed once the current findings are cleared.
+
+on:
+  schedule:
+    # Mondays 06:17 UTC, before the working week starts.
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+  # A change to this file proves itself on its own pull request.
+  pull_request:
+    paths:
+      - .github/workflows/audit.yml
+
+permissions:
+  contents: read
+
+jobs:
+  pip-audit:
+    name: pip-audit (backend runtime dependencies)
+    runs-on: ubuntu-latest
+    env:
+      PIP_AUDIT_VERSION: "2.10.1"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Resolve the runtime dependency set
+        # Runtime only: the image ships these, not the dev tools. pip itself is
+        # upgraded first so its own advisories do not drown the real ones.
+        run: |
+          python -m venv "$RUNNER_TEMP/runtime"
+          "$RUNNER_TEMP/runtime/bin/pip" install --upgrade pip
+          "$RUNNER_TEMP/runtime/bin/pip" install ./backend
+          "$RUNNER_TEMP/runtime/bin/pip" freeze --exclude-editable \
+            | grep -v '^suas-mission-planner' > "$RUNNER_TEMP/runtime.txt"
+      - name: pip-audit
+        continue-on-error: true
+        run: |
+          python -m venv "$RUNNER_TEMP/audit"
+          "$RUNNER_TEMP/audit/bin/pip" install "pip-audit==${PIP_AUDIT_VERSION}"
+          set -o pipefail
+          "$RUNNER_TEMP/audit/bin/pip-audit" -r "$RUNNER_TEMP/runtime.txt" \
+            --no-deps --disable-pip --format markdown \
+            | tee -a "$GITHUB_STEP_SUMMARY" \
+            || { echo "::warning title=pip-audit::advisories in backend runtime dependencies"; exit 1; }
+
+  npm-audit:
+    name: npm audit (frontend)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "20"
+      - name: npm audit, production dependencies
+        continue-on-error: true
+        run: |
+          {
+            echo "## npm audit --omit=dev"
+            echo '```'
+            npm audit --omit=dev || echo "::warning title=npm audit::advisories in frontend production dependencies"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: npm audit, everything (dev tools included)
+        continue-on-error: true
+        run: |
+          {
+            echo "## npm audit (all)"
+            echo '```'
+            npm audit || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

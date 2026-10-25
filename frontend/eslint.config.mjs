@@ -34,6 +34,10 @@ export default tseslint.config(
     rules: {
       // P1: simple flow control
       "max-depth": ["error", 3],
+      // ub-mode's CRAP < 10 for the backend has no frontend twin until the
+      // frontend measures coverage; cyclomatic complexity <= 10 is the half
+      // of CRAP that can be held today. See docs/engineering-practices.md.
+      complexity: ["error", 10],
       "no-else-return": "error",
 
       // P2/P4: scoping and no shared mutable state

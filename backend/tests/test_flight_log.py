@@ -279,3 +279,10 @@ async def test_a_non_utf8_body_is_refused(app_with_graph: FastAPI) -> None:
             headers={"Content-Type": "text/csv"},
         )
     assert response.status_code == 422
+
+
+def test_effective_power_without_a_power_figure_raises_value_error_not_assert() -> None:
+    """The guard survives ``python -O``, which strips ``assert``."""
+    sample = FlightLogSample.model_construct(power_w=None, voltage_v=None, current_a=None)
+    with pytest.raises(ValueError, match="power"):
+        _ = sample.effective_power_w
