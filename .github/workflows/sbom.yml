@@ -1,0 +1,94 @@
+name: SBOM
+
+# CycloneDX SBOMs for both images on every v* tag, attached to that tag's
+# release (#89). workflow_dispatch, and a pull request touching this file or
+# the trivy pin, run everything except the attach job: that is the dry run.
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/sbom.yml
+      - scripts/install-trivy.sh
+
+permissions:
+  contents: read
+
+jobs:
+  sbom:
+    name: SBOM (trivy, CycloneDX)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      # No build cache: a release artifact is built from the tagged tree alone.
+      - name: Build backend image
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: backend/Dockerfile
+          push: false
+          load: true
+          tags: suas-backend:sbom
+      - name: Build frontend image
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: ./frontend
+          push: false
+          load: true
+          tags: suas-frontend:sbom
+      - name: Install trivy
+        run: scripts/install-trivy.sh "$RUNNER_TEMP"
+      - name: Generate CycloneDX SBOMs
+        run: |
+          mkdir -p sbom
+          trivy="$RUNNER_TEMP/trivy"
+          "$trivy" image --quiet --cache-dir "$RUNNER_TEMP/trivy-cache" --format cyclonedx --output sbom/suas-backend.cdx.json suas-backend:sbom
+          "$trivy" image --quiet --cache-dir "$RUNNER_TEMP/trivy-cache" --format cyclonedx --output sbom/suas-frontend.cdx.json suas-frontend:sbom
+      - name: Check the SBOMs and summarise
+        run: |
+          python3 - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json, pathlib, sys
+          print("| SBOM | Format | Components |\n|---|---|---|")
+          for path in sorted(pathlib.Path("sbom").glob("*.cdx.json")):
+              bom = json.loads(path.read_text())
+              components = len(bom.get("components", []))
+              if bom.get("bomFormat") != "CycloneDX" or components == 0:
+                  sys.exit(f"{path} is not a non-empty CycloneDX SBOM")
+              print(f"| `{path.name}` | CycloneDX {bom['specVersion']} | {components} |")
+          PY
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: sbom
+          path: sbom/
+          if-no-files-found: error
+          retention-days: 30
+
+  attach:
+    name: Attach SBOMs to the release
+    needs: sbom
+    # The only job with write access, and it runs only for a pushed v* tag.
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: sbom
+          path: sbom
+      - name: Attach to the tag's release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          gh release view "$TAG" > /dev/null 2>&1 \
+            || gh release create "$TAG" --verify-tag --title "$TAG" --notes "SBOMs attached by sbom.yml."
+          gh release upload "$TAG" sbom/*.cdx.json --clobber
