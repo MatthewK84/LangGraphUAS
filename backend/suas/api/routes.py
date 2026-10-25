@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, Final
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
-from langgraph.types import Command
+from langgraph.types import Command, StateSnapshot
 from sqlalchemy import text
 
 from suas import __version__
@@ -59,6 +59,16 @@ _DEGRADED_WEATHER_WARNING: Final[str] = (
 def _thread_config(thread_id: str) -> "RunnableConfig":
     """Return the LangGraph config that scopes state to one thread."""
     return {"configurable": {"thread_id": thread_id}}
+
+
+def _state_values(snapshot: StateSnapshot | None) -> dict[str, Any]:
+    """Return a thread's stored values, or an empty dict for an unknown thread."""
+    return dict(snapshot.values) if snapshot and snapshot.values else {}
+
+
+def _sub_dict(values: dict[str, Any], key: str) -> dict[str, Any]:
+    """Return ``values[key]`` as a dict, treating a missing or empty entry as ``{}``."""
+    return dict(values.get(key) or {})
 
 
 def _collect_warnings(weather: WeatherReading | None) -> list[str]:
@@ -295,7 +305,7 @@ async def acknowledge_plan(
         locked = await lock_thread_for_update(session, thread_id)
 
         snapshot = await graph.aget_state(_thread_config(thread_id))
-        values: dict[str, Any] = dict(snapshot.values) if snapshot and snapshot.values else {}
+        values = _state_values(snapshot)
         if not values:
             raise HTTPException(status_code=404, detail="Unknown planning thread")
         if not (snapshot and snapshot.next):
@@ -303,7 +313,7 @@ async def acknowledge_plan(
                 status_code=409, detail="This plan is not awaiting acknowledgement"
             )
 
-        assessment_dump: dict[str, Any] = dict(values.get("assessment") or {})
+        assessment_dump = _sub_dict(values, "assessment")
         current_hash: str = str(assessment_dump.get("inputs_hash", ""))
         if request.inputs_hash and request.inputs_hash != current_hash:
             raise HTTPException(
@@ -362,19 +372,18 @@ async def replan_mission(
     or to let one influence what the operator is told.
     """
     parent = await graph.aget_state(_thread_config(snapshot.thread_id))
-    briefed: dict[str, Any] = dict(parent.values) if parent and parent.values else {}
+    briefed = _state_values(parent)
     if not briefed:
         raise HTTPException(status_code=404, detail="Unknown planning thread")
 
-    assessment_dump: dict[str, Any] = dict(briefed.get("assessment") or {})
+    assessment_dump = _sub_dict(briefed, "assessment")
     if not assessment_dump:
         raise HTTPException(
             status_code=409,
             detail="That thread has no assessment to replan against",
         )
 
-    calculations_dump: dict[str, Any] = dict(briefed.get("calculations") or {})
-    battery_check: dict[str, Any] = dict(calculations_dump.get("battery_check") or {})
+    battery_check = _sub_dict(_sub_dict(briefed, "calculations"), "battery_check")
     briefed_margin_wh = float(battery_check.get("margin_wh", 0.0))
     age_s: float = snapshot.age_s(datetime.now(UTC))
 
@@ -421,7 +430,7 @@ async def replan_mission(
 async def get_thread_state(thread_id: str, graph: GraphDep) -> ThreadStateResponse:
     """Return the persisted state for a previously planned mission thread."""
     snapshot = await graph.aget_state(_thread_config(thread_id))
-    values: dict[str, Any] = dict(snapshot.values) if snapshot and snapshot.values else {}
+    values = _state_values(snapshot)
     if not values:
         return ThreadStateResponse(
             thread_id=thread_id,
