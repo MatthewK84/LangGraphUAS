@@ -178,6 +178,10 @@ class ReadinessResponse(BaseModel):
 
     ready: bool
     database: str
+    migrations: str = Field(
+        description="ok, pending (schema behind the code), not_tracked (local create_all), "
+        "or unknown (database unavailable)"
+    )
     checkpointer: str
 
 

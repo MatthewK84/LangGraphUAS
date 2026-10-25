@@ -8,11 +8,13 @@ so a deployed database whose ``alembic_version`` row is not
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import Final
+from typing import TYPE_CHECKING, Final
 
 from sqlalchemy import text
 from sqlalchemy.exc import OperationalError, ProgrammingError
-from sqlalchemy.ext.asyncio import AsyncSession
+
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncSession
 
 EXPECTED_REVISION: Final[str] = "0010"
 """The alembic head this code needs. A test pins it to the migration scripts."""
