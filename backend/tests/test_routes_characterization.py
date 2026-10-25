@@ -20,7 +20,15 @@ from fastapi import FastAPI
 from langgraph.graph.state import CompiledStateGraph
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from suas.api.observability import MetricsRegistry
+from suas.api.routes import (
+    _build_plan_response,
+    _estimate_summary,
+    _record_violations,
+    _resume_payload,
+)
 from suas.db.retention import get_acknowledgement
+from suas.schemas.requests import AckRequest, MissionEdits
 from tests.test_ack import _BODY
 from tests.test_replan import _snapshot
 
@@ -246,3 +254,90 @@ async def test_a_missing_battery_check_briefs_a_zero_margin(
 
     assert response.status_code == 200
     assert response.json()["briefed_margin_wh"] == 0.0
+
+
+# --- helpers and thread state --------------------------------------------------
+
+
+class _GraphWithNoState:
+    """A graph that has never seen the thread at all."""
+
+    async def aget_state(self, config: Any) -> None:
+        _ = config
+
+
+async def test_a_thread_the_graph_has_never_seen_is_not_found(app_with_graph: FastAPI) -> None:
+    app_with_graph.state.graph = _GraphWithNoState()
+
+    async with _client(app_with_graph) as client:
+        body = (await client.get("/api/plan/never-seen")).json()
+
+    assert body["found"] is False
+    assert body["awaiting_ack"] is False
+
+
+async def test_a_thread_with_no_pending_step_is_found_and_not_awaiting(
+    app_with_graph: FastAPI,
+) -> None:
+    """Missing values default to not viable, and an empty ``next`` means no ack is due."""
+    app_with_graph.state.graph = _GraphWithState({"report": "Stored brief."})
+
+    async with _client(app_with_graph) as client:
+        body = (await client.get("/api/plan/finished")).json()
+
+    assert body["found"] is True
+    assert body["is_viable"] is False
+    assert body["awaiting_ack"] is False
+    assert body["report"] == "Stored brief."
+
+
+def test_a_plan_response_from_empty_state_is_not_aborted_or_viable() -> None:
+    response = _build_plan_response({}, "t-1")
+    assert response.aborted is False
+    assert response.is_viable is False
+    assert response.awaiting_ack is False
+
+
+def test_violations_are_counted_by_the_reason_before_the_colon() -> None:
+    metrics = MetricsRegistry()
+    _record_violations(metrics, ["contradiction:cleared for takeoff", ":no reason", "numeric"])
+    exposition = metrics.render()
+    assert "suas_llm_field_violations_total 3" in exposition
+    assert 'reason="contradiction"} 1' in exposition
+    assert 'reason="unknown"} 1' in exposition
+    assert 'reason="numeric"} 1' in exposition
+
+
+def test_an_estimate_summary_needs_both_a_median_and_a_count() -> None:
+    assert _estimate_summary(None, 12, "high") is None
+    assert _estimate_summary(820.0, None, "high") is None
+    summary = _estimate_summary(820.0, 12, None)
+    assert summary is not None
+    assert summary.confidence == "low"
+
+
+def test_the_resume_payload_carries_only_the_edits_given() -> None:
+    request = AckRequest(action="edit", actor="pilot", edits=MissionEdits(hover_time_s=30.0))
+    assert _resume_payload(request) == {
+        "action": "edit",
+        "actor": "pilot",
+        "edits": {"hover_time_s": 30.0},
+    }
+
+
+async def test_a_plan_for_an_unknown_aircraft_answers_without_weather(
+    app_with_graph: FastAPI,
+) -> None:
+    """Validation stops the graph before the weather fetch, and the route still answers.
+
+    The plan metric treats an absent reading as not-a-fallback; it must not
+    dereference the missing reading to decide that.
+    """
+    async with _client(app_with_graph) as client:
+        response = await client.post("/api/plan", json={**_BODY, "aircraft_id": "NOPE"})
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["weather"] is None
+    assert body["is_viable"] is False
+    assert 'suas_plan_outcomes_total{outcome="no_go"} 1' in app_with_graph.state.metrics.render()
