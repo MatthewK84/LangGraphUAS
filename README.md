@@ -74,6 +74,20 @@ neither.
 
 ## Quickstart (Docker)
 
+### Demo, no keys
+
+```bash
+cp .env.example .env
+DEMO_MODE=true docker compose up --build
+```
+
+Open `http://localhost:3000`. Demo mode needs no model key, no API key and no
+weather provider. Every plan uses a fixed fixture reading tagged `fixture`, so
+the gate blocks operational (`WEATHER_NOT_LIVE`) and every plan is advisory.
+Never fly on a demo plan. CI runs exactly these steps (job `compose`).
+
+### Live weather
+
 1. Copy `.env.example` to `.env` and set at least `POSTGRES_PASSWORD`. Add
    `OPENAI_API_KEY` to enable the model narrative (optional).
 2. Run `docker compose up --build`.
@@ -116,6 +130,7 @@ Backend variables use the `SUAS_` prefix. Compose maps friendly names to them.
 | --- | --- | --- |
 | `SUAS_DATABASE_URL` | `sqlite+aiosqlite:///./suas_local.db` | Async SQLAlchemy URL. Postgres enables the durable checkpointer. |
 | `SUAS_OPENAI_API_KEY` | empty | Enables the model-generated report. |
+| `SUAS_DEMO_MODE` | `false` | Fixture weather instead of the live provider; every plan advisory. Compose: `DEMO_MODE`. |
 | `SUAS_OPENAI_MODEL` | `gpt-4o-mini` | Chat model name. |
 | `SUAS_API_KEY` | empty | When set, planning endpoints require header `X-API-Key`. |
 | `SUAS_CORS_ORIGINS` | `http://localhost:3000` | Comma-separated allowed origins. Only needed for non-browser clients now that the UI proxies server-side. |
