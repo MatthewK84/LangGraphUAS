@@ -7,30 +7,13 @@ so seeding works regardless of the process working directory.
 import logging
 from typing import Any, Final
 
-from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from suas.db.models import AircraftRow, PayloadRow
+from suas.db.startup_lock import hold_startup_lock
 from suas.reference_data import AIRCRAFT_FILE, PAYLOAD_FILE, load_rows
 
 logger: Final[logging.Logger] = logging.getLogger(__name__)
-
-# Any fixed bigint; it only has to be the same in every process that seeds.
-SEED_LOCK_KEY: Final[int] = 0x5_5A5_5EED
-
-
-async def _serialise_seeding(session: AsyncSession) -> None:
-    """Hold a Postgres advisory lock until this seed's transaction ends.
-
-    Each uvicorn worker seeds at startup. merge() is SELECT then INSERT, so on
-    an empty database concurrent workers all INSERT the same rows and all but
-    one fail on the primary key, which kills that worker and the container.
-    With the lock they run one after another, and the later ones find the rows
-    and update them. SQLite already serialises writers and has no such lock.
-    """
-    connection = await session.connection()
-    if connection.dialect.name == "postgresql":
-        await session.execute(text("SELECT pg_advisory_xact_lock(:key)"), {"key": SEED_LOCK_KEY})
 
 
 async def seed_reference_data(session: AsyncSession) -> None:
@@ -47,7 +30,9 @@ async def seed_reference_data(session: AsyncSession) -> None:
     """
     aircraft_records: list[dict[str, Any]] = load_rows(AIRCRAFT_FILE)
     payload_records: list[dict[str, Any]] = load_rows(PAYLOAD_FILE)
-    await _serialise_seeding(session)
+    # merge() is SELECT then INSERT: without the lock, workers seeding an empty
+    # database at once collide on the primary key (#160).
+    await hold_startup_lock(await session.connection())
     for record in aircraft_records:
         await session.merge(AircraftRow(**record))
     for record in payload_records:

@@ -113,10 +113,10 @@ jobs:
           python scripts/smoke_check.py --expect-unmigrated
       # Two workers seed at startup; on an empty database they used to race
       # to INSERT and one died on the primary key (main run 40237537525).
-      - name: Concurrent seeds on a fresh database
+      - name: Concurrent startup on a fresh database
         env:
           SUAS_TEST_POSTGRES_URL: postgresql://suas:suas@localhost:5432/suas
-        run: python -m pytest -q -p no:cacheprovider tests/test_seed_concurrency.py
+        run: python -m pytest -q -p no:cacheprovider tests/test_startup_concurrency.py
 
   calculator-version:
     name: Calculator version bump

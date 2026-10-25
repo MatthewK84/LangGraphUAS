@@ -139,3 +139,31 @@ async def test_concurrent_create_schema_on_an_empty_database_all_succeed(
             )
     finally:
         await engine.dispose()
+
+
+async def _full_startup_once(url: str) -> None:
+    """The lifespan's order: schema, seed, then the checkpointer's setup."""
+    engine = create_engine(url)
+    try:
+        await create_schema(engine)
+        async with create_session_factory(engine)() as session:
+            await seed_reference_data(session)
+    finally:
+        await engine.dispose()
+    await _start_checkpointer_once(url)
+
+
+async def test_concurrent_full_startup_on_an_empty_database_all_succeed(
+    fresh_database_url: str,
+) -> None:
+    engine = create_engine(fresh_database_url)
+    try:
+        for _ in range(ROUNDS):
+            async with engine.begin() as conn:
+                await conn.run_sync(Base.metadata.drop_all)
+                await conn.execute(text(f"DROP TABLE IF EXISTS {_CHECKPOINT_TABLES}"))
+            await _gather_all_succeed(
+                *(_full_startup_once(fresh_database_url) for _ in range(WORKERS))
+            )
+    finally:
+        await engine.dispose()
