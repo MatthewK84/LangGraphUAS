@@ -74,3 +74,45 @@ carefully" is not a control.
 - A new graph node, ingest source, or external dependency adds a STRIDE row to
   `docs/threat-model.md` before merge.
 - A decision later code will assume gets an ADR. See `docs/adr/README.md`.
+
+## Aspirational
+
+Practices this repository intends to follow but does not yet enforce in CI.
+Nothing here blocks a merge. Issue #73 will finish splitting this document into
+Enforced and Aspirational; this section only covers ub-mode.
+
+### ub-mode
+
+The discipline is the vendored skill in
+[`docs/skills/ub-mode/SKILL.md`](skills/ub-mode/SKILL.md) (source and credit in
+the README beside it). Each change goes First Make it Work, then Make it Right,
+then Practice. The parts that matter most here:
+
+- **TDD.** Write the failing test first and see it fail for the expected
+  reason, then make the smallest change that passes. If an honest test is
+  impractical, say so in the PR instead of writing a bad one.
+- **Small, single-purpose edits.** One decision lives in one place. Take
+  complexity out before adding any.
+- **Boundaries and types.** Parse outside data once where it enters, keep
+  business logic in pure functions, and do not silence the compiler: no new
+  `# type: ignore`, `noqa`, or widened mypy overrides.
+- **Root causes.** Reproduce, then fix the cause. A guard that hides a crash is
+  not a fix.
+- **Behavior tests.** A test calls the code the way its user does. A test that
+  would still pass if every function returned nothing is deleted.
+- **CRAP under 10** for every function
+  ([crapper](https://github.com/unclebob/crapper)), and **no duplication at
+  0.8 or above** ([dryer](https://github.com/unclebob/dryer)).
+- **Mutation testing** ([mutator](https://github.com/unclebob/mutator)) on the
+  files a PR touches: cover the uncovered, kill survivors, delete dead code.
+- **Commits.** Small and ordered. Each message says why, what changed, and how
+  it was proven. The PR body carries the log of what was done and why.
+
+What runs today: the `ub-mode-report` job in `.github/workflows/ci.yml` runs
+crapper and dryer on `backend/suas` and writes the results to the job summary.
+It is `continue-on-error`, so it reports and never blocks. Mutator and the
+frontend are not measured in CI.
+
+Baseline on `main` at `01949cd`: 7 of 257 functions at CRAP 10 or above, and 10
+duplicate pairs at 0.8 or above. The job moves to **CI gates that block merge**
+once both numbers are zero.
