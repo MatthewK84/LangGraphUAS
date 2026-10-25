@@ -109,14 +109,20 @@ def test_the_table_lists_exactly_the_fields_each_figure_moves_with() -> None:
 def test_the_weakest_source_and_the_lowest_confidence_win() -> None:
     records = {
         field: _record(FieldSource.DATASHEET)
-        for field in ("hover_power_w", "cruise_power_w", "weight_kg", "battery_wh")
+        for field in (
+            "hover_power_w",
+            "cruise_power_w",
+            "cruise_speed_mps",
+            "weight_kg",
+            "battery_wh",
+        )
     }
     records["battery_wh"] = _record(FieldSource.ESTIMATE, Confidence.MEDIUM)
     aircraft = Aircraft.model_validate(_with_provenance(_AIRCRAFT, records))
     payload = Payload.model_validate(
         _with_provenance(
             _PAYLOAD,
-            {f: _record(FieldSource.FLIGHT_LOG) for f in ("weight_kg", "power_draw_w")},
+            {f: _record(FieldSource.DATASHEET) for f in ("weight_kg", "power_draw_w")},
         )
     )
     view = number_provenance(aircraft, payload)
@@ -155,9 +161,7 @@ def test_source_buckets_rank_from_unknown_up(weaker: FieldSource, stronger: Fiel
             },
         )
     )
-    payload = Payload.model_validate(
-        _with_provenance(_PAYLOAD, {"weight_kg": _record(stronger)})
-    )
+    payload = Payload.model_validate(_with_provenance(_PAYLOAD, {"weight_kg": _record(stronger)}))
     assert number_provenance(aircraft, payload)["effective_hover_power_w"].source is weaker
 
 
@@ -185,9 +189,12 @@ def test_an_all_estimate_configuration_is_estimate_on_every_figure() -> None:
     assert not any(figure.operational_grade for figure in view.values())
 
 
-def test_the_bundled_data_never_reads_as_operational_grade() -> None:
-    """Every bundled power figure is derived or an estimate (PLAN-90)."""
+def test_the_bundled_data_reads_as_unknown_on_every_figure() -> None:
+    """No bundled payload records where its mass came from, and every figure uses it.
+
+    So the honest label for every bundled W and Wh figure is ``unknown``, the
+    weakest bucket, even where the airframe's own power figure is ``derived``.
+    """
     view = number_provenance(Aircraft.model_validate(_AIRCRAFT), Payload.model_validate(_PAYLOAD))
+    assert {figure.source for figure in view.values()} == {FieldSource.UNKNOWN}
     assert not any(figure.operational_grade for figure in view.values())
-    assert view["effective_hover_power_w"].source is FieldSource.DERIVED
-    assert view["battery_check.usable_capacity_wh"].source is FieldSource.UNKNOWN

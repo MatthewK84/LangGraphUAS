@@ -189,10 +189,12 @@ async def test_every_watt_on_the_plan_says_what_it_rests_on(app_with_graph: Fast
         body = (await client.post("/api/plan", json=_VALID_BODY)).json()
     provenance = body["provenance"]
     hover = provenance["effective_hover_power_w"]
-    assert hover["source"] == "derived"
+    # The airframe's hover figure is derived, but no payload records its mass.
+    assert hover["source"] == "unknown"
+    assert hover["confidence"] == "low"
     assert hover["operational_grade"] is False
     assert "aircraft.hover_power_w" in hover["inputs"]
-    assert provenance["battery_check.usable_capacity_wh"]["source"] == "unknown"
+    assert provenance["battery_check.usable_capacity_wh"]["inputs"] == ["aircraft.battery_wh"]
     assert body["calculations"]["effective_hover_power_w"] > 0
 
 
@@ -217,7 +219,7 @@ async def test_thread_state_roundtrip(app_with_graph: FastAPI) -> None:
     assert body["found"] is True
     assert body["thread_id"] == thread_id
     assert body["report"] == "TEST REPORT"
-    assert body["provenance"]["energy_required_wh"]["source"] in {"derived", "unknown"}
+    assert body["provenance"]["energy_required_wh"]["source"] == "unknown"
 
 
 async def test_thread_state_unknown_thread_reports_not_found(app_with_graph: FastAPI) -> None:
