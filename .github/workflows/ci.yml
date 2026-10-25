@@ -124,6 +124,9 @@ jobs:
     # job never blocks a merge. See "Aspirational" in docs/engineering-practices.md.
     runs-on: ubuntu-latest
     continue-on-error: true
+    # Third-party code runs here; it gets a read-only token and no secrets.
+    permissions:
+      contents: read
     env:
       # Neither tool publishes releases, so both are pinned to a commit.
       CRAPPER_REF: 6fd92c4c9bcc56efb64a2f8743d5a2993bcfd42d
