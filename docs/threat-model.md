@@ -47,6 +47,7 @@ text.
 | Mass edited after ack without recalculation | Ack bound to `inputs_hash` and `calculator_version` | Edit invalidates the ack |
 | Hybrid search without a configuration filter | Same `WHERE` on both fusion legs | A query for the Astro cannot return ANAFI chunks |
 | Compromised CI-only analysis tool (crapper, dryer) | Installed from commit-pinned refs into a separate venv; the `ub-mode` job reads no secrets, has a read-only token, and is not part of any image | `ci.yml`: the job has `permissions: contents: read` and no `secrets.` reference |
+| Compromised or retagged GitHub Action, or a workflow lint tool (actionlint, zizmor) | Every `uses:` pinned to a full commit SHA, with Dependabot proposing new SHAs after a 7-day cooldown; the lint tools are pinned PyPI releases in their own venv, run `--offline`, and get the workflow-wide read-only token and no secrets | `workflow-lint` job: zizmor fails on any unpinned `uses:`; `ci.yml` sets `permissions: contents: read` at the top |
 
 ## Repudiation
 
