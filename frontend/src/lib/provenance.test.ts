@@ -31,7 +31,10 @@ const datasheet: NumberProvenance = {
 describe("figureTag", () => {
   it("labels an estimate-grade watt with its source and confidence", () => {
     expect(
-      figureTag({ effective_hover_power_w: derived }, "effective_hover_power_w"),
+      figureTag(
+        { effective_hover_power_w: derived },
+        "effective_hover_power_w",
+      ),
     ).toEqual({ label: "derived, medium confidence", operationalGrade: false });
   });
 

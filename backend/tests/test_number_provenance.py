@@ -11,6 +11,8 @@ calculator. So the table is not trusted: the tests perturb each reference
 field and watch which figures move, and the table must match exactly.
 """
 
+import re
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -198,3 +200,12 @@ def test_the_bundled_data_reads_as_unknown_on_every_figure() -> None:
     view = number_provenance(Aircraft.model_validate(_AIRCRAFT), Payload.model_validate(_PAYLOAD))
     assert {figure.source for figure in view.values()} == {FieldSource.UNKNOWN}
     assert not any(figure.operational_grade for figure in view.values())
+
+
+def test_every_figure_the_dashboard_labels_is_one_the_backend_reports() -> None:
+    panel = (
+        Path(__file__).resolve().parents[2] / "frontend/src/app/components/ResultsPanel.tsx"
+    ).read_text(encoding="utf-8")
+    paths = re.findall(r'<Figure[^>]*path="([^"]+)"', panel, re.DOTALL)
+    assert len(paths) == 8
+    assert set(paths) <= set(WATT_FIGURE_INPUTS)

@@ -209,7 +209,7 @@ async def test_thread_state_roundtrip(app_with_graph: FastAPI) -> None:
     async with _client(app_with_graph) as client:
         created = await client.post("/api/plan", json=_VALID_BODY)
         thread_id = created.json()["thread_id"]
-        await client.post(
+        acked = await client.post(
             f"/api/plan/{thread_id}/ack",
             json={"action": "confirm", "actor": "tester"},
         )
@@ -220,6 +220,7 @@ async def test_thread_state_roundtrip(app_with_graph: FastAPI) -> None:
     assert body["thread_id"] == thread_id
     assert body["report"] == "TEST REPORT"
     assert body["provenance"]["energy_required_wh"]["source"] == "unknown"
+    assert acked.json()["provenance"] == body["provenance"]
 
 
 async def test_thread_state_unknown_thread_reports_not_found(app_with_graph: FastAPI) -> None:
