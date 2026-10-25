@@ -33,7 +33,7 @@ from suas.graph.workflow import build_mission_graph
 from suas.logging_config import configure_logging
 from suas.rag.provider import build_embedder
 from suas.services.llm import ReportService
-from suas.services.weather import WeatherService
+from suas.services.weather import build_weather_service
 
 logger: Final[logging.Logger] = logging.getLogger(__name__)
 
@@ -56,13 +56,7 @@ async def _build_resources(settings: Settings) -> _Resources:
     async with session_factory() as session:
         await seed_reference_data(session)
     weather_client = httpx.AsyncClient(timeout=settings.weather_timeout_s)
-    weather_service = WeatherService(
-        client=weather_client,
-        base_url=settings.weather_base_url,
-        retry_attempts=settings.weather_retry_attempts,
-        deadline_s=settings.weather_deadline_s,
-        cache_ttl_s=settings.weather_cache_ttl_s,
-    )
+    weather_service = build_weather_service(settings, weather_client)
     deps = GraphDependencies(
         session_factory=session_factory,
         weather=weather_service,

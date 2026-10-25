@@ -106,6 +106,10 @@ class Settings(BaseSettings):
         return self
 
     openai_api_key: str = Field(default="")
+    # Demo mode (#97): fixture weather instead of the live provider, so
+    # `docker compose up` needs no network weather and no keys. Fixture weather
+    # is never operational grade, so every plan is advisory.
+    demo_mode: bool = Field(default=False)
     openai_model: str = Field(default="gpt-4o-mini")
     api_key: str = Field(default="")
     cors_origins: str = Field(default="http://localhost:3000")

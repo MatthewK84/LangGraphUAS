@@ -15,7 +15,7 @@ import asyncio
 import logging
 import math
 from datetime import UTC, datetime
-from typing import Any, Final
+from typing import TYPE_CHECKING, Any, Final, Protocol
 
 import httpx
 from tenacity import (
@@ -27,6 +27,9 @@ from tenacity import (
 
 from suas.errors import SuasError
 from suas.schemas.responses import WeatherReading, WeatherSource
+
+if TYPE_CHECKING:
+    from suas.config import Settings
 
 logger: Final[logging.Logger] = logging.getLogger(__name__)
 
@@ -215,3 +218,41 @@ class WeatherService:
             return _parse_current(body.get("current", {}))
 
         return await _do()
+
+
+class WeatherProvider(Protocol):
+    """Anything the graph can ask for current conditions."""
+
+    async def fetch(self, latitude: float, longitude: float) -> WeatherReading:
+        """Return current conditions for a coordinate."""
+        ...
+
+
+_FIXTURE_CONDITIONS: Final[str] = "demo fixture: calm, clear (not observed weather)"
+
+
+class FixtureWeather:
+    """Demo mode's weather: one calm reading, tagged ``fixture``, with no network.
+
+    ``FIXTURE`` is not operational grade, so the gate adds WEATHER_NOT_LIVE and
+    every demo plan comes back advisory, whatever the caller asked for.
+    """
+
+    async def fetch(self, latitude: float, longitude: float) -> WeatherReading:
+        """Return the fixture reading for any coordinate."""
+        _ = (latitude, longitude)
+        return _degraded_reading(WeatherSource.FIXTURE, _FIXTURE_CONDITIONS)
+
+
+def build_weather_service(settings: "Settings", client: httpx.AsyncClient) -> WeatherProvider:
+    """Return the fixture provider in demo mode, the live provider otherwise."""
+    if settings.demo_mode:
+        logger.warning("DEMO MODE: fixture weather, every plan is advisory")
+        return FixtureWeather()
+    return WeatherService(
+        client=client,
+        base_url=settings.weather_base_url,
+        retry_attempts=settings.weather_retry_attempts,
+        deadline_s=settings.weather_deadline_s,
+        cache_ttl_s=settings.weather_cache_ttl_s,
+    )
