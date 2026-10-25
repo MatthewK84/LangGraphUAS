@@ -8,7 +8,7 @@ from uuid import uuid4
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from langgraph.types import Command, StateSnapshot
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from suas import __version__
 from suas.api.dependencies import GraphDep, MetricsDep, ReplanGraphDep, SessionFactoryDep
@@ -18,6 +18,7 @@ from suas.api.security import require_api_key
 from suas.api.thread_locks import thread_lock
 from suas.db.corpus import open_quarantine_configs
 from suas.db.flight_logs import apply_flight_log, store_flight_log
+from suas.db.migrations import MigrationState, migration_state
 from suas.db.repository import list_aircraft, list_payloads
 from suas.db.retention import (
     lock_thread_for_update,
@@ -119,23 +120,54 @@ async def health_check() -> HealthResponse:
     return HealthResponse(status="operational", service="suas-engine", version=__version__)
 
 
-@router.get("/ready", response_model=ReadinessResponse, tags=["ops"])
-async def readiness_check(
-    session_factory: SessionFactoryDep,
-    response: Response,
-) -> ReadinessResponse:
-    """Return readiness, verifying the database is actually reachable."""
-    database: str = "ok"
+_READINESS_PROBE_THREAD: str = "__readiness_probe__"
+
+
+async def _database_states(session_factory: async_sessionmaker[AsyncSession]) -> tuple[str, str]:
+    """Return (database, migrations). Migrations are ``unknown`` when the database is down."""
     try:
         async with session_factory() as session:
             await session.execute(text("SELECT 1"))
+            tracked_required = session.get_bind().dialect.name != "sqlite"
+            migrations = await migration_state(session, tracked_required=tracked_required)
     except Exception as exc:  # A probe must report status, never propagate.
         logger.error("Readiness database check failed: %s", exc)
-        database = "unavailable"
-    ready: bool = database == "ok"
+        return "unavailable", "unknown"
+    return "ok", migrations.value
+
+
+async def _checkpointer_state(graph: Any) -> str:
+    """Read one (absent) checkpoint, proving the plan store answers."""
+    try:
+        await graph.checkpointer.aget_tuple(_thread_config(_READINESS_PROBE_THREAD))
+    except Exception as exc:  # A probe must report status, never propagate.
+        logger.error("Readiness checkpointer check failed: %s", exc)
+        return "unavailable"
+    return "ok"
+
+
+@router.get("/ready", response_model=ReadinessResponse, tags=["ops"])
+async def readiness_check(
+    session_factory: SessionFactoryDep,
+    graph: GraphDep,
+    response: Response,
+) -> ReadinessResponse:
+    """Return readiness: database reachable, schema at the code's revision, checkpoints readable.
+
+    A missing model key does not count; advisory briefs are a supported mode.
+    """
+    database, migrations = await _database_states(session_factory)
+    checkpointer = await _checkpointer_state(graph)
+    ready = (
+        database == "ok"
+        and migrations in {MigrationState.OK, MigrationState.NOT_TRACKED}
+        and checkpointer == "ok"
+    )
     if not ready:
         response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
-    return ReadinessResponse(ready=ready, database=database, checkpointer="ok")
+    return ReadinessResponse(
+        ready=ready, database=database, migrations=migrations, checkpointer=checkpointer
+    )
 
 
 @router.get("/metrics", tags=["ops"])

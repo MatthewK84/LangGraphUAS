@@ -260,7 +260,7 @@ live roster, cross-check `bluelist.dcma.mil`.
 | Method | Path | Purpose |
 | --- | --- | --- |
 | `GET` | `/health` | Liveness. Touches no dependencies. |
-| `GET` | `/ready` | Readiness. Executes a real database query; returns 503 when unavailable. |
+| `GET` | `/ready` | Readiness: database reachable, schema at the code's alembic revision, checkpoint store readable. Returns 503 otherwise; a missing model key does not count. See [ops](docs/ops.md#readiness). |
 | `GET` | `/metrics` | Prometheus text exposition: request counts, latency, plan outcomes, weather provenance. |
 
 ### Catalog

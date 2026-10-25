@@ -102,6 +102,15 @@ jobs:
         env:
           SUAS_DATABASE_URL: postgresql+psycopg://suas:suas@localhost:5432/suas
         run: python scripts/smoke_check.py
+      # The other direction (#111): a database alembic never touched must
+      # make /ready answer 503 with migrations "pending", even though the
+      # lifespan's create_all gives it every table.
+      - name: Smoke test /ready refuses an unmigrated database
+        env:
+          SUAS_DATABASE_URL: postgresql+psycopg://suas:suas@localhost:5432/suas_unmigrated
+        run: |
+          python -c "import psycopg; psycopg.connect('postgresql://suas:suas@localhost:5432/suas', autocommit=True).execute('CREATE DATABASE suas_unmigrated')"
+          python scripts/smoke_check.py --expect-unmigrated
 
   calculator-version:
     name: Calculator version bump

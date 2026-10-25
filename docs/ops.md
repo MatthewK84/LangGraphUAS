@@ -1,5 +1,21 @@
 # Operations
 
+## Readiness
+
+`GET /ready` answers 200 only when the instance can serve a plan, and 503 otherwise. Each field reports one dependency:
+
+| Field | `ok` means | Not ready when |
+|---|---|---|
+| `database` | `SELECT 1` succeeds | `unavailable`: no connection |
+| `migrations` | `alembic_version` holds `EXPECTED_REVISION` (`suas/db/migrations.py`) | `pending`: an older revision, or no version table on Postgres (tables from `create_all` alone); `unknown` when the database is down |
+| `checkpointer` | the plan checkpoint store answers a read | `unavailable`: the read raised |
+
+`not_tracked` is ready. It is local SQLite with no version table, the default development path, where `create_all` builds the schema. Deployed containers run `alembic upgrade head` in `docker-entrypoint.sh` before uvicorn, so `pending` there means the upgrade failed or ran against another database.
+
+A missing model key does not affect readiness. Advisory briefs are a supported mode.
+
+A new migration must also bump `EXPECTED_REVISION`; a test fails until it does. CI proves both directions against Postgres. A migrated database must be ready, and a database alembic never touched must answer 503 with `pending` (`scripts/smoke_check.py --expect-unmigrated`).
+
 ## Retention
 
 LangGraph's Postgres saver has no TTL, so retention is ours.

@@ -5,14 +5,21 @@ with the graph and database overridden so no network or model call occurs.
 ASGITransport is used so the production lifespan does not run.
 """
 
+from pathlib import Path
 from typing import Any
 
 import httpx
 import pytest
+from alembic.config import Config
+from alembic.script import ScriptDirectory
 from fastapi import FastAPI
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from suas.api.security import require_api_key
 from suas.config import Settings, get_settings
+from suas.db.migrations import EXPECTED_REVISION, MigrationState, migration_state
+from tests.conftest import stamp_revision
 
 _VALID_BODY: dict[str, Any] = {
     "aircraft_id": "Skydio_X10D",
@@ -57,8 +64,91 @@ async def test_readiness_reports_database_ok(app_with_graph: FastAPI) -> None:
         response = await client.get("/ready")
     assert response.status_code == 200
     body = response.json()
-    assert body["ready"] is True
-    assert body["database"] == "ok"
+    assert body == {"ready": True, "database": "ok", "migrations": "ok", "checkpointer": "ok"}
+
+
+async def test_a_schema_behind_the_code_is_not_ready(
+    app_with_graph: FastAPI, session_factory: async_sessionmaker[AsyncSession]
+) -> None:
+    """The failure #111 names: an unmigrated container reported ready."""
+    async with session_factory() as session, session.begin():
+        await stamp_revision(await session.connection(), "0009")
+
+    async with _client(app_with_graph) as client:
+        response = await client.get("/ready")
+
+    assert response.status_code == 503
+    assert response.json()["migrations"] == "pending"
+    assert response.json()["ready"] is False
+
+
+async def test_an_untracked_postgres_schema_is_pending(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    """Tables made by create_all with no alembic_version row are not migrated."""
+    async with session_factory() as session:
+        await session.execute(text("DROP TABLE alembic_version"))
+        assert await migration_state(session, tracked_required=True) is MigrationState.PENDING
+        assert await migration_state(session, tracked_required=False) is (
+            MigrationState.NOT_TRACKED
+        )
+
+
+async def test_local_sqlite_without_alembic_stays_ready(
+    app_with_graph: FastAPI, session_factory: async_sessionmaker[AsyncSession]
+) -> None:
+    """Local SQLite schemas come from create_all, so no version table is expected there."""
+    async with session_factory() as session, session.begin():
+        await session.execute(text("DROP TABLE alembic_version"))
+
+    async with _client(app_with_graph) as client:
+        response = await client.get("/ready")
+
+    assert response.status_code == 200
+    assert response.json()["migrations"] == "not_tracked"
+
+
+class _BrokenSaver:
+    async def aget_tuple(self, config: Any) -> None:
+        _ = config
+        raise ConnectionError("checkpoint store unreachable")
+
+
+class _GraphWithBrokenSaver:
+    checkpointer = _BrokenSaver()
+
+
+async def test_an_unreachable_checkpointer_is_not_ready(app_with_graph: FastAPI) -> None:
+    app_with_graph.state.graph = _GraphWithBrokenSaver()
+
+    async with _client(app_with_graph) as client:
+        response = await client.get("/ready")
+
+    assert response.status_code == 503
+    assert response.json()["checkpointer"] == "unavailable"
+
+
+async def test_readiness_does_not_need_a_model_key(
+    app_with_graph: FastAPI, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Advisory briefs are a supported mode, so a missing model key still takes traffic."""
+    monkeypatch.setenv("SUAS_OPENAI_API_KEY", "")
+    get_settings.cache_clear()
+
+    async with _client(app_with_graph) as client:
+        response = await client.get("/ready")
+
+    get_settings.cache_clear()
+    assert response.status_code == 200
+
+
+def test_the_expected_revision_is_the_alembic_head() -> None:
+    """A new migration must bump EXPECTED_REVISION, or every container reads as pending."""
+    config = Config(str(Path(__file__).resolve().parent.parent / "alembic.ini"))
+    config.set_main_option(
+        "script_location", str(Path(__file__).resolve().parent.parent / "alembic")
+    )
+    assert ScriptDirectory.from_config(config).get_heads() == [EXPECTED_REVISION]
 
 
 async def test_aircraft_catalog_returns_seeded_platforms(app_with_graph: FastAPI) -> None:

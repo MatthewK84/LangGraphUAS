@@ -14,9 +14,16 @@ import pytest
 from hypothesis import settings
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph.state import CompiledStateGraph
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import (
+    AsyncConnection,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
 from sqlalchemy.pool import StaticPool
 
+from suas.db.migrations import EXPECTED_REVISION
 from suas.db.models import AircraftRow, Base, PayloadRow
 from suas.graph.dependencies import GraphDependencies
 from suas.graph.replan import ReplanDependencies, build_replan_graph
@@ -32,6 +39,19 @@ settings.register_profile(
     "ci", parent=settings.get_profile("dev"), derandomize=True, database=None
 )
 settings.load_profile("ci" if os.environ.get("CI") else "dev")
+
+
+async def stamp_revision(connection: AsyncConnection, revision: str) -> None:
+    """Record ``revision`` the way ``alembic upgrade`` would, so the schema reads as migrated."""
+    await connection.execute(
+        text("CREATE TABLE IF NOT EXISTS alembic_version (version_num VARCHAR(32) PRIMARY KEY)")
+    )
+    await connection.execute(text("DELETE FROM alembic_version"))
+    await connection.execute(
+        text("INSERT INTO alembic_version (version_num) VALUES (:revision)"),
+        {"revision": revision},
+    )
+
 
 _DATA_DIR = Path(__file__).resolve().parent.parent / "suas" / "data"
 
@@ -82,6 +102,7 @@ async def session_factory() -> AsyncIterator[async_sessionmaker[AsyncSession]]:
     )
     async with engine.begin() as connection:
         await connection.run_sync(Base.metadata.create_all)
+        await stamp_revision(connection, EXPECTED_REVISION)
     factory = async_sessionmaker(engine, expire_on_commit=False)
     async with factory() as session:
         for record in _seed_records("aircraft.json"):
