@@ -1,0 +1,15 @@
+# Changelog
+
+What reached `main` each week: one section per week, headed by its Monday
+(dates in UTC), newest first, five lines at most. Every PR adds its line to the
+current week's section, creating that section if the week has none. Each line
+names the PRs or issues it records. `backend/tests/test_changelog.py` checks
+the format.
+
+## Week of 2026-10-19
+
+- ub-mode is now a blocking CI gate: crapper and dryer at pinned commits, CRAP < 10 for every function in `backend/suas`, and no duplicate pair at 0.8 or above unless allowlisted with a reason (#131, #136, #137).
+- The seven functions at CRAP 10 or above got characterization tests first, then small refactors where needed: `acknowledge_plan`, `replan_mission`, `make_cite_limits_node`, `retrieve`, `ingest_document`, `lifespan`, `apply_flight_log`. Coverage now counts code run under greenlets (#132, #133, #134, #135).
+- PLAN-90 gained a living status block measured from `main` (#120).
+- Dependabot bumps. Backend: sqlalchemy 2.0.54, psycopg 3.3.5, uvicorn 0.53.0, langchain-core 1.6.3, mypy 2.3.1. Frontend: @types/node 26.6.1, typescript-eslint 8.70.0, autoprefixer 10.6.1, postcss 8.5.28 (#121, #122, #123, #124, #125, #126, #127, #129, #130).
+- `CHANGELOG.md` started, with a test for its format (#80).
