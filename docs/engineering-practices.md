@@ -112,7 +112,9 @@ was 7 functions and 10 pairs.
 
 The `mutation` job ("Mutation (mutator, report-only)") in
 `.github/workflows/ci.yml` runs mutator, pinned to a commit, and lists every
-surviving mutant in the job summary. It never fails a build. On a pull request
+surviving mutant in the job summary. Survivors never fail it; a tool that
+cannot run (mutator exits other than 0 or 3) does, so an empty run cannot pass
+as a clean one. On a pull request
 it mutates the `backend/suas` modules the PR changed, as chosen by
 `backend/scripts/mutation_targets.py`. On a push to `main`, and on a pull
 request that edits that selector, it mutates the safety core: `calculations/`,

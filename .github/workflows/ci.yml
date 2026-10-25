@@ -234,8 +234,10 @@ jobs:
     permissions:
       contents: read
     env:
-      # mutator publishes no releases, so it is pinned to a commit.
+      # mutator publishes no releases, so it is pinned to a commit. It imports
+      # crapper for function names; keep CRAPPER_REF equal to the ub-mode job's.
       MUTATOR_REF: a5a0cb803b66e0cdb8bf471b3b08af701d424a41
+      CRAPPER_REF: 6fd92c4c9bcc56efb64a2f8743d5a2993bcfd42d
       TREE_SITTER_VERSION: "0.26.0"
       TREE_SITTER_LANGUAGE_PACK_VERSION: "1.22.1"
     defaults:
@@ -282,6 +284,7 @@ jobs:
           python -m venv "$RUNNER_TEMP/mutator"
           "$RUNNER_TEMP/mutator/bin/pip" install \
             "mutator @ git+https://github.com/unclebob/mutator@${MUTATOR_REF}" \
+            "crapper @ git+https://github.com/unclebob/crapper@${CRAPPER_REF}" \
             "tree-sitter==${TREE_SITTER_VERSION}" \
             "tree-sitter-language-pack==${TREE_SITTER_LANGUAGE_PACK_VERSION}"
       - name: Coverage for mutator
@@ -290,14 +293,20 @@ jobs:
       - name: Mutator
         if: steps.targets.outputs.any == 'true'
         id: mutate
-        # Report-only: neither survivors nor a timeout fail the job.
-        continue-on-error: true
-        timeout-minutes: 15
+        timeout-minutes: 20
+        # Report-only for survivors, not for a broken tool. mutator exits 0 when
+        # every mutant is killed and 3 when some survive; both pass. Anything
+        # else (2: crapper missing, or the suite failing unmutated) fails the
+        # job, so a run that mutated nothing cannot look green.
         run: |
           mapfile -t files < "$RUNNER_TEMP/targets.txt"
+          code=0
           "$RUNNER_TEMP/mutator/bin/mutator" --use-existing-coverage \
             --test-command "python -m pytest -q -x -p no:cacheprovider" "${files[@]}" \
-            | tee "$RUNNER_TEMP/mutate.txt"
+            > "$RUNNER_TEMP/mutate.txt" 2>&1 || code=$?
+          cat "$RUNNER_TEMP/mutate.txt"
+          echo "mutator exit code: $code"
+          [ "$code" -eq 0 ] || [ "$code" -eq 3 ]
       - name: Job summary
         if: always()
         env:
