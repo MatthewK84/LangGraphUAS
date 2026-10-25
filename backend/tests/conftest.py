@@ -5,11 +5,13 @@ bundled reference data, fake weather and report services, and an in-memory
 checkpointer. No network calls occur during tests.
 """
 
+import os
 from collections.abc import AsyncIterator, Callable
 from pathlib import Path
 from typing import Any
 
 import pytest
+from hypothesis import settings
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph.state import CompiledStateGraph
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
@@ -21,6 +23,15 @@ from suas.graph.replan import ReplanDependencies, build_replan_graph
 from suas.graph.workflow import build_mission_graph
 from suas.reference_data import load_rows
 from suas.schemas.responses import WeatherReading, WeatherSource
+
+# Property tests: 100 examples each, no per-example deadline (a slow CI runner is
+# not a bug), and in CI a fixed seed with no example database, so a failure there
+# reproduces exactly on a rerun.
+settings.register_profile("dev", max_examples=100, deadline=None)
+settings.register_profile(
+    "ci", parent=settings.get_profile("dev"), derandomize=True, database=None
+)
+settings.load_profile("ci" if os.environ.get("CI") else "dev")
 
 _DATA_DIR = Path(__file__).resolve().parent.parent / "suas" / "data"
 
