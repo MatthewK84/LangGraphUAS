@@ -167,6 +167,12 @@ jobs:
         run: |
           "$RUNNER_TEMP/ub-tools/bin/dryer" --threshold 0.8 suas \
             | tee "$RUNNER_TEMP/dry.txt"
+      - name: Gate on CRAP < 10 and unlisted duplication < 0.8
+        run: >-
+          python scripts/ub_gate.py
+          --crap "$RUNNER_TEMP/crap.txt"
+          --dry "$RUNNER_TEMP/dry.txt"
+          --allowlist ub-mode-allowlist.txt
       - name: Job summary
         if: always()
         run: |
