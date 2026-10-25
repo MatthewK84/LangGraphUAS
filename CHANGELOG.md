@@ -6,6 +6,10 @@ current week's section, creating that section if the week has none. Each line
 names the PRs or issues it records. `backend/tests/test_changelog.py` checks
 the format.
 
+## Week of 2026-10-26
+
+- Every W and Wh figure in a plan response now carries its own provenance (weakest source, lowest confidence, operational grade, inputs), and the dashboard shows it beside each number, so an estimate can no longer render as a measured watt; a test perturbs each reference field through the calculator to keep the figure-to-input table honest (#79).
+
 ## Week of 2026-10-19
 
 - ub-mode is now a blocking CI gate: crapper and dryer at pinned commits, CRAP < 10 for every function in `backend/suas`, and no duplicate pair at 0.8 or above unless allowlisted with a reason (#131, #136, #137). The frontend lint now fails any function above cyclomatic complexity 10 (#152). A report-only `mutation` job lists mutator survivors for the backend modules a PR changes (#155).

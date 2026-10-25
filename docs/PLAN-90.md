@@ -38,6 +38,11 @@ ahead of the dates. What follows is measured from `main`, not from the plan.
 - **Retrieval gates** in CI: configuration leak and false-confirm at zero.
 - **Offline eval harness**: 40 retrieval fixtures, 30 frozen mission fixtures,
   both with committed baselines.
+- **Every watt says what it rests on.** Each W and Wh figure in a plan
+  response carries its own `provenance` entry: the weakest source and lowest
+  confidence among the reference fields it was computed from (#79). With the
+  bundled data every figure reads `unknown`, because no payload records its
+  mass, and the dashboard shows that tag beside each number.
 
 ### Blocking operational mode
 
@@ -62,11 +67,13 @@ one lab configuration pass, or by writing the refusal down.
 
 ### Next three PRs
 
-1. **#72** — this status block.
-2. **#73** — split `engineering-practices.md` into Enforced in CI and
-   Aspirational, and reconcile the README's Known Limitations against it.
-3. **#74** — a live issue for the 76 reference fields, replacing the dead link,
-   with `CITATIONS.md` regenerated from the seed JSON so the two cannot drift.
+#72 and #73 are merged, and #74 to #78 wait on data or a decision (a ticket
+to open, a datasheet, a flight log, a gate review), so the next three come from
+wave 2:
+
+1. **#81** — per-operator API keys.
+2. **#82** — the frontend proxy must not be a shared god key.
+3. **#83** — key rotation without breaking open interrupts.
 
 Updated in any PR that changes what is on `main`.
 
