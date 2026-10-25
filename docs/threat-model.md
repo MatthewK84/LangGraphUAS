@@ -34,7 +34,7 @@ text.
 |---|---|---|
 | Stolen key resumes another operator's thread | Keys scoped to `missions.operator_key_id`; mismatch returns 404 | Cross-key resume returns 404 |
 | Forged "live" weather | `source` is tagged by our client from transport outcome, never read from the response body | A fake body cannot set `source=live` when the request failed |
-| Demo mode left on in a deployment (#97) | `SUAS_DEMO_MODE` defaults off in Settings, Compose and `.env.example`. Demo weather is tagged `fixture`, never operational grade, so the gate blocks operational (`WEATHER_NOT_LIVE`) and every plan says advisory. The backend logs a `DEMO MODE` warning at startup | `tests/test_demo_mode.py`: an operational request on fixture weather comes back advisory; the CI `compose` job checks the same end to end |
+| Demo mode left on in a deployment (#97) | `SUAS_DEMO_MODE` defaults off in Settings, Compose and `.env.example`. Demo weather is tagged `fixture`, never operational grade, so the gate blocks operational (`WEATHER_NOT_LIVE`) and every plan says advisory. The backend logs a `DEMO MODE` warning at startup | `tests/test_demo_mode.py`: an operational request on fixture weather comes back advisory; `scripts/compose_smoke.py` checks the same end to end when run locally |
 | Forged Blue List page | Snapshot plus `content_hash`; the gate reads the snapshot, never a request-path scrape | Tampered hash fails the gate |
 | Model claiming to be the calculator | Seal drop-list | `test_seal.py` |
 
