@@ -27,6 +27,8 @@ Security and safety gates, each a job in `.github/workflows/ci.yml`:
 | Gate | Job | Rule |
 |---|---|---|
 | Workflow lint | `workflow-lint` ("Workflow lint (actionlint, zizmor)") | actionlint finds no error, and zizmor finds no issue in `.github/`: every action pinned to a commit SHA, no `${{ }}` expansion inside `run:`, no persisted checkout credentials, a read-only default token, and a Dependabot cooldown |
+| Python SAST | `backend` ("Backend (py3.11, py3.12, py3.13)"), step "Ruff lint" | ruff's flake8-bandit `S` rules over `suas`, `tests`, `alembic`, `scripts`, `eval`; only asserts and fixed subprocess calls are ignored, and only in tests and scripts |
+| Trojan Source | `backend`, step "Pytest with coverage" | `tests/test_source_hygiene.py` fails on any zero-width, bidi or BOM character in backend, eval, or frontend source; patterns spell them as `\u` escapes |
 
 Added by this plan:
 

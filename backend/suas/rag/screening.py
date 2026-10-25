@@ -28,7 +28,7 @@ from typing import Final
 # Zero-width characters, bidirectional overrides, word joiners, and the BOM.
 # None of these have any business in a datasheet, and all of them are standard
 # ways to hide one string inside another.
-INVISIBLE: Final[re.Pattern[str]] = re.compile("[​-‏‪-‮⁠-⁤﻿]")
+INVISIBLE: Final[re.Pattern[str]] = re.compile("[\u200b-\u200f\u202a-\u202e\u2060-\u2064\ufeff]")
 
 # Markdown and HTML link syntax. URLs come from the document record, never from
 # body text: a link in a chunk is either an exfiltration target or noise.

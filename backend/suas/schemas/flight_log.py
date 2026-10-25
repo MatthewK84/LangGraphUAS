@@ -61,8 +61,10 @@ class FlightLogSample(BaseModel):
         """Return recorded power, or volts times amps when power was not logged."""
         if self.power_w is not None:
             return self.power_w
-        # The validator guarantees both are present when power_w is not.
-        assert self.voltage_v is not None and self.current_a is not None
+        # The validator guarantees both are present when power_w is not. An
+        # explicit raise, not assert, so the guard survives ``python -O``.
+        if self.voltage_v is None or self.current_a is None:
+            raise ValueError("sample has neither power_w nor both voltage_v and current_a")
         return self.voltage_v * self.current_a
 
     @property
