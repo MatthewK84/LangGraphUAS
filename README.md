@@ -728,6 +728,14 @@ the air.
   merge. [`audit.yml`](.github/workflows/audit.yml) runs `pip-audit` and
   `npm audit` every Monday and on demand, report-only; run `pip-audit` before a
   release as well.
+- **Some practices are not gates yet.** The
+  [Aspirational](docs/engineering-practices.md#aspirational) list says which.
+  The branch ruleset lists no required status checks, so "merge only on green"
+  is held by people. No job holds `calculations/` at 95% coverage (only the
+  repo-wide 80%), graph tests run on SQLite rather than Postgres, nothing
+  enforces the second reviewer the review bar asks for on safety code, and the
+  frontend's CRAP is not measured. Mutation, image scan, dependency audit and
+  SBOM are report-only.
 
 <details>
 <summary><b>Operational notes</b></summary>
