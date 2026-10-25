@@ -111,6 +111,12 @@ jobs:
         run: |
           python -c "import psycopg; psycopg.connect('postgresql://suas:suas@localhost:5432/suas', autocommit=True).execute('CREATE DATABASE suas_unmigrated')"
           python scripts/smoke_check.py --expect-unmigrated
+      # Two workers seed at startup; on an empty database they used to race
+      # to INSERT and one died on the primary key (main run 40237537525).
+      - name: Concurrent seeds on a fresh database
+        env:
+          SUAS_TEST_POSTGRES_URL: postgresql://suas:suas@localhost:5432/suas
+        run: python -m pytest -q -p no:cacheprovider tests/test_seed_concurrency.py
 
   calculator-version:
     name: Calculator version bump
@@ -444,9 +450,19 @@ jobs:
           docker compose up --build --detach --wait --wait-timeout 300
       - name: Smoke the running stack
         run: python3 scripts/compose_smoke.py
-      - name: Compose logs
+      - name: Compose state and logs
         if: failure()
-        run: docker compose logs --no-color
+        run: |
+          docker compose ps --all
+          echo "::group::backend healthcheck history"
+          docker inspect --format '{{json .State.Health}}' "$(docker compose ps --all --quiet backend)" || true
+          echo "::endgroup::"
+          echo "::group::backend log"
+          docker compose logs --no-color --timestamps backend
+          echo "::endgroup::"
+          echo "::group::all services"
+          docker compose logs --no-color --timestamps
+          echo "::endgroup::"
       - name: Stop
         if: always()
         run: docker compose down --volumes
