@@ -7,7 +7,12 @@ set accordingly.
 
 - Trunk-based. `main` is always deployable. Short-lived `feat/` branches.
 - Phase tags: `v0.2.0-honest-core`, `v0.3.0-closed-loop`, `v0.4.0-eval`.
-- Conventional commits. `CHANGELOG.md` gets five lines every Friday.
+- Conventional commits.
+- Every PR appends its line to the current week's section of `CHANGELOG.md`,
+  starting the section (headed by that week's Monday) if the week has none.
+  Five lines a week at most, so fold related PRs into one line, and name the
+  PRs or issues each line records. `backend/tests/test_changelog.py` enforces
+  the format.
 - One PR is one mergeable slice with tests.
 
 ## CI gates that block merge
