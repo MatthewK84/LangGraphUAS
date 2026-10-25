@@ -1,4 +1,29 @@
-# sUAS Intelligent Mission Planner
+<h1 align="center">sUAS Intelligent Mission Planner</h1>
+
+<h4 align="center">Deterministic energy and performance feasibility for small unmanned aircraft.<br>The language model writes prose; the calculator writes every number.</h4>
+
+<div align="center">
+
+[![CI](https://img.shields.io/github/actions/workflow/status/MatthewK84/LangGraphUAS/ci.yml?branch=main&style=for-the-badge&labelColor=000000&label=CI&logo=githubactions&logoColor=white)](https://github.com/MatthewK84/LangGraphUAS/actions/workflows/ci.yml?query=branch%3Amain)
+[![License: MIT](https://img.shields.io/badge/license-MIT-1f6feb?style=for-the-badge&labelColor=000000)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-1f6feb?style=for-the-badge&labelColor=000000&logo=python&logoColor=white)](backend/pyproject.toml)
+[![Node](https://img.shields.io/badge/node-20-1f6feb?style=for-the-badge&labelColor=000000&logo=nodedotjs&logoColor=white)](frontend/Dockerfile)
+
+[![mypy](https://img.shields.io/badge/mypy-strict-1f6feb?style=for-the-badge&labelColor=000000)](#quality-gates)
+[![ruff](https://img.shields.io/badge/ruff-incl.%20bandit-1f6feb?style=for-the-badge&labelColor=000000)](#quality-gates)
+[![CRAP](https://img.shields.io/badge/CRAP-%3C%2010-1f6feb?style=for-the-badge&labelColor=000000)](#quality-gates)
+[![gitleaks](https://img.shields.io/badge/gitleaks-full%20history-1f6feb?style=for-the-badge&labelColor=000000)](#quality-gates)
+[![workflow lint](https://img.shields.io/badge/workflows-actionlint%20%2B%20zizmor-1f6feb?style=for-the-badge&labelColor=000000)](#quality-gates)
+
+</div>
+
+> [!WARNING]
+> **Advisory only, not a clearance.** This is an energy and performance
+> feasibility calculator. It is explicitly not an airspace, NOTAM, or regulatory
+> clearance tool, and a GO means only that the energy budget and airframe
+> envelope close. Today operational mode is unreachable: every plan comes back
+> advisory, with blockers naming what is missing. See
+> [Advisory and operational](#advisory-and-operational).
 
 An async AI orchestration and deterministic physics engine for small unmanned
 aircraft system (sUAS) flight planning. A LangGraph state machine coordinates
@@ -6,73 +31,30 @@ validation, live weather, deterministic safety math, and a language-model
 safety brief. A Next.js dashboard drives it. The reference data covers a set of
 DIU/DCMA Blue UAS (NDAA-compliant) multirotor platforms.
 
-Supported on Python 3.11, 3.12, and 3.13. CI verifies all three.
+<div align="center">
 
-## Architecture
+<!-- Demo recording: reserved for issue #99. Add only a real recording of this app. -->
+<i>Demo recording: not yet recorded, tracked in <a href="https://github.com/MatthewK84/LangGraphUAS/issues/99">#99</a>.
+Until then the <a href="#quickstart">demo quickstart</a> runs the whole flow locally with no keys.</i>
 
-- **Frontend**: Next.js 14 (App Router, standalone output), TypeScript strict, TailwindCSS.
-- **Backend**: FastAPI on Python 3.11 to 3.13, fully async request path.
-- **Orchestration**: LangGraph 1.x `StateGraph` with a conditional edge and durable checkpointing.
-- **Language model**: `langchain-openai` `ChatOpenAI`, called with `ainvoke`, timeout, and bounded retries.
-- **Database**: PostgreSQL 16 via async SQLAlchemy 2.0 (SQLite for local and tests).
-- **Migrations**: Alembic, async-aware, verified against the ORM models in CI.
-- **Persistence of graph state**: `AsyncPostgresSaver` in production, `InMemorySaver` otherwise.
-- **Observability**: request correlation, JSON logs, Prometheus metrics, split liveness and readiness.
-- **Deployment**: Docker Compose with health checks and non-root images.
+</div>
 
-### Authentication and the API key
+## Contents
 
-The browser never holds a credential. It calls this app's own origin, and
-server-side Next.js route handlers under `frontend/src/app/api/` proxy each
-request to the backend, attaching `X-API-Key` from `BACKEND_API_KEY`. That
-variable is deliberately not prefixed `NEXT_PUBLIC_`, so Next.js will not inline
-it into the client bundle.
+- [Quickstart](#quickstart)
+- [Architecture](#architecture)
+- [Quality gates](#quality-gates)
+- [The performance model](#the-performance-model)
+- [API](#api)
+- [Configuration](#configuration)
+- [Local development](#local-development)
+- [Documentation](#documentation)
+- [Operations and limitations](#operations-and-limitations)
+- [License](#license)
 
-This replaces an earlier arrangement where the key was read from
-`NEXT_PUBLIC_API_KEY` and shipped inside the JavaScript bundle, which meant
-enabling auth published the key to every visitor. Only the Next.js server needs
-network reach to the backend now; the backend does not have to be exposed to
-browsers at all.
+## Quickstart
 
-The key still authenticates the *deployment*, not individual users. There is no
-per-user identity, so any caller who can reach the proxy can plan a mission and
-can fetch any `thread_id` they know. Thread ids are UUIDv4 and so are not
-practically enumerable, but put real authentication in front of this before
-serving distinct tenants.
-
-### Graph design
-
-The graph is defined in `backend/suas/graph/`. Nodes are built by factories that
-receive dependencies explicitly, so no node relies on global state and each is
-unit testable. The flow is:
-
-```
-START -> validate -> (conditional) -> weather -> calculations -> human_ack -> report -> END
-                          \-> report (when validation fails)          |
-                                        edit <---------------------- /
-                                        abort -> END
-```
-
-`human_ack` interrupts the run and waits for a person. The order is a security
-control rather than a workflow preference: the operator signs an assessment that
-neither retrieved text nor generated prose has touched, so nothing a model
-produces can change what was signed. See
-[ADR-004](docs/adr/004-node-order-and-empty-tool-binding.md). The report node has
-no tools bound, for the same reason. Both are pinned by tests that fail if the
-invariant is removed.
-
-State holds only JSON-native values. Pydantic models are dumped to dictionaries
-before entering state, which keeps checkpoint serialization simple and safe.
-The container sets `LANGGRAPH_STRICT_MSGPACK=true` to restrict checkpoint
-deserialization to known-safe types.
-
-Every request supplies a `thread_id`. The checkpointer persists state per thread,
-so `GET /api/plan/{thread_id}` can retrieve a prior assessment and a follow-up
-request can resume the same conversation. Checkpoints are written with
-`durability="sync"`, so a crash between the assessment and the signature loses
-neither.
-
-## Quickstart (Docker)
+Docker Compose, from the repository root.
 
 ### Demo, no keys
 
@@ -98,77 +80,147 @@ acknowledge and read-back (`scripts/compose_smoke.py`).
 Without an `OPENAI_API_KEY`, the app still runs. The report node returns a
 deterministic go/no-go summary instead of a model narrative.
 
-## Local development
+## Architecture
+
+| Layer | Choice |
+|---|---|
+| Frontend | Next.js 14 (App Router, standalone output), TypeScript strict, TailwindCSS. |
+| Backend | FastAPI on Python 3.11 to 3.13, fully async request path. |
+| Orchestration | LangGraph 1.x `StateGraph` with a conditional edge and durable checkpointing. |
+| Language model | `langchain-openai` `ChatOpenAI`, called with `ainvoke`, timeout, and bounded retries. |
+| Database | PostgreSQL 16 via async SQLAlchemy 2.0 (SQLite for local and tests). |
+| Migrations | Alembic, async-aware, verified against the ORM models in CI. |
+| Persistence of graph state | `AsyncPostgresSaver` in production, `InMemorySaver` otherwise. |
+| Observability | request correlation, JSON logs, Prometheus metrics, split liveness and readiness. |
+| Deployment | Docker Compose with health checks and non-root images. |
+
+### Graph design
+
+The graph is defined in `backend/suas/graph/`. Nodes are built by factories that
+receive dependencies explicitly, so no node relies on global state and each is
+unit testable. The flow is:
+
+```mermaid
+flowchart LR
+    S([START]) --> validate
+    validate -- viable --> weather
+    validate -- validation failed --> report
+    weather --> calculations
+    calculations --> cite_limits
+    cite_limits --> human_ack
+    human_ack -- confirm --> report
+    human_ack -- edit --> calculations
+    human_ack -- abort --> E([END])
+    report --> E
+```
+
+`human_ack` interrupts the run and waits for a person. The order is a security
+control rather than a workflow preference: the operator signs an assessment that
+neither retrieved text nor generated prose has touched, so nothing a model
+produces can change what was signed. See
+[ADR-004](docs/adr/004-node-order-and-empty-tool-binding.md). The report node has
+no tools bound, for the same reason. Both are pinned by tests that fail if the
+invariant is removed.
+
+<details>
+<summary><b>State and checkpoints</b></summary>
+
+State holds only JSON-native values. Pydantic models are dumped to dictionaries
+before entering state, which keeps checkpoint serialization simple and safe.
+The container sets `LANGGRAPH_STRICT_MSGPACK=true` to restrict checkpoint
+deserialization to known-safe types.
+
+Every request supplies a `thread_id`. The checkpointer persists state per thread,
+so `GET /api/plan/{thread_id}` can retrieve a prior assessment and a follow-up
+request can resume the same conversation. Checkpoints are written with
+`durability="sync"`, so a crash between the assessment and the signature loses
+neither.
+
+</details>
+
+<details>
+<summary><b>Authentication and the API key</b></summary>
+
+The browser never holds a credential. It calls this app's own origin, and
+server-side Next.js route handlers under `frontend/src/app/api/` proxy each
+request to the backend, attaching `X-API-Key` from `BACKEND_API_KEY`. That
+variable is deliberately not prefixed `NEXT_PUBLIC_`, so Next.js will not inline
+it into the client bundle.
+
+This replaces an earlier arrangement where the key was read from
+`NEXT_PUBLIC_API_KEY` and shipped inside the JavaScript bundle, which meant
+enabling auth published the key to every visitor. Only the Next.js server needs
+network reach to the backend now; the backend does not have to be exposed to
+browsers at all.
+
+The key still authenticates the *deployment*, not individual users. There is no
+per-user identity, so any caller who can reach the proxy can plan a mission and
+can fetch any `thread_id` they know. Thread ids are UUIDv4 and so are not
+practically enumerable, but put real authentication in front of this before
+serving distinct tenants.
+
+</details>
+
+## Quality gates
+
+Every job in [`.github/workflows/ci.yml`](.github/workflows/ci.yml), as of `main`
+today. A blocking job turns the run red when its rule fails; changes merge only
+on a fully green run. That is project practice: the branch ruleset does not yet
+list required status checks. Rules and rationale for each gate are in
+[`docs/engineering-practices.md`](docs/engineering-practices.md).
+
+| Job | Effect | What it holds |
+|---|---|---|
+| `backend` | Blocks | On Python 3.11, 3.12 and 3.13: ruff lint (including the bandit `S` rules), ruff format, `mypy --strict`, pytest with coverage at 80% or more, and migrations that apply and match the models |
+| `postgres-integration` | Blocks | Real Postgres: migrations apply, the app boots end to end, `/ready` refuses an unmigrated database, and concurrent startup seeds all succeed |
+| `calculator-version` | Blocks (pull requests only) | A change to `backend/suas/calculations/` must bump `CALCULATOR_VERSION` |
+| `ub-mode` | Blocks | CRAP below 10 for every function in `backend/suas`, and no unlisted duplicate pair at 0.8 or above |
+| `frontend` | Blocks | `tsc`, ESLint (cyclomatic complexity 10 or less), Prettier, Vitest, production build |
+| `docker` | Blocks on the build | Both images build. Its trivy scan of HIGH and CRITICAL findings is **report-only** (job summary) |
+| `compose` | Blocks | The demo quickstart above, then plan, acknowledge and read-back through the frontend (`scripts/compose_smoke.py`) |
+| `workflow-lint` | Blocks | actionlint and zizmor over `.github/`: actions pinned to commits, no template injection, least-privilege tokens |
+| `secrets-scan` | Blocks | gitleaks, a checksum-verified pinned release, over the full history |
+| `mutation` | **Report-only** | Surviving mutants (mutator) in the changed backend modules, or the safety core on `main` |
+
+Outside `ci.yml`, both report-only:
+[`audit.yml`](.github/workflows/audit.yml) runs `pip-audit` and `npm audit`
+every Monday and on demand, and [`sbom.yml`](.github/workflows/sbom.yml) writes
+CycloneDX SBOMs of both images on each `v*` tag.
+
+<details>
+<summary><b>Run the gates locally</b></summary>
 
 Backend:
 
 ```bash
 cd backend
-python -m venv .venv && source .venv/bin/activate
-pip install -e ".[dev]"
-alembic upgrade head                 # optional locally; the app can self-create schema
-uvicorn suas.main:app --reload        # serves on :8000, defaults to local SQLite
+ruff check suas tests alembic scripts ../eval   # lint
+ruff format --check suas tests          # formatting
+mypy suas                               # strict type check
+pytest -q --cov=suas --cov-fail-under=80
+alembic upgrade head && alembic check   # migrations apply and match models
+python scripts/smoke_check.py           # boots the real lifespan end to end
 ```
 
 Frontend:
 
 ```bash
 cd frontend
-npm install
-npm run dev                           # serves on :3000
+npm run typecheck
+npm run lint
+npm run format                        # prettier --check
+npm test                              # vitest, covers the server-side proxy
+npm run build
 ```
 
-Optional git hooks:
+Dependency audit, report-only (as `audit.yml` runs it weekly):
 
 ```bash
-pre-commit install
+pip install -e ".[dev]"
+pip-audit                             # runtime + dev, advisory
 ```
 
-## Configuration
-
-Backend variables use the `SUAS_` prefix. Compose maps friendly names to them.
-
-| Variable | Default | Purpose |
-| --- | --- | --- |
-| `SUAS_DATABASE_URL` | `sqlite+aiosqlite:///./suas_local.db` | Async SQLAlchemy URL. Postgres enables the durable checkpointer. |
-| `SUAS_OPENAI_API_KEY` | empty | Enables the model-generated report. |
-| `SUAS_DEMO_MODE` | `false` | Fixture weather instead of the live provider; every plan advisory. Compose: `DEMO_MODE`. |
-| `SUAS_OPENAI_MODEL` | `gpt-4o-mini` | Chat model name. |
-| `SUAS_API_KEY` | empty | When set, planning endpoints require header `X-API-Key`. |
-| `SUAS_CORS_ORIGINS` | `http://localhost:3000` | Comma-separated allowed origins. Only needed for non-browser clients now that the UI proxies server-side. |
-| `SUAS_LOG_LEVEL` | `INFO` | Root log level. |
-| `SUAS_JSON_LOGS` | `true` | Emit structured JSON logs. Set false for readable local output. |
-| `SUAS_BATTERY_RESERVE_PERCENT` | `20` | Reserve withheld from usable battery capacity. |
-| `SUAS_VERTICAL_SPEED_MPS` | `3` | Assumed climb and descent rate. |
-| `SUAS_CLIMB_EFFICIENCY` | `0.6` | Propulsive efficiency for the climb energy term. |
-| `SUAS_CHECKPOINT_RETENTION_DAYS` | `30` | Age at which graph checkpoints are purged. `0` disables retention. |
-| `SUAS_RATE_LIMIT_REQUESTS` | `30` | Requests allowed per window, per client, per worker. |
-| `SUAS_RATE_LIMIT_WINDOW_S` | `60` | Rate limit window in seconds. |
-| `BACKEND_API_URL` | `http://localhost:8000` | Backend URL as reached by the Next.js **server**, not the browser. |
-| `BACKEND_API_KEY` | empty | Sent upstream as `X-API-Key` by the server-side proxy. Never exposed to the client. |
-
-## Platforms and payloads
-
-Reference data is bundled at `backend/suas/data/` and is reconciled into the
-database on every startup. The bundled JSON is the source of truth: rows are
-matched by id and updated in place, so a corrected performance figure reaches an
-existing deployment on the next restart. Rows you add yourself that are not in
-the JSON are left untouched. Edit the JSON (or mount your own) to change the
-catalog; direct database edits are overwritten on the next boot.
-
-The frontend fetches the catalog from the API at runtime, so the dropdowns
-cannot drift from the data the backend actually holds.
-
-Aircraft: `Skydio_X10D`, `Skydio_X2D`, `Parrot_ANAFI_USA`, `Teal_Golden_Eagle`,
-`Freefly_Astro_Max`, `Freefly_Alta_X`, `Inspired_Flight_IF1200A`.
-
-Payloads: `None`, `FLIR_Hadron_640R`, `Sony_ILX_LR1`, `Nextvision_Raptor`,
-`Workswell_WIRIS_Ent`, `Trillium_HD40_LV`.
-
-The X10D carries an integrated sensor suite, so its external payload capacity is
-0; pairing it with any payload other than `None` yields a negative payload margin
-and a NO-GO, which is the correct result. For a combination with real payload
-headroom, select `Freefly_Astro_Max`.
+</details>
 
 ## The performance model
 
@@ -199,7 +251,8 @@ the result toward GO. The choices above are deliberately conservative where the
 model is uncertain: worst-case headwind, no descent energy recovery, and the
 momentum-theory power law applied to cruise as well as hover.
 
-### Data provenance
+<details>
+<summary><b>Data provenance</b></summary>
 
 Every numeric field in `backend/suas/data/*.json` carries its value, unit,
 source, confidence, and notes. The full inventory is generated into
@@ -243,7 +296,7 @@ Operating temperature limits are published manufacturer figures:
 
 `Freefly_Astro_Max` additionally carries `pack_min_takeoff_c` at 10 C.
 
-#### Where the four documented conflicts stand
+### Where the four documented conflicts stand
 
 | Conflict | Resolution |
 | --- | --- |
@@ -270,24 +323,100 @@ real power logs before operational use, which `POST /api/logs` now makes
 possible. All payload `power_draw_w` values are estimates. For the authoritative
 live roster, cross-check `bluelist.dcma.mil`.
 
-## API
+</details>
 
-### Operations
+### Degraded inputs
+
+Weather has five explicit states, because "we could not reach the provider",
+"the provider answered with nonsense", and "this is a reading from forty minutes
+ago" are different situations an operator would act on differently.
+
+| `source` | Meaning | Operational? |
+| --- | --- | --- |
+| `live` | Fetched now, parsed, complete | yes |
+| `cached_fresh` | A recent reading, still inside its freshness window | yes |
+| `cached_stale` | Past its window, used because the live fetch failed | no |
+| `fallback` | Defaults; the provider could not be reached | no |
+| `error` | Defaults; the provider answered and the answer was unusable | no |
+
+The rule the service exists to keep is narrow and absolute: **a degraded reading
+must never be indistinguishable from a live one.** Anything short of the top two
+sets `degraded: true`, names the state in `warnings`, and blocks operational
+mode. The dashboard renders an amber banner.
+
+Parsing is strict. A missing, non-numeric, NaN or infinite field makes the whole
+payload unusable rather than being quietly replaced with a default — substituting
+defaults is how a reading nobody measured ends up labelled `live`.
+
+Timeouts are bounded twice: `SUAS_WEATHER_TIMEOUT_S` (default 3s) per request,
+and `SUAS_WEATHER_DEADLINE_S` (default 6s) across the whole operation including
+retries. Without the second, per-request timeouts multiply by the retry count and
+the endpoint hangs far longer than any single setting suggests.
+
+The cache is per process, like the rate limiter: `SUAS_WEATHER_CACHE_TTL_S`
+(default 600s). Each worker keeps its own, so a fresh reading in one worker is
+not a fresh reading in another.
+
+<details>
+<summary><b>Platforms and payloads</b></summary>
+
+Reference data is bundled at `backend/suas/data/` and is reconciled into the
+database on every startup. The bundled JSON is the source of truth: rows are
+matched by id and updated in place, so a corrected performance figure reaches an
+existing deployment on the next restart. Rows you add yourself that are not in
+the JSON are left untouched. Edit the JSON (or mount your own) to change the
+catalog; direct database edits are overwritten on the next boot.
+
+The frontend fetches the catalog from the API at runtime, so the dropdowns
+cannot drift from the data the backend actually holds.
+
+Aircraft: `Skydio_X10D`, `Skydio_X2D`, `Parrot_ANAFI_USA`, `Teal_Golden_Eagle`,
+`Freefly_Astro_Max`, `Freefly_Alta_X`, `Inspired_Flight_IF1200A`.
+
+Payloads: `None`, `FLIR_Hadron_640R`, `Sony_ILX_LR1`, `Nextvision_Raptor`,
+`Workswell_WIRIS_Ent`, `Trillium_HD40_LV`.
+
+The X10D carries an integrated sensor suite, so its external payload capacity is
+0; pairing it with any payload other than `None` yields a negative payload margin
+and a NO-GO, which is the correct result. For a combination with real payload
+headroom, select `Freefly_Astro_Max`.
+
+</details>
+
+## API
 
 | Method | Path | Purpose |
 | --- | --- | --- |
 | `GET` | `/health` | Liveness. Touches no dependencies. |
 | `GET` | `/ready` | Readiness: database reachable, schema at the code's alembic revision, checkpoint store readable. Returns 503 otherwise; a missing model key does not count. See [ops](docs/ops.md#readiness). |
 | `GET` | `/metrics` | Prometheus text exposition: request counts, latency, plan outcomes, weather provenance. |
-
-### Catalog
-
-| Method | Path | Purpose |
-| --- | --- | --- |
 | `GET` | `/api/aircraft` | Selectable airframes. Drives the client dropdown. |
 | `GET` | `/api/payloads` | Selectable payloads. Drives the client dropdown. |
+| `POST` | `/api/plan` | Assess a mission; pauses for a person with `awaiting_ack: true`. |
+| `POST` | `/api/plan/{thread_id}/ack` | Confirm, edit, or abort the assessment the operator was shown. |
+| `GET` | `/api/plan/{thread_id}` | Persisted state of a prior mission thread. |
+| `POST` | `/api/replan` | Compare live telemetry against the briefed plan. No language model. |
+| `POST` | `/api/logs` | Ingest a CSV flight log; `apply=true` writes measured power figures. |
 
-### Planning
+### Advisory and operational
+
+`assessment_mode` is what you ask for. The backend decides what you get, and it
+fails closed: a gate condition it cannot verify counts against the plan. Today
+that means **operational mode is unreachable** — every plan returns `200` with
+`mode: "advisory"` and blockers naming what is missing, because the bundled
+power figures carry no provenance and no Blue List snapshot is stored. An
+ungrantable mode is a downgrade with reasons attached, not a `409`; see
+[ADR-005](docs/adr/005-mode-downgrade-is-not-an-error.md). A mode that is not a
+valid value is still a `422`.
+
+`GET /api/plan/{thread_id}` returns the persisted state for a prior mission
+thread, or `found: false` when the thread is unknown.
+
+Every response carries an `X-Request-ID` header. Supply your own to correlate a
+client trace with server logs; one is generated when absent.
+
+<details>
+<summary><b>Planning: request, acknowledgement, and the assessment</b></summary>
 
 `POST /api/plan` accepts a validated mission request and returns the go/no-go
 result, weather, deterministic calculations, a report, the `thread_id`, and any
@@ -320,7 +449,7 @@ planning `h` meters higher raises reported density altitude by exactly `h`.
 `POST /api/plan` now returns with `awaiting_ack: true` and no brief. The run is
 paused at the review step until a person acts:
 
-```
+```text
 POST /api/plan/{thread_id}/ack
 { "action": "confirm", "actor": "dispatcher-1", "inputs_hash": "<from the plan response>" }
 ```
@@ -340,24 +469,10 @@ behind it, the `mode` granted, any `blockers`, plus `inputs_hash` and
 written by `suas/calculations/` and never by the language model. `is_viable`
 remains as a derived alias for `decision == "go"`.
 
-#### Advisory and operational
+</details>
 
-`assessment_mode` is what you ask for. The backend decides what you get, and it
-fails closed: a gate condition it cannot verify counts against the plan. Today
-that means **operational mode is unreachable** — every plan returns `200` with
-`mode: "advisory"` and blockers naming what is missing, because the bundled
-power figures carry no provenance and no Blue List snapshot is stored. An
-ungrantable mode is a downgrade with reasons attached, not a `409`; see
-[ADR-005](docs/adr/005-mode-downgrade-is-not-an-error.md). A mode that is not a
-valid value is still a `422`.
-
-`GET /api/plan/{thread_id}` returns the persisted state for a prior mission
-thread, or `found: false` when the thread is unknown.
-
-Every response carries an `X-Request-ID` header. Supply your own to correlate a
-client trace with server logs; one is generated when absent.
-
-### Replanning in flight
+<details>
+<summary><b>Replanning in flight</b></summary>
 
 `POST /api/replan` takes a telemetry snapshot from an aircraft already flying and
 compares it against the plan that was briefed.
@@ -407,7 +522,10 @@ one it was briefed for, and the reserve is measured against that same derated
 capacity — a reserve computed on nameplate watt-hours is not a reserve on a cold
 day.
 
-### Flight logs
+</details>
+
+<details>
+<summary><b>Flight logs</b></summary>
 
 `POST /api/logs?airframe_id=<id>` takes a CSV flight log as the request body and
 derives measured hover and cruise power from it. This is the only way a figure in
@@ -443,7 +561,10 @@ The estimator reports the median rather than the mean, with the interquartile
 range and a sample count beside it, because a log routinely contains brief spikes
 that a mean would let move the figure.
 
-### Citations
+</details>
+
+<details>
+<summary><b>Citations</b></summary>
 
 After the calculator runs and before the operator signs, `cite_limits` attaches
 evidence for the limits the assessment used. Citations explain a decision; they
@@ -467,7 +588,10 @@ deployable as its own Railway service; the default is a lexical hashing
 projection that runs anywhere and understands nothing. Deployment is documented
 in [`docs/railway.md`](docs/railway.md).
 
-### The document corpus
+</details>
+
+<details>
+<summary><b>The document corpus</b></summary>
 
 Manufacturer documents that back a citation live in `corpus/`, and nothing enters
 it because it happens to be on disk. A file is ingested only if
@@ -492,7 +616,7 @@ hashing can be walked straight past.
 A chunk carrying something that reads as an instruction to a model is
 **quarantined, never dropped**:
 
-```
+```text
 datasheets/freefly-astro-pack-limits.txt: 4 chunks, 1 quarantined (20.0%)
     tripwire: 'Ignore previous instructions'
 ```
@@ -509,76 +633,139 @@ and will occasionally fire on an innocent sentence in a real manual — that is 
 it quarantines rather than deletes, and why the rate is worth watching. A
 tripwire nobody trusts gets switched off, which is worse than not having one.
 
-### Degraded inputs
+</details>
 
-Weather has five explicit states, because "we could not reach the provider",
-"the provider answered with nonsense", and "this is a reading from forty minutes
-ago" are different situations an operator would act on differently.
+## Configuration
 
-| `source` | Meaning | Operational? |
+Backend variables use the `SUAS_` prefix. Compose maps friendly names to them.
+
+<details>
+<summary><b>All variables</b></summary>
+
+| Variable | Default | Purpose |
 | --- | --- | --- |
-| `live` | Fetched now, parsed, complete | yes |
-| `cached_fresh` | A recent reading, still inside its freshness window | yes |
-| `cached_stale` | Past its window, used because the live fetch failed | no |
-| `fallback` | Defaults; the provider could not be reached | no |
-| `error` | Defaults; the provider answered and the answer was unusable | no |
+| `SUAS_DATABASE_URL` | `sqlite+aiosqlite:///./suas_local.db` | Async SQLAlchemy URL. Postgres enables the durable checkpointer. |
+| `SUAS_OPENAI_API_KEY` | empty | Enables the model-generated report. |
+| `SUAS_DEMO_MODE` | `false` | Fixture weather instead of the live provider; every plan advisory. Compose: `DEMO_MODE`. |
+| `SUAS_OPENAI_MODEL` | `gpt-4o-mini` | Chat model name. |
+| `SUAS_API_KEY` | empty | When set, planning endpoints require header `X-API-Key`. |
+| `SUAS_CORS_ORIGINS` | `http://localhost:3000` | Comma-separated allowed origins. Only needed for non-browser clients now that the UI proxies server-side. |
+| `SUAS_LOG_LEVEL` | `INFO` | Root log level. |
+| `SUAS_JSON_LOGS` | `true` | Emit structured JSON logs. Set false for readable local output. |
+| `SUAS_BATTERY_RESERVE_PERCENT` | `20` | Reserve withheld from usable battery capacity. |
+| `SUAS_VERTICAL_SPEED_MPS` | `3` | Assumed climb and descent rate. |
+| `SUAS_CLIMB_EFFICIENCY` | `0.6` | Propulsive efficiency for the climb energy term. |
+| `SUAS_CHECKPOINT_RETENTION_DAYS` | `30` | Age at which graph checkpoints are purged. `0` disables retention. |
+| `SUAS_RATE_LIMIT_REQUESTS` | `30` | Requests allowed per window, per client, per worker. |
+| `SUAS_RATE_LIMIT_WINDOW_S` | `60` | Rate limit window in seconds. |
+| `BACKEND_API_URL` | `http://localhost:8000` | Backend URL as reached by the Next.js **server**, not the browser. |
+| `BACKEND_API_KEY` | empty | Sent upstream as `X-API-Key` by the server-side proxy. Never exposed to the client. |
 
-The rule the service exists to keep is narrow and absolute: **a degraded reading
-must never be indistinguishable from a live one.** Anything short of the top two
-sets `degraded: true`, names the state in `warnings`, and blocks operational
-mode. The dashboard renders an amber banner.
+</details>
 
-Parsing is strict. A missing, non-numeric, NaN or infinite field makes the whole
-payload unusable rather than being quietly replaced with a default — substituting
-defaults is how a reading nobody measured ends up labelled `live`.
-
-Timeouts are bounded twice: `SUAS_WEATHER_TIMEOUT_S` (default 3s) per request,
-and `SUAS_WEATHER_DEADLINE_S` (default 6s) across the whole operation including
-retries. Without the second, per-request timeouts multiply by the retry count and
-the endpoint hangs far longer than any single setting suggests.
-
-The cache is per process, like the rate limiter: `SUAS_WEATHER_CACHE_TTL_S`
-(default 600s). Each worker keeps its own, so a fresh reading in one worker is
-not a fresh reading in another.
-
-## Testing and quality gates
+## Local development
 
 Backend:
 
 ```bash
 cd backend
-ruff check suas tests alembic scripts   # lint
-ruff format --check suas tests          # formatting
-mypy suas                               # strict type check
-pytest -q --cov=suas --cov-fail-under=80
-alembic upgrade head && alembic check   # migrations apply and match models
-python scripts/smoke_check.py           # boots the real lifespan end to end
+python -m venv .venv && source .venv/bin/activate
+pip install -e ".[dev]"
+alembic upgrade head                 # optional locally; the app can self-create schema
+uvicorn suas.main:app --reload        # serves on :8000, defaults to local SQLite
 ```
 
 Frontend:
 
 ```bash
 cd frontend
-npm run typecheck
-npm run lint
-npm run format                        # prettier --check
-npm test                              # vitest, covers the server-side proxy
-npm run build
+npm install
+npm run dev                           # serves on :3000
 ```
 
-CI runs the backend gates across Python 3.11, 3.12, and 3.13, plus a Postgres
-integration job (real migrations and startup smoke check), the frontend gates,
-and Docker image builds for both services. See `.github/workflows/ci.yml`.
-
-Dependency auditing is **not** a CI gate. `pip-audit` stays in the dev extras
-and is run on demand:
+Optional git hooks:
 
 ```bash
-pip install -e ".[dev]"
-pip-audit                             # runtime + dev, advisory
+pre-commit install
 ```
 
-## Coding standards
+## Documentation
+
+The 90-day plan for taking this from a working demo to a system whose numbers
+can be defended lives in [`docs/PLAN-90.md`](docs/PLAN-90.md). Supporting
+specifications:
+
+| Document | Covers |
+|---|---|
+| [`docs/engineering-practices.md`](docs/engineering-practices.md) | Branching, CI gates, environments, review bar |
+| [`docs/retrieval.md`](docs/retrieval.md) | pgvector hybrid search for datasheet citations |
+| [`docs/rag-eval.md`](docs/rag-eval.md) | Retrieval and citation metrics and their gate thresholds (not yet run in CI) |
+| [`docs/injection-defense.md`](docs/injection-defense.md) | Prompt injection surfaces and controls |
+| [`docs/threat-model.md`](docs/threat-model.md) | STRIDE across every trust boundary |
+| [`docs/ops.md`](docs/ops.md) | Retention, concurrency, incident handling |
+| [`docs/railway.md`](docs/railway.md) | Deploying on Railway, from zero |
+| [`backend/suas/data/CITATIONS.md`](backend/suas/data/CITATIONS.md) | Every reference figure with its source, generated from the data |
+| [`docs/adr/`](docs/adr/README.md) | The decisions later code is allowed to assume |
+| [`docs/backlog/`](docs/backlog/README.md) | The seventeen opening issues, ready to file |
+| [`CHANGELOG.md`](CHANGELOG.md) | What reached `main` each week, five lines at most, appended by every PR |
+
+The organizing rule across all of it: the language model writes prose, and
+`backend/suas/calculations/` writes every number that can keep an aircraft in
+the air.
+
+## Operations and limitations
+
+### Known limitations
+
+- **Python 3.10 is not supported.** The floor is 3.11, which is what makes
+  `enum.StrEnum` and `datetime.UTC` available to this codebase. The production
+  image still pins `python:3.11-slim`, the floor of the supported range, so CI
+  exercises a wider range than the container runs.
+- **Next.js ESLint plugin is disabled.** The `@next/eslint-plugin-next` v14 rules
+  crash under ESLint 9 flat config, so Next-specific lint is off. Re-add it after
+  moving to Next 15, which is flat-config compatible.
+- **No dependency-audit gate.** `pip-audit --strict` failed regularly on
+  transitive advisories outside this project's control, so it does not block a
+  merge. [`audit.yml`](.github/workflows/audit.yml) runs `pip-audit` and
+  `npm audit` every Monday and on demand, report-only; run `pip-audit` before a
+  release as well.
+
+<details>
+<summary><b>Operational notes</b></summary>
+
+- **Rate limiting is per process.** Each worker enforces its own budget, so the
+  effective cluster ceiling is `SUAS_RATE_LIMIT_REQUESTS * worker_count`. It is a
+  spend guard against runaway model calls, not an exact global quota. Put a
+  shared limiter (Redis or the ingress) in front when you need a hard ceiling.
+- **Resuming an interrupt is not per process.** Two workers handed the same
+  acknowledgement serialise on a per-thread mutex and a `FOR UPDATE` row lock;
+  one proceeds, the other gets 409. Measured, not assumed: see
+  [`docs/ops.md`](docs/ops.md).
+- **Load and crash-recovery figures are recorded** in [`docs/ops.md`](docs/ops.md),
+  including the concurrency at which this service stops keeping up and the
+  `kill -9` drill transcript. Reproduce with
+  `python3 backend/scripts/load_plan.py --requests 100 --concurrency 100`.
+- **Metrics are per process too.** Scrape every replica and aggregate in
+  Prometheus rather than assuming one endpoint reports the whole fleet.
+- **The container migrates before it serves.** The image's entrypoint
+  (`backend/scripts/docker-entrypoint.sh`) runs `alembic upgrade head` before
+  starting uvicorn, so every path that starts the image migrates. Outside the
+  image, run `alembic upgrade head` as a deploy step; the app can create its
+  own schema for convenience, and `/ready` stays 503 until the schema is at the
+  code's revision.
+- **Reference power figures are estimates.** See Data provenance. Swap in
+  measured values before relying on the energy budget operationally. Edit
+  `backend/suas/data/*.json`; the change is applied on the next restart.
+- **Checkpoint retention runs at startup.** Threads older than
+  `SUAS_CHECKPOINT_RETENTION_DAYS` are purged through the checkpointer's own
+  API, capped at 1000 threads per pass. A long-running process that never
+  restarts will not purge; schedule a periodic restart or call the purge from
+  your own scheduler. Retention failures are logged and never block startup.
+
+</details>
+
+<details>
+<summary><b>Coding standards</b></summary>
 
 All Python, JavaScript, and TypeScript follows a strict, safety-critical style
 adapted from NASA's Power of Ten: simple control flow, minimal shared state, no
@@ -593,12 +780,15 @@ mypy generic-interop codes, Alembic's generated migration environment is exclude
 from strict typing, and CI scripts may write to stdout. All domain logic
 (calculations, schemas, services, database, API) stays fully strict.
 
-## Project structure
+</details>
 
-```
+<details>
+<summary><b>Project structure</b></summary>
+
+```text
 backend/
   alembic/          async migration environment and versioned migrations
-  scripts/          smoke_check.py, run in CI against Postgres
+  scripts/          entrypoint, smoke check, corpus ingest, load test, generators, CI helpers
   suas/
     api/            routes, security, rate limiting, observability, error handlers
     calculations/   pure physics, battery, and assessment functions
@@ -618,74 +808,17 @@ frontend/
       components/   UI components
     lib/            typed API client, catalog hook, geolocation, shared types
       server/       backend proxy; the only reader of the API key
+corpus/             manifest-listed manufacturer documents for citations
+docs/               plan, practices, threat model, ADRs, runbooks
+eval/               frozen mission pack and retrieval evaluation (offline by default)
+scripts/            Compose smoke test, pinned trivy installer, backlog filer
+services/
+  embeddings/       optional embedding service for retrieval
 docker-compose.yml
 ```
 
-## Operational notes
-
-- **Rate limiting is per process.** Each worker enforces its own budget, so the
-  effective cluster ceiling is `SUAS_RATE_LIMIT_REQUESTS * worker_count`. It is a
-  spend guard against runaway model calls, not an exact global quota. Put a
-  shared limiter (Redis or the ingress) in front when you need a hard ceiling.
-- **Resuming an interrupt is not per process.** Two workers handed the same
-  acknowledgement serialise on a per-thread mutex and a `FOR UPDATE` row lock;
-  one proceeds, the other gets 409. Measured, not assumed: see
-  [`docs/ops.md`](docs/ops.md).
-- **Load and crash-recovery figures are recorded** in [`docs/ops.md`](docs/ops.md),
-  including the concurrency at which this service stops keeping up and the
-  `kill -9` drill transcript. Reproduce with
-  `python3 backend/scripts/load_plan.py --requests 100 --concurrency 100`.
-- **Metrics are per process too.** Scrape every replica and aggregate in
-  Prometheus rather than assuming one endpoint reports the whole fleet.
-- **Migrations are not run automatically on boot.** The app can create its own
-  schema for convenience, but in production run `alembic upgrade head` as a
-  deploy step so schema changes are explicit and auditable.
-- **Reference power figures are estimates.** See Data provenance. Swap in
-  measured values before relying on the energy budget operationally. Edit
-  `backend/suas/data/*.json`; the change is applied on the next restart.
-- **Checkpoint retention runs at startup.** Threads older than
-  `SUAS_CHECKPOINT_RETENTION_DAYS` are purged through the checkpointer's own
-  API, capped at 1000 threads per pass. A long-running process that never
-  restarts will not purge; schedule a periodic restart or call the purge from
-  your own scheduler. Retention failures are logged and never block startup.
-
-## Planning and design documents
-
-The 90-day plan for taking this from a working demo to a system whose numbers
-can be defended lives in [`docs/PLAN-90.md`](docs/PLAN-90.md). Supporting
-specifications:
-
-| Document | Covers |
-|---|---|
-| [`docs/engineering-practices.md`](docs/engineering-practices.md) | Branching, CI gates, environments, review bar |
-| [`docs/retrieval.md`](docs/retrieval.md) | pgvector hybrid search for datasheet citations |
-| [`docs/rag-eval.md`](docs/rag-eval.md) | Retrieval and citation metrics that gate CI |
-| [`docs/injection-defense.md`](docs/injection-defense.md) | Prompt injection surfaces and controls |
-| [`docs/threat-model.md`](docs/threat-model.md) | STRIDE across every trust boundary |
-| [`docs/ops.md`](docs/ops.md) | Retention, concurrency, incident handling |
-| [`docs/adr/`](docs/adr/README.md) | The decisions later code is allowed to assume |
-| [`docs/backlog/`](docs/backlog/README.md) | The seventeen opening issues, ready to file |
-| [`CHANGELOG.md`](CHANGELOG.md) | What reached `main` each week, five lines at most, appended by every PR |
-
-The organizing rule across all of it: the language model writes prose, and
-`backend/suas/calculations/` writes every number that can keep an aircraft in
-the air.
-
-## Known limitations
-
-- **Python 3.10 is not supported.** The floor is 3.11, which is what makes
-  `enum.StrEnum` and `datetime.UTC` available to this codebase. The production
-  image still pins `python:3.11-slim`, the floor of the supported range, so CI
-  exercises a wider range than the container runs.
-- **Next.js ESLint plugin is disabled.** The `@next/eslint-plugin-next` v14 rules
-  crash under ESLint 9 flat config, so Next-specific lint is off. Re-add it after
-  moving to Next 15, which is flat-config compatible.
-- **No dependency-audit gate.** `pip-audit --strict` failed regularly on
-  transitive advisories outside this project's control, so the job was removed
-  rather than left red. Nothing watches for a vulnerable dependency
-  automatically: run `pip-audit` before a release, and reinstate a scheduled
-  (non-blocking) job if that proves too easy to forget.
+</details>
 
 ## License
 
-MIT. See `LICENSE`.
+[MIT](LICENSE) © 2026 Matthew K.
