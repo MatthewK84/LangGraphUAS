@@ -46,6 +46,7 @@ text.
 | Checkpoint blob rewritten | Ingest role cannot write application tables; strict msgpack; optional encrypted serializer | Unknown type fails closed |
 | Mass edited after ack without recalculation | Ack bound to `inputs_hash` and `calculator_version` | Edit invalidates the ack |
 | Hybrid search without a configuration filter | Same `WHERE` on both fusion legs | A query for the Astro cannot return ANAFI chunks |
+| Compromised CI-only analysis tool (crapper, dryer) | Installed from commit-pinned refs into a separate venv; the `ub-mode` job reads no secrets, has a read-only token, and is not part of any image | `ci.yml`: the job has `permissions: contents: read` and no `secrets.` reference |
 
 ## Repudiation
 

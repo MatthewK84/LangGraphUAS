@@ -5,19 +5,19 @@ description = "Async LangGraph sUAS mission planning API"
 requires-python = ">=3.11"
 dependencies = [
     "fastapi==0.139.0",
-    "uvicorn[standard]==0.50.0",
+    "uvicorn[standard]==0.53.0",
     "pydantic==2.13.4",
     "pydantic-settings==2.14.2",
-    "sqlalchemy[asyncio]==2.0.44",
+    "sqlalchemy[asyncio]==2.0.54",
     "aiosqlite==0.21.0",
     "alembic==1.18.5",
-    "psycopg[binary]==3.3.4",
+    "psycopg[binary]==3.3.5",
     "psycopg-pool==3.3.0",
     "httpx==0.28.1",
     "tenacity==9.1.4",
     "langgraph==1.2.7",
     "langgraph-checkpoint-postgres==3.1.0",
-    "langchain-core==1.4.8",
+    "langchain-core==1.6.3",
     "langchain-openai==1.3.3",
 ]
 
@@ -28,7 +28,7 @@ dev = [
     "pytest-cov==7.1.0",
     "pip-audit==2.10.1",
     "ruff==0.14.4",
-    "mypy==2.3.0",
+    "mypy==2.3.1",
 ]
 
 [build-system]
@@ -41,6 +41,13 @@ include = ["suas*"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+
+[tool.coverage.run]
+# SQLAlchemy's async engine runs on greenlets. Without this, coverage stops
+# tracing after the first greenlet switch inside a request, so lines that run
+# after an awaited database call are reported as uncovered even when tests
+# execute them.
+concurrency = ["greenlet", "thread"]
 
 [tool.mypy]
 python_version = "3.11"

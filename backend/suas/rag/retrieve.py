@@ -26,7 +26,7 @@ import re
 from dataclasses import dataclass
 from typing import Final
 
-from sqlalchemy import select
+from sqlalchemy import Select, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from suas.db.models import CorpusChunkRow, CorpusDocumentRow
@@ -206,6 +206,77 @@ def fuse(lexical: list[tuple[str, float]], vector: list[tuple[str, float]]) -> l
     return [chunk_id for chunk_id, _ in sorted(fused.items(), key=lambda i: -i[1])]
 
 
+_Row = tuple[CorpusChunkRow, CorpusDocumentRow]
+
+
+def _candidate_statement(
+    airframe_config_id: str, field_path: str | None, candidates: int
+) -> Select[_Row]:
+    """Return the query selecting one configuration's chunks, and one field's if known."""
+    statement = (
+        select(CorpusChunkRow, CorpusDocumentRow)
+        .join(CorpusDocumentRow, CorpusChunkRow.document_id == CorpusDocumentRow.document_id)
+        .where(CorpusChunkRow.airframe_config_id == airframe_config_id)
+        .limit(candidates * 5)
+    )
+    if field_path is not None:
+        statement = statement.where(CorpusChunkRow.field_path == field_path)
+    return statement
+
+
+def _warn_other_models(rows: list[_Row], model_id: str) -> None:
+    """Log how many candidates were embedded by a model other than ``model_id``."""
+    skipped = sum(1 for chunk, _ in rows if chunk.embedding_model not in (None, model_id))
+    if skipped:
+        logger.warning(
+            "Skipped %d chunk(s) embedded by a different model than %s",
+            skipped,
+            model_id,
+        )
+
+
+async def _vector_scores(
+    query: str, rows: list[_Row], embedder: EmbeddingProvider
+) -> list[tuple[str, float]]:
+    """Return cosine scores for the candidates embedded by ``embedder``'s model.
+
+    The query is embedded only when at least one candidate can be compared.
+    """
+    comparable = [
+        chunk
+        for chunk, _ in rows
+        if chunk.embedding_json and chunk.embedding_model == embedder.model_id
+    ]
+    _warn_other_models(rows, embedder.model_id)
+    if not comparable:
+        return []
+    query_vector = (await embedder.embed([query]))[0]
+    return [
+        (chunk.chunk_id, cosine_similarity(query_vector, json.loads(chunk.embedding_json)))
+        for chunk in comparable
+        if chunk.embedding_json
+    ]
+
+
+def _as_evidence(ordered: list[str], by_id: dict[str, _Row]) -> list[Evidence]:
+    """Return the ranked chunk ids as evidence, scored 1/rank."""
+    results: list[Evidence] = []
+    for position, chunk_id in enumerate(ordered, start=1):
+        chunk, document = by_id[chunk_id]
+        results.append(
+            Evidence(
+                chunk_id=chunk.chunk_id,
+                text=chunk.text,
+                field_path=chunk.field_path,
+                page=chunk.page,
+                document_id=document.document_id,
+                source_url=document.source_url,
+                score=1.0 / position,
+            )
+        )
+    return results
+
+
 async def retrieve(
     session: AsyncSession,
     *,
@@ -222,61 +293,19 @@ async def retrieve(
     An unconfirmed citation is a supported outcome; a citation from the wrong
     aircraft is not.
     """
-    statement = (
-        select(CorpusChunkRow, CorpusDocumentRow)
-        .join(CorpusDocumentRow, CorpusChunkRow.document_id == CorpusDocumentRow.document_id)
-        .where(CorpusChunkRow.airframe_config_id == airframe_config_id)
-        .limit(candidates * 5)
-    )
-    if field_path is not None:
-        statement = statement.where(CorpusChunkRow.field_path == field_path)
-
-    rows = list((await session.execute(statement)).all())
+    statement = _candidate_statement(airframe_config_id, field_path, candidates)
+    result = await session.execute(statement)
     # Applied before scoring, not after: a chunk sharing no substantive term
     # with the question is not a weak match to be ranked low, it is not evidence.
-    rows = [pair for pair in rows if _shares_content(query, pair[0].text)]
+    rows: list[_Row] = [
+        (chunk, document) for chunk, document in result.all() if _shares_content(query, chunk.text)
+    ]
     if not rows:
         return []
 
     lexical: list[tuple[str, float]] = [
         (chunk.chunk_id, _lexical_score(query, chunk.text)) for chunk, _ in rows
     ]
-
-    vector: list[tuple[str, float]] = []
-    comparable = [
-        (chunk, document)
-        for chunk, document in rows
-        if chunk.embedding_json and chunk.embedding_model == embedder.model_id
-    ]
-    skipped = sum(1 for chunk, _ in rows if chunk.embedding_model not in (None, embedder.model_id))
-    if skipped:
-        logger.warning(
-            "Skipped %d chunk(s) embedded by a different model than %s",
-            skipped,
-            embedder.model_id,
-        )
-    if comparable:
-        query_vector = (await embedder.embed([query]))[0]
-        vector = [
-            (chunk.chunk_id, cosine_similarity(query_vector, json.loads(chunk.embedding_json)))
-            for chunk, _ in comparable
-            if chunk.embedding_json
-        ]
-
+    vector = await _vector_scores(query, rows, embedder)
     by_id = {chunk.chunk_id: (chunk, document) for chunk, document in rows}
-    ordered = fuse(lexical, vector)[:top_k]
-    results: list[Evidence] = []
-    for position, chunk_id in enumerate(ordered, start=1):
-        chunk, document = by_id[chunk_id]
-        results.append(
-            Evidence(
-                chunk_id=chunk.chunk_id,
-                text=chunk.text,
-                field_path=chunk.field_path,
-                page=chunk.page,
-                document_id=document.document_id,
-                source_url=document.source_url,
-                score=1.0 / position,
-            )
-        )
-    return results
+    return _as_evidence(fuse(lexical, vector)[:top_k], by_id)

@@ -6,8 +6,9 @@ from typing import TYPE_CHECKING, Any, Final
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
-from langgraph.types import Command
+from langgraph.types import Command, StateSnapshot
 from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from suas import __version__
 from suas.api.dependencies import GraphDep, MetricsDep, ReplanGraphDep, SessionFactoryDep
@@ -59,6 +60,16 @@ _DEGRADED_WEATHER_WARNING: Final[str] = (
 def _thread_config(thread_id: str) -> "RunnableConfig":
     """Return the LangGraph config that scopes state to one thread."""
     return {"configurable": {"thread_id": thread_id}}
+
+
+def _state_values(snapshot: StateSnapshot | None) -> dict[str, Any]:
+    """Return a thread's stored values, or an empty dict for an unknown thread."""
+    return dict(snapshot.values) if snapshot and snapshot.values else {}
+
+
+def _sub_dict(values: dict[str, Any], key: str) -> dict[str, Any]:
+    """Return ``values[key]`` as a dict, treating a missing or empty entry as ``{}``."""
+    return dict(values.get(key) or {})
 
 
 def _collect_warnings(weather: WeatherReading | None) -> list[str]:
@@ -268,6 +279,72 @@ async def upload_flight_log(
     )
 
 
+def _require_awaiting_ack(snapshot: StateSnapshot | None) -> dict[str, Any]:
+    """Return the thread's values, or refuse an unknown or already-resumed thread."""
+    values = _state_values(snapshot)
+    if not values:
+        raise HTTPException(status_code=404, detail="Unknown planning thread")
+    if not (snapshot and snapshot.next):
+        raise HTTPException(status_code=409, detail="This plan is not awaiting acknowledgement")
+    return values
+
+
+def _require_current_hash(assessment_dump: dict[str, Any], requested_hash: str | None) -> str:
+    """Return the assessment's hash, refusing a signature on one that has changed.
+
+    The check applies only when the caller sends the hash it was shown.
+    """
+    current_hash = str(assessment_dump.get("inputs_hash", ""))
+    if requested_hash and requested_hash != current_hash:
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "The assessment changed after it was shown. Re-read the plan and "
+                "acknowledge the current one."
+            ),
+        )
+    return current_hash
+
+
+def _resume_payload(request: AckRequest) -> dict[str, Any]:
+    """Return the value the review step's interrupt resumes with."""
+    return {
+        "action": request.action,
+        "actor": request.actor,
+        "edits": request.edits.model_dump(exclude_none=True) if request.edits else {},
+    }
+
+
+async def _record_signature(
+    session: AsyncSession,
+    thread_id: str,
+    request: AckRequest,
+    *,
+    assessment_dump: dict[str, Any],
+    current_hash: str,
+    has_retention_row: bool,
+) -> None:
+    """Record a confirmed signature against the thread's retention row.
+
+    Only a signature that a run actually proceeded on is recorded. An edit
+    produces a new assessment, which is a new thing to sign.
+    """
+    if request.action != "confirm":
+        return
+    if not has_retention_row:
+        logger.warning("Acknowledged thread %s has no retention row", thread_id)
+        return
+    if current_hash:
+        await record_acknowledgement(
+            session,
+            thread_id=thread_id,
+            actor=request.actor,
+            action=request.action,
+            inputs_hash=current_hash,
+            calculator_version=str(assessment_dump.get("calculator_version", "")),
+        )
+
+
 @router.post(
     "/api/plan/{thread_id}/ack",
     response_model=PlanResponse,
@@ -295,48 +372,24 @@ async def acknowledge_plan(
         locked = await lock_thread_for_update(session, thread_id)
 
         snapshot = await graph.aget_state(_thread_config(thread_id))
-        values: dict[str, Any] = dict(snapshot.values) if snapshot and snapshot.values else {}
-        if not values:
-            raise HTTPException(status_code=404, detail="Unknown planning thread")
-        if not (snapshot and snapshot.next):
-            raise HTTPException(
-                status_code=409, detail="This plan is not awaiting acknowledgement"
-            )
+        values = _require_awaiting_ack(snapshot)
+        assessment_dump = _sub_dict(values, "assessment")
+        current_hash = _require_current_hash(assessment_dump, request.inputs_hash)
 
-        assessment_dump: dict[str, Any] = dict(values.get("assessment") or {})
-        current_hash: str = str(assessment_dump.get("inputs_hash", ""))
-        if request.inputs_hash and request.inputs_hash != current_hash:
-            raise HTTPException(
-                status_code=409,
-                detail=(
-                    "The assessment changed after it was shown. Re-read the plan and "
-                    "acknowledge the current one."
-                ),
-            )
-
-        resume: dict[str, Any] = {
-            "action": request.action,
-            "actor": request.actor,
-            "edits": request.edits.model_dump(exclude_none=True) if request.edits else {},
-        }
         final_state = await graph.ainvoke(
-            Command(resume=resume), config=_thread_config(thread_id), durability="sync"
+            Command(resume=_resume_payload(request)),
+            config=_thread_config(thread_id),
+            durability="sync",
         )
         state: dict[str, Any] = dict(final_state)
-
-        # Only a signature that a run actually proceeded on is recorded. An edit
-        # produces a new assessment, which is a new thing to sign.
-        if request.action == "confirm" and current_hash and locked is not None:
-            await record_acknowledgement(
-                session,
-                thread_id=thread_id,
-                actor=request.actor,
-                action=request.action,
-                inputs_hash=current_hash,
-                calculator_version=str(assessment_dump.get("calculator_version", "")),
-            )
-        elif request.action == "confirm" and locked is None:
-            logger.warning("Acknowledged thread %s has no retention row", thread_id)
+        await _record_signature(
+            session,
+            thread_id,
+            request,
+            assessment_dump=assessment_dump,
+            current_hash=current_hash,
+            has_retention_row=locked is not None,
+        )
 
     _record_violations(metrics, state.get("seal_violations"))
     return _build_plan_response(state, thread_id)
@@ -362,19 +415,18 @@ async def replan_mission(
     or to let one influence what the operator is told.
     """
     parent = await graph.aget_state(_thread_config(snapshot.thread_id))
-    briefed: dict[str, Any] = dict(parent.values) if parent and parent.values else {}
+    briefed = _state_values(parent)
     if not briefed:
         raise HTTPException(status_code=404, detail="Unknown planning thread")
 
-    assessment_dump: dict[str, Any] = dict(briefed.get("assessment") or {})
+    assessment_dump = _sub_dict(briefed, "assessment")
     if not assessment_dump:
         raise HTTPException(
             status_code=409,
             detail="That thread has no assessment to replan against",
         )
 
-    calculations_dump: dict[str, Any] = dict(briefed.get("calculations") or {})
-    battery_check: dict[str, Any] = dict(calculations_dump.get("battery_check") or {})
+    battery_check = _sub_dict(_sub_dict(briefed, "calculations"), "battery_check")
     briefed_margin_wh = float(battery_check.get("margin_wh", 0.0))
     age_s: float = snapshot.age_s(datetime.now(UTC))
 
@@ -421,7 +473,7 @@ async def replan_mission(
 async def get_thread_state(thread_id: str, graph: GraphDep) -> ThreadStateResponse:
     """Return the persisted state for a previously planned mission thread."""
     snapshot = await graph.aget_state(_thread_config(thread_id))
-    values: dict[str, Any] = dict(snapshot.values) if snapshot and snapshot.values else {}
+    values = _state_values(snapshot)
     if not values:
         return ThreadStateResponse(
             thread_id=thread_id,

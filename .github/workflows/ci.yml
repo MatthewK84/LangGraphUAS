@@ -117,6 +117,95 @@ jobs:
           python3 backend/scripts/check_calculator_version.py
           --base "origin/${{ github.base_ref }}"
 
+  ub-mode:
+    name: ub-mode (crapper, dryer)
+    # Blocking. Thresholds from docs/skills/ub-mode/SKILL.md: every function in
+    # backend/suas at CRAP < 10, and no duplicate pair at dryer score >= 0.8
+    # unless it is listed with a reason in backend/ub-mode-allowlist.txt.
+    # See "CI gates that block merge" in docs/engineering-practices.md.
+    runs-on: ubuntu-latest
+    # Third-party code runs here; it gets a read-only token and no secrets.
+    permissions:
+      contents: read
+    env:
+      # Neither tool publishes releases, so both are pinned to a commit.
+      CRAPPER_REF: 6fd92c4c9bcc56efb64a2f8743d5a2993bcfd42d
+      DRYER_REF: 66ff6d21a42c04afcad89c78a80066176d1294b0
+      TREE_SITTER_VERSION: "0.26.0"
+      TREE_SITTER_LANGUAGE_PACK_VERSION: "1.22.1"
+    defaults:
+      run:
+        # Explicit bash adds pipefail, so a crashing tool is not hidden by tee.
+        shell: bash
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/pyproject.toml
+      - name: Install backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Install crapper and dryer in their own venv
+        run: |
+          python -m venv "$RUNNER_TEMP/ub-tools"
+          "$RUNNER_TEMP/ub-tools/bin/pip" install \
+            "crapper @ git+https://github.com/unclebob/crapper@${CRAPPER_REF}" \
+            "dryer @ git+https://github.com/unclebob/dryer@${DRYER_REF}" \
+            "tree-sitter==${TREE_SITTER_VERSION}" \
+            "tree-sitter-language-pack==${TREE_SITTER_LANGUAGE_PACK_VERSION}"
+      - name: Coverage for crapper
+        run: pytest -q --cov=suas --cov-report=lcov:coverage/lcov.info
+      - name: Crapper on suas
+        run: |
+          "$RUNNER_TEMP/ub-tools/bin/crapper" --use-existing-coverage suas \
+            | tee "$RUNNER_TEMP/crap.txt"
+      - name: Dryer on suas
+        run: |
+          "$RUNNER_TEMP/ub-tools/bin/dryer" --threshold 0.8 suas \
+            | tee "$RUNNER_TEMP/dry.txt"
+      - name: Gate on CRAP < 10 and unlisted duplication < 0.8
+        run: >-
+          python scripts/ub_gate.py
+          --crap "$RUNNER_TEMP/crap.txt"
+          --dry "$RUNNER_TEMP/dry.txt"
+          --allowlist ub-mode-allowlist.txt
+      - name: Job summary
+        if: always()
+        run: |
+          crap="$RUNNER_TEMP/crap.txt"
+          dry="$RUNNER_TEMP/dry.txt"
+          touch "$crap" "$dry"
+          over=$(awk '$NF ~ /^[0-9.]+$/ && $NF + 0 >= 10' "$crap" | wc -l)
+          total=$(awk '$NF ~ /^[0-9.]+$/' "$crap" | wc -l)
+          pairs=$(grep -c '^DUPLICATE' "$dry" || true)
+          {
+            echo "## ub-mode (blocking)"
+            echo
+            echo "Thresholds from \`docs/skills/ub-mode/SKILL.md\`: CRAP < 10, duplication < 0.8."
+            echo "crapper \`${CRAPPER_REF}\`, dryer \`${DRYER_REF}\`."
+            echo
+            echo "- Functions at CRAP >= 10: **${over}** of ${total}"
+            echo "- Duplicate pairs at >= 0.8: **${pairs}** (each must be in \`backend/ub-mode-allowlist.txt\`)"
+            echo
+            echo "<details><summary>crapper output</summary>"
+            echo
+            echo '```'
+            cat "$crap"
+            echo '```'
+            echo "</details>"
+            echo
+            echo "<details><summary>dryer output</summary>"
+            echo
+            echo '```'
+            cat "$dry"
+            echo '```'
+            echo "</details>"
+          } >> "$GITHUB_STEP_SUMMARY"
+
   frontend:
     name: Frontend (tsc, eslint, build)
     runs-on: ubuntu-latest

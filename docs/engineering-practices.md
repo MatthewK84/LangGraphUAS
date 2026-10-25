@@ -13,7 +13,9 @@ set accordingly.
 ## CI gates that block merge
 
 Already in place: `ruff`, `mypy --strict`, `pytest` with coverage, frontend
-typecheck and Vitest, Prettier, and the calculator-version gate below.
+typecheck and Vitest, Prettier, the calculator-version gate below, and the
+ub-mode gate (CRAP and duplication) described under
+[ub-mode](#ub-mode-crapper-and-dryer).
 
 Added by this plan:
 
@@ -34,6 +36,59 @@ for reasons nobody can act on teaches people to ignore red. It runs on demand
 instead. The tradeoff is real and unmitigated — nothing currently notices a
 vulnerable dependency on its own. If that bites, the fix is a scheduled
 non-blocking job that opens an issue, not a restored merge gate.
+
+### ub-mode (crapper and dryer)
+
+The discipline is the vendored skill in
+[`docs/skills/ub-mode/SKILL.md`](skills/ub-mode/SKILL.md) (source and credit in
+the README beside it). Each change goes First Make it Work, then Make it Right,
+then Practice. The parts that matter most here:
+
+- **TDD.** Write the failing test first and see it fail for the expected
+  reason, then make the smallest change that passes. If an honest test is
+  impractical, say so in the PR instead of writing a bad one.
+- **Small, single-purpose edits.** One decision lives in one place. Take
+  complexity out before adding any.
+- **Boundaries and types.** Parse outside data once where it enters, keep
+  business logic in pure functions, and do not silence the compiler: no new
+  `# type: ignore`, `noqa`, or widened mypy overrides.
+- **Root causes.** Reproduce, then fix the cause. A guard that hides a crash is
+  not a fix.
+- **Behavior tests.** A test calls the code the way its user does. A test that
+  would still pass if every function returned nothing is deleted.
+- **CRAP under 10** for every function
+  ([crapper](https://github.com/unclebob/crapper)), and **no duplication at
+  0.8 or above** ([dryer](https://github.com/unclebob/dryer)). Enforced in CI;
+  see below.
+- **Mutation testing** ([mutator](https://github.com/unclebob/mutator)) on the
+  files a PR touches: cover the uncovered, kill survivors, delete dead code.
+  Not yet in CI; see [Aspirational](#aspirational).
+- **Commits.** Small and ordered. Each message says why, what changed, and how
+  it was proven. The PR body carries the log of what was done and why.
+
+What blocks a merge: the `ub-mode` job ("ub-mode (crapper, dryer)") in
+`.github/workflows/ci.yml` runs crapper and dryer, at pinned commits, on
+`backend/suas`. Then `backend/scripts/ub_gate.py` fails the job when:
+
+- any function has a CRAP score of 10 or more, or
+- any duplicate pair scores 0.8 or more and is not listed in
+  `backend/ub-mode-allowlist.txt`.
+
+Each allowlist entry names its functions as `path::qualname` and must give a
+reason. An entry that no longer matches a reported pair also fails the job, so
+delete it once the duplication is gone. Add an entry only when removing the
+duplication would make the code worse, and say why in the entry. The job
+summary shows both tools' full output.
+
+To run it locally, from `backend/`: produce `coverage/lcov.info` with
+`pytest --cov=suas --cov-report=lcov:coverage/lcov.info`. Then run
+`crapper --use-existing-coverage suas > crap.txt` and
+`dryer --threshold 0.8 suas > dry.txt`, and finally
+`python scripts/ub_gate.py --crap crap.txt --dry dry.txt --allowlist ub-mode-allowlist.txt`.
+
+The gate was made blocking at 0 of 278 functions at CRAP 10 or above, with 8
+duplicate pairs at 0.8 or above, all allowlisted. The baseline at `01949cd`
+was 7 functions and 10 pairs.
 
 ## Environments
 
@@ -74,3 +129,15 @@ carefully" is not a control.
 - A new graph node, ingest source, or external dependency adds a STRIDE row to
   `docs/threat-model.md` before merge.
 - A decision later code will assume gets an ADR. See `docs/adr/README.md`.
+
+## Aspirational
+
+Practices this repository intends to follow but does not yet enforce in CI.
+Nothing here blocks a merge. Issue #73 will finish splitting this document into
+Enforced and Aspirational; this section only covers ub-mode.
+
+### ub-mode, beyond CRAP and duplication
+
+The rest of the [ub-mode](#ub-mode-crapper-and-dryer) discipline (TDD,
+small edits, behavior tests, commit messages) is held at review, not by a tool.
+Mutator and the frontend are not measured in CI.
