@@ -375,6 +375,10 @@ jobs:
 
   docker:
     name: Docker images build
+    # Builds both images, then scans them with trivy. The scan is report-only:
+    # HIGH and CRITICAL findings that have a fix go to the job summary, and the
+    # job stays green. The frontend's `next` needs a major bump (#100), so a
+    # blocking scan would be red from day one.
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -387,6 +391,8 @@ jobs:
           context: .
           file: backend/Dockerfile
           push: false
+          load: true
+          tags: suas-backend:ci
           cache-from: type=gha
           cache-to: type=gha,mode=max
       - name: Build frontend image
@@ -394,8 +400,26 @@ jobs:
         with:
           context: ./frontend
           push: false
+          load: true
+          tags: suas-frontend:ci
           cache-from: type=gha
           cache-to: type=gha,mode=max
+      - name: Install trivy
+        run: scripts/install-trivy.sh "$RUNNER_TEMP"
+      - name: Image scan (trivy, report-only)
+        run: |
+          scan() {
+            {
+              echo "### trivy: $1 (HIGH, CRITICAL, fix available)"
+              echo '```'
+              "$RUNNER_TEMP/trivy" image --quiet --cache-dir "$RUNNER_TEMP/trivy-cache" \
+                --scanners vuln --severity HIGH,CRITICAL --ignore-unfixed \
+                --format table --exit-code 0 "$1"
+              echo '```'
+            } | tee -a "$GITHUB_STEP_SUMMARY"
+          }
+          scan suas-backend:ci
+          scan suas-frontend:ci
 
   compose:
     name: Compose quickstart (demo, no keys)
