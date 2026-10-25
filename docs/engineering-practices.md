@@ -80,7 +80,7 @@ then Practice. The parts that matter most here:
   see below.
 - **Mutation testing** ([mutator](https://github.com/unclebob/mutator)) on the
   files a PR touches: cover the uncovered, kill survivors, delete dead code.
-  Not yet in CI; see [Aspirational](#aspirational).
+  Reported in CI but not a gate; see [Mutation report](#mutation-report-report-only).
 - **Commits.** Small and ordered. Each message says why, what changed, and how
   it was proven. The PR body carries the log of what was done and why.
 
@@ -107,6 +107,23 @@ To run it locally, from `backend/`: produce `coverage/lcov.info` with
 The gate was made blocking at 0 of 278 functions at CRAP 10 or above, with 8
 duplicate pairs at 0.8 or above, all allowlisted. The baseline at `01949cd`
 was 7 functions and 10 pairs.
+
+### Mutation report (report-only)
+
+The `mutation` job ("Mutation (mutator, report-only)") in
+`.github/workflows/ci.yml` runs mutator, pinned to a commit, and lists every
+surviving mutant in the job summary. Survivors never fail it; a tool that
+cannot run (mutator exits other than 0 or 3) does, so an empty run cannot pass
+as a clean one. On a pull request
+it mutates the `backend/suas` modules the PR changed, as chosen by
+`backend/scripts/mutation_targets.py`. On a push to `main`, and on a pull
+request that edits that selector, it mutates the safety core: `calculations/`,
+`graph/seal.py` and `rag/screening.py`. A survivor in a file you touched is
+yours to kill or to explain as equivalent in the PR. It is not a gate because
+equivalent mutants cannot be told apart from real gaps without a reader.
+
+To run it locally, from `backend/`, after producing `coverage/lcov.info` as above:
+`mutator --use-existing-coverage --test-command "python -m pytest -q -x -p no:cacheprovider" <files>`.
 
 ## Environments
 
@@ -158,5 +175,5 @@ Enforced and Aspirational; this section only covers ub-mode.
 
 The rest of the [ub-mode](#ub-mode-crapper-and-dryer) discipline (TDD,
 small edits, behavior tests, commit messages) is held at review, not by a tool.
-Mutator is not measured in CI. The frontend holds cyclomatic complexity at 10
+Mutation survivors are reported but do not block a merge. The frontend holds cyclomatic complexity at 10
 or below but has no coverage report, so its CRAP is not measured.
