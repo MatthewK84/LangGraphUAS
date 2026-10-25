@@ -4,12 +4,16 @@ Boots the application through its real lifespan, which exercises the database
 engine, schema creation, seeding, and the Postgres checkpointer, then calls the
 ops and catalog endpoints. Exits non-zero on any failure so CI fails loudly.
 
-Run: ``python scripts/smoke_check.py``
+Run: ``python scripts/smoke_check.py`` against a migrated database.
+
+``--expect-unmigrated`` inverts the readiness checks: pointed at a database
+that ``alembic upgrade`` never touched, /ready must answer 503 with
+``migrations: pending``. CI runs both directions (#111).
 """
 
 import asyncio
 import sys
-from typing import Final
+from typing import Any, Final
 
 import httpx
 
@@ -18,7 +22,24 @@ from suas.main import create_app
 _TIMEOUT_S: Final[float] = 30.0
 
 
-async def _run() -> int:
+def ready_checks(
+    status_code: int, body: dict[str, Any], *, expect_unmigrated: bool
+) -> list[tuple[str, bool]]:
+    """Name and judge each /ready expectation for the database under test."""
+    if expect_unmigrated:
+        return [
+            ("ready 503 on an unmigrated schema", status_code == 503),
+            ("ready migrations pending", body.get("migrations") == "pending"),
+        ]
+    return [
+        ("ready 200", status_code == 200),
+        ("ready database ok", body.get("database") == "ok"),
+        ("ready migrations ok", body.get("migrations") == "ok"),
+        ("ready checkpointer ok", body.get("checkpointer") == "ok"),
+    ]
+
+
+async def _run(*, expect_unmigrated: bool) -> int:
     """Boot the app, probe key endpoints, and return an exit code."""
     app = create_app()
     transport = httpx.ASGITransport(app=app)
@@ -37,8 +58,7 @@ async def _run() -> int:
 
     checks: list[tuple[str, bool]] = [
         ("health 200", health.status_code == 200),
-        ("ready 200", ready.status_code == 200),
-        ("ready database ok", ready.json().get("database") == "ok"),
+        *ready_checks(ready.status_code, ready.json(), expect_unmigrated=expect_unmigrated),
         ("aircraft catalog non-empty", len(aircraft.json()) > 0),
         ("payload catalog non-empty", len(payloads.json()) > 0),
     ]
@@ -53,4 +73,4 @@ async def _run() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(asyncio.run(_run()))
+    sys.exit(asyncio.run(_run(expect_unmigrated="--expect-unmigrated" in sys.argv[1:])))
