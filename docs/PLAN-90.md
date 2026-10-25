@@ -225,7 +225,8 @@ applications. No new features for two weeks unless a reviewer finds an oracle bu
 - **Monday** — pick the week's PRs from this file. No extra scope.
 - **Wednesday** — if a PR is not reviewable, cut scope. Never cut the seal,
   HITL, or oracle tests.
-- **Friday** — full backend suite plus one Compose up/down. Five lines in
-  `CHANGELOG.md`.
+- **Friday** — full backend suite plus one Compose up/down. Read the week's
+  section of `CHANGELOG.md` (five lines at most). Each PR wrote its own line
+  as it merged; fold lines if the week ran over.
 - **Any day** — an idea not in this plan becomes an issue titled `attic:` and
   the laptop closes.

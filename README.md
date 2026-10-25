@@ -648,6 +648,7 @@ specifications:
 | [`docs/ops.md`](docs/ops.md) | Retention, concurrency, incident handling |
 | [`docs/adr/`](docs/adr/README.md) | The decisions later code is allowed to assume |
 | [`docs/backlog/`](docs/backlog/README.md) | The seventeen opening issues, ready to file |
+| [`CHANGELOG.md`](CHANGELOG.md) | What reached `main` each week, five lines at most, appended by every PR |
 
 The organizing rule across all of it: the language model writes prose, and
 `backend/suas/calculations/` writes every number that can keep an aircraft in
