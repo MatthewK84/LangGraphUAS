@@ -22,6 +22,12 @@ typecheck and Vitest, Prettier, the calculator-version gate below, and the
 ub-mode gate (CRAP and duplication) described under
 [ub-mode](#ub-mode-crapper-and-dryer).
 
+Security and safety gates, each a job in `.github/workflows/ci.yml`:
+
+| Gate | Job | Rule |
+|---|---|---|
+| Workflow lint | `workflow-lint` ("Workflow lint (actionlint, zizmor)") | actionlint finds no error, and zizmor finds no issue in `.github/`: every action pinned to a commit SHA, no `${{ }}` expansion inside `run:`, no persisted checkout credentials, a read-only default token, and a Dependabot cooldown |
+
 Added by this plan:
 
 | Gate | Rule |

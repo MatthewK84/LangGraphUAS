@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main]
 
+# Every job gets a read-only token unless it asks for more. No job here does.
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -22,9 +26,11 @@ jobs:
       run:
         working-directory: backend
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
@@ -76,8 +82,10 @@ jobs:
       run:
         working-directory: backend
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: "3.12"
       - name: Install
@@ -102,20 +110,27 @@ jobs:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
+          persist-credentials: false
           # Full history: the gate diffs against the merge base, which a shallow
           # clone does not contain.
           fetch-depth: 0
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: "3.12"
+      # The base ref reaches the shell through env, never through template
+      # expansion, so a branch name cannot inject shell syntax.
       - name: Fetch base branch
-        run: git fetch --no-tags origin "${{ github.base_ref }}"
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: git fetch --no-tags origin "$BASE_REF"
       - name: Require a version bump when the oracle changes
+        env:
+          BASE_REF: ${{ github.base_ref }}
         run: >-
           python3 backend/scripts/check_calculator_version.py
-          --base "origin/${{ github.base_ref }}"
+          --base "origin/$BASE_REF"
 
   ub-mode:
     name: ub-mode (crapper, dryer)
@@ -139,8 +154,10 @@ jobs:
         shell: bash
         working-directory: backend
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: "3.12"
           cache: pip
@@ -213,8 +230,10 @@ jobs:
       run:
         working-directory: frontend
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: "20"
           cache: npm
@@ -238,10 +257,12 @@ jobs:
     name: Docker images build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
       - name: Build backend image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
         with:
           context: .
           file: backend/Dockerfile
@@ -249,9 +270,38 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
       - name: Build frontend image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
         with:
           context: ./frontend
           push: false
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  workflow-lint:
+    name: Workflow lint (actionlint, zizmor)
+    # Blocking. actionlint catches workflow syntax and expression mistakes;
+    # zizmor catches workflow security mistakes: unpinned actions, template
+    # injection, persisted credentials, broad permissions, Dependabot without
+    # a cooldown. Both are pinned PyPI releases installed into their own venv,
+    # and run offline: they read .github/ and nothing else.
+    runs-on: ubuntu-latest
+    env:
+      ACTIONLINT_PY_VERSION: "1.7.12.25"
+      ZIZMOR_VERSION: "1.31.1"
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+      - name: Install actionlint and zizmor in their own venv
+        run: |
+          python -m venv "$RUNNER_TEMP/wf-tools"
+          "$RUNNER_TEMP/wf-tools/bin/pip" install \
+            "actionlint-py==${ACTIONLINT_PY_VERSION}" \
+            "zizmor==${ZIZMOR_VERSION}"
+      - name: actionlint
+        run: '"$RUNNER_TEMP/wf-tools/bin/actionlint" -color'
+      - name: zizmor
+        run: '"$RUNNER_TEMP/wf-tools/bin/zizmor" --offline --format github .github/'
