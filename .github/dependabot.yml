@@ -4,21 +4,41 @@ updates:
     directory: /backend
     schedule:
       interval: weekly
+    # Wait a week before proposing a release: most malicious or broken
+    # releases are yanked within days.
+    cooldown:
+      default-days: 7
     open-pull-requests-limit: 5
   - package-ecosystem: npm
     directory: /frontend
     schedule:
       interval: weekly
+    # Wait a week before proposing a release: most malicious or broken
+    # releases are yanked within days.
+    cooldown:
+      default-days: 7
     open-pull-requests-limit: 5
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
+    # Wait a week before proposing a release: most malicious or broken
+    # releases are yanked within days.
+    cooldown:
+      default-days: 7
   - package-ecosystem: docker
     directory: /backend
     schedule:
       interval: weekly
+    # Wait a week before proposing a release: most malicious or broken
+    # releases are yanked within days.
+    cooldown:
+      default-days: 7
   - package-ecosystem: docker
     directory: /frontend
     schedule:
       interval: weekly
+    # Wait a week before proposing a release: most malicious or broken
+    # releases are yanked within days.
+    cooldown:
+      default-days: 7
