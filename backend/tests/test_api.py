@@ -183,6 +183,19 @@ async def test_plan_endpoint_returns_an_assessment_awaiting_acknowledgement(
     assert body["warnings"] == []
 
 
+async def test_every_watt_on_the_plan_says_what_it_rests_on(app_with_graph: FastAPI) -> None:
+    """The wire could not tell a datasheet watt from a derived one (#79)."""
+    async with _client(app_with_graph) as client:
+        body = (await client.post("/api/plan", json=_VALID_BODY)).json()
+    provenance = body["provenance"]
+    hover = provenance["effective_hover_power_w"]
+    assert hover["source"] == "derived"
+    assert hover["operational_grade"] is False
+    assert "aircraft.hover_power_w" in hover["inputs"]
+    assert provenance["battery_check.usable_capacity_wh"]["source"] == "unknown"
+    assert body["calculations"]["effective_hover_power_w"] > 0
+
+
 async def test_plan_endpoint_rejects_bad_coordinates(app_with_graph: FastAPI) -> None:
     bad = {**_VALID_BODY, "mission_params": {**_VALID_BODY["mission_params"], "latitude": 999.0}}
     async with _client(app_with_graph) as client:
@@ -204,6 +217,7 @@ async def test_thread_state_roundtrip(app_with_graph: FastAPI) -> None:
     assert body["found"] is True
     assert body["thread_id"] == thread_id
     assert body["report"] == "TEST REPORT"
+    assert body["provenance"]["energy_required_wh"]["source"] in {"derived", "unknown"}
 
 
 async def test_thread_state_unknown_thread_reports_not_found(app_with_graph: FastAPI) -> None:
