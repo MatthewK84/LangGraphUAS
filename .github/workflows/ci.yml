@@ -305,3 +305,28 @@ jobs:
         run: '"$RUNNER_TEMP/wf-tools/bin/actionlint" -color'
       - name: zizmor
         run: '"$RUNNER_TEMP/wf-tools/bin/zizmor" --offline --format github .github/'
+
+  secrets-scan:
+    name: Secret scan (gitleaks)
+    # Blocking. Scans every commit reachable from the checkout, so a key that
+    # was committed and then deleted still fails. The binary is a pinned
+    # release, verified against its published SHA-256 before it runs.
+    runs-on: ubuntu-latest
+    env:
+      GITLEAKS_VERSION: "8.30.1"
+      GITLEAKS_SHA256: "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb"
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+          # Full history: a secret removed in a later commit is still leaked.
+          fetch-depth: 0
+      - name: Install gitleaks
+        run: |
+          archive="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -sSfL -o "$RUNNER_TEMP/$archive" \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/${archive}"
+          echo "${GITLEAKS_SHA256}  $RUNNER_TEMP/$archive" | sha256sum --check --strict
+          tar -xzf "$RUNNER_TEMP/$archive" -C "$RUNNER_TEMP" gitleaks
+      - name: gitleaks over the full history
+        run: '"$RUNNER_TEMP/gitleaks" git . --no-banner --redact --verbose'
