@@ -117,13 +117,13 @@ jobs:
           python3 backend/scripts/check_calculator_version.py
           --base "origin/${{ github.base_ref }}"
 
-  ub-mode-report:
-    name: ub-mode report (crapper, dryer; non-blocking)
-    # Report-only. The thresholds come from docs/skills/ub-mode/SKILL.md
-    # (CRAP < 10, duplication < 0.8), but main does not meet them yet, so this
-    # job never blocks a merge. See "Aspirational" in docs/engineering-practices.md.
+  ub-mode:
+    name: ub-mode (crapper, dryer)
+    # Blocking. Thresholds from docs/skills/ub-mode/SKILL.md: every function in
+    # backend/suas at CRAP < 10, and no duplicate pair at dryer score >= 0.8
+    # unless it is listed with a reason in backend/ub-mode-allowlist.txt.
+    # See "CI gates that block merge" in docs/engineering-practices.md.
     runs-on: ubuntu-latest
-    continue-on-error: true
     # Third-party code runs here; it gets a read-only token and no secrets.
     permissions:
       contents: read
@@ -183,13 +183,13 @@ jobs:
           total=$(awk '$NF ~ /^[0-9.]+$/' "$crap" | wc -l)
           pairs=$(grep -c '^DUPLICATE' "$dry" || true)
           {
-            echo "## ub-mode report (non-blocking)"
+            echo "## ub-mode (blocking)"
             echo
             echo "Thresholds from \`docs/skills/ub-mode/SKILL.md\`: CRAP < 10, duplication < 0.8."
             echo "crapper \`${CRAPPER_REF}\`, dryer \`${DRYER_REF}\`."
             echo
             echo "- Functions at CRAP >= 10: **${over}** of ${total}"
-            echo "- Duplicate pairs at >= 0.8: **${pairs}**"
+            echo "- Duplicate pairs at >= 0.8: **${pairs}** (each must be in \`backend/ub-mode-allowlist.txt\`)"
             echo
             echo "<details><summary>crapper output</summary>"
             echo
