@@ -16,7 +16,7 @@ from suas.calculations.assessment import (
 from suas.calculations.battery import DEFAULT_RESERVE_PERCENT
 from suas.rag.embedding import EmbeddingProvider
 from suas.services.llm import ReportService
-from suas.services.weather import WeatherService
+from suas.services.weather import WeatherProvider
 
 
 @dataclass(frozen=True)
@@ -24,7 +24,7 @@ class GraphDependencies:
     """Collaborators required by the mission graph nodes."""
 
     session_factory: async_sessionmaker[AsyncSession]
-    weather: WeatherService
+    weather: WeatherProvider
     report: ReportService
     embedder: EmbeddingProvider | None = None
     battery_reserve_percent: float = DEFAULT_RESERVE_PERCENT

@@ -16,10 +16,11 @@ from suas.schemas.assessment import DeterministicAssessment
 class WeatherSource(StrEnum):
     """Provenance of a weather reading.
 
-    Five states rather than two, because "we could not reach the provider",
+    Several states rather than two, because "we could not reach the provider",
     "the provider answered with nonsense", and "this is a reading from eight
     minutes ago" are different situations that an operator would act on
-    differently. Only the first two below are good enough to fly on.
+    differently. Only the first two below are good enough to fly on; a demo
+    fixture never is.
     """
 
     LIVE = "live"
@@ -36,6 +37,9 @@ class WeatherSource(StrEnum):
 
     ERROR = "error"
     """Defaults, because the provider answered and the answer was unusable."""
+
+    FIXTURE = "fixture"
+    """A fixed reading from demo mode, never fetched from anything (#97)."""
 
 
 # The only weather states an operational plan may rest on.
