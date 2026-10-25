@@ -30,6 +30,7 @@ Security and safety gates, each a job in `.github/workflows/ci.yml`:
 | Python SAST | `backend` ("Backend (py3.11, py3.12, py3.13)"), step "Ruff lint" | ruff's flake8-bandit `S` rules over `suas`, `tests`, `alembic`, `scripts`, `eval`; only asserts and fixed subprocess calls are ignored, and only in tests and scripts |
 | Trojan Source | `backend`, step "Pytest with coverage" | `tests/test_source_hygiene.py` fails on any zero-width, bidi or BOM character in backend, eval, or frontend source; patterns spell them as `\u` escapes |
 | Secret scan | `secrets-scan` ("Secret scan (gitleaks)") | gitleaks, a checksum-verified pinned release, finds no secret in any commit of the full history |
+| Frontend complexity | `frontend` ("Frontend (tsc, eslint, build)"), step "Lint" | ESLint `complexity: ["error", 10]` on `src/`, the half of CRAP the frontend can hold until it measures coverage; `src/lib/lint-rules.test.ts` proves 11 fails and 10 passes |
 
 Added by this plan:
 
@@ -156,4 +157,5 @@ Enforced and Aspirational; this section only covers ub-mode.
 
 The rest of the [ub-mode](#ub-mode-crapper-and-dryer) discipline (TDD,
 small edits, behavior tests, commit messages) is held at review, not by a tool.
-Mutator and the frontend are not measured in CI.
+Mutator is not measured in CI. The frontend holds cyclomatic complexity at 10
+or below but has no coverage report, so its CRAP is not measured.
