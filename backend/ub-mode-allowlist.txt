@@ -1,0 +1,12 @@
+# Duplicate pairs that dryer reports at >= 0.8 and that are kept on purpose.
+# Read by scripts/ub_gate.py in the "ub-mode" CI job (.github/workflows/ci.yml).
+#
+# Format: two or more path::qualname names, then "#" and why the pair stays.
+# Every pair within a line is allowed. A line that no longer matches a
+# reported pair fails the job, so delete it when the duplication goes away.
+# Add an entry only when removing the duplication would make the code worse;
+# say why in the reason.
+
+suas/api/dependencies.py::get_graph suas/api/dependencies.py::get_replan_graph suas/api/dependencies.py::get_metrics suas/api/dependencies.py::get_limiter  # FastAPI dependencies: each must be its own function so Depends and dependency_overrides can key on it, and each declares its return type, which a shared factory would erase (the types are TYPE_CHECKING-only imports).
+suas/api/observability.py::MetricsRegistry.record_seal_violations suas/api/observability.py::MetricsRegistry.record_hallucinated_citations  # Two separate incident counters with the same guard-then-lock shape. Folding them would need setattr by attribute name, which mypy cannot check.
+suas/schemas/alerts.py::worst_severity suas/schemas/alerts.py::strongest_action  # Same max-by-rank shape over different enums, orders and defaults. Each is three lines and reads directly; a generic helper would add indirection without removing a rule.
