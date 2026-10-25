@@ -402,6 +402,8 @@ jobs:
     # Blocking (#97). Follows the README quickstart literally on a clean runner
     # with no model key and no API key, in demo mode: fixture weather, so
     # nothing reaches a live provider and every plan must come back advisory.
+    # The smoke then goes through the frontend proxy: the catalog must match
+    # frontend/src/lib/types.ts, and plan, ack and read-back must work (#116).
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:

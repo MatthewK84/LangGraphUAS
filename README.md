@@ -84,7 +84,9 @@ DEMO_MODE=true docker compose up --build
 Open `http://localhost:3000`. Demo mode needs no model key, no API key and no
 weather provider. Every plan uses a fixed fixture reading tagged `fixture`, so
 the gate blocks operational (`WEATHER_NOT_LIVE`) and every plan is advisory.
-Never fly on a demo plan. CI runs exactly these steps (job `compose`).
+Never fly on a demo plan. CI runs exactly these steps (job `compose`). Then, through
+the frontend, it checks the catalog against the frontend's types and walks plan,
+acknowledge and read-back (`scripts/compose_smoke.py`).
 
 ### Live weather
 
