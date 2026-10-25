@@ -120,6 +120,55 @@ def _provenance_for(
     )
 
 
+async def _log_and_airframe(
+    session: AsyncSession, log_id: str
+) -> tuple[FlightLogRow, AircraftRow]:
+    """Fetch a log and the airframe it belongs to, or raise FlightLogError."""
+    log_row: FlightLogRow | None = await session.get(FlightLogRow, log_id)
+    if log_row is None:
+        raise FlightLogError(f"Unknown flight log: {log_id}")
+    aircraft: AircraftRow | None = await session.get(AircraftRow, log_row.airframe_id)
+    if aircraft is None:
+        raise FlightLogError(f"Unknown airframe: {log_row.airframe_id}")
+    return log_row, aircraft
+
+
+def _usable_estimate(
+    median_w: float | None, samples: int | None, confidence: str | None
+) -> PowerEstimate | None:
+    """Build an estimate only when it clears MIN_APPLY_SAMPLES."""
+    if median_w is None or samples is None or samples < MIN_APPLY_SAMPLES:
+        return None
+    return PowerEstimate(
+        median_w=median_w,
+        sample_count=samples,
+        iqr_w=0.0,
+        confidence=Confidence(confidence or Confidence.LOW.value),
+    )
+
+
+def _candidates(
+    log_row: FlightLogRow,
+) -> tuple[tuple[str, float | None, PowerEstimate | None], ...]:
+    """Pair each airframe field with the log's median and usable estimate for it."""
+    return (
+        (
+            "hover_power_w",
+            log_row.hover_median_w,
+            _usable_estimate(
+                log_row.hover_median_w, log_row.hover_samples, log_row.hover_confidence
+            ),
+        ),
+        (
+            "cruise_power_w",
+            log_row.cruise_median_w,
+            _usable_estimate(
+                log_row.cruise_median_w, log_row.cruise_samples, log_row.cruise_confidence
+            ),
+        ),
+    )
+
+
 async def apply_flight_log(session: AsyncSession, log_id: str) -> list[str]:
     """Write a log's estimates into its airframe, returning the fields changed.
 
@@ -130,34 +179,13 @@ async def apply_flight_log(session: AsyncSession, log_id: str) -> list[str]:
     Raises:
         FlightLogError: when the log or its airframe is unknown.
     """
-    log_row: FlightLogRow | None = await session.get(FlightLogRow, log_id)
-    if log_row is None:
-        raise FlightLogError(f"Unknown flight log: {log_id}")
-    aircraft: AircraftRow | None = await session.get(AircraftRow, log_row.airframe_id)
-    if aircraft is None:
-        raise FlightLogError(f"Unknown airframe: {log_row.airframe_id}")
+    log_row, aircraft = await _log_and_airframe(session, log_id)
 
     provenance: dict[str, Any] = dict(aircraft.provenance or {})
     changed: list[str] = []
-
-    candidates = (
-        ("hover_power_w", log_row.hover_median_w, log_row.hover_samples, log_row.hover_confidence),
-        (
-            "cruise_power_w",
-            log_row.cruise_median_w,
-            log_row.cruise_samples,
-            log_row.cruise_confidence,
-        ),
-    )
-    for field, median_w, samples, confidence in candidates:
-        if median_w is None or samples is None or samples < MIN_APPLY_SAMPLES:
+    for field, median_w, estimate in _candidates(log_row):
+        if estimate is None:
             continue
-        estimate = PowerEstimate(
-            median_w=median_w,
-            sample_count=samples,
-            iqr_w=0.0,
-            confidence=Confidence(confidence or Confidence.LOW.value),
-        )
         record = _provenance_for(estimate=estimate, log_id=log_id)
         provenance[field] = record.model_dump(mode="json")
         setattr(aircraft, field, median_w)
