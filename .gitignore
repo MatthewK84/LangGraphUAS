@@ -31,6 +31,10 @@ yarn-error.log*
 .coverage
 .coverage.*
 htmlcov/
+coverage/
+
+# ub-mode tool snapshots (crapper, dryer)
+.metrics/
 
 # TypeScript incremental build info
 *.tsbuildinfo
