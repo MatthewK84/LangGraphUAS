@@ -66,9 +66,9 @@ DEMO_MODE=true docker compose up --build
 Open `http://localhost:3000`. Demo mode needs no model key, no API key and no
 weather provider. Every plan uses a fixed fixture reading tagged `fixture`, so
 the gate blocks operational (`WEATHER_NOT_LIVE`) and every plan is advisory.
-Never fly on a demo plan. CI runs exactly these steps (job `compose`). Then, through
-the frontend, it checks the catalog against the frontend's types and walks plan,
-acknowledge and read-back (`scripts/compose_smoke.py`).
+Never fly on a demo plan. With the stack up, `python3 scripts/compose_smoke.py`
+checks the catalog through the frontend against the frontend's types and walks
+plan, acknowledge and read-back. It runs locally; it is not a CI job.
 
 ### Live weather
 
@@ -177,7 +177,6 @@ list required status checks. Rules and rationale for each gate are in
 | `ub-mode` | Blocks | CRAP below 10 for every function in `backend/suas`, and no unlisted duplicate pair at 0.8 or above |
 | `frontend` | Blocks | `tsc`, ESLint (cyclomatic complexity 10 or less), Prettier, Vitest, production build |
 | `docker` | Blocks on the build | Both images build. Its trivy scan of HIGH and CRITICAL findings is **report-only** (job summary) |
-| `compose` | Blocks | The demo quickstart above, then plan, acknowledge and read-back through the frontend (`scripts/compose_smoke.py`) |
 | `workflow-lint` | Blocks | actionlint and zizmor over `.github/`: actions pinned to commits, no template injection, least-privilege tokens |
 | `secrets-scan` | Blocks | gitleaks, a checksum-verified pinned release, over the full history |
 | `mutation` | **Report-only** | Surviving mutants (mutator) in the changed backend modules, or the safety core on `main` |

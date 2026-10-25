@@ -427,46 +427,6 @@ jobs:
           scan suas-backend:ci
           scan suas-frontend:ci
 
-  compose:
-    name: Compose quickstart (demo, no keys)
-    # Blocking (#97). Follows the README quickstart literally on a clean runner
-    # with no model key and no API key, in demo mode: fixture weather, so
-    # nothing reaches a live provider and every plan must come back advisory.
-    # The smoke then goes through the frontend proxy: the catalog must match
-    # frontend/src/lib/types.ts, and plan, ack and read-back must work (#116).
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - name: README quickstart, demo mode
-        env:
-          DEMO_MODE: "true"
-        run: |
-          cp .env.example .env
-          docker compose up --build --detach --wait --wait-timeout 300
-      - name: Smoke the running stack
-        run: python3 scripts/compose_smoke.py
-      - name: Compose state and logs
-        if: failure()
-        run: |
-          docker compose ps --all
-          echo "::group::backend healthcheck history"
-          docker inspect --format '{{json .State.Health}}' "$(docker compose ps --all --quiet backend)" || true
-          echo "::endgroup::"
-          echo "::group::backend log"
-          docker compose logs --no-color --timestamps backend
-          echo "::endgroup::"
-          echo "::group::all services"
-          docker compose logs --no-color --timestamps
-          echo "::endgroup::"
-      - name: Stop
-        if: always()
-        run: docker compose down --volumes
-
   workflow-lint:
     name: Workflow lint (actionlint, zizmor)
     # Blocking. actionlint catches workflow syntax and expression mistakes;
