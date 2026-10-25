@@ -1,9 +1,9 @@
-"""CI must run the seed-race test on Postgres and leave a diagnosable trail.
+"""CI runs the seed-race test on Postgres; the Compose smoke is local only.
 
-Main went red once with only "container langgraphuas-backend-1 is unhealthy"
-in the failing step. These pin that the Postgres job runs the concurrent-seed
-test against real Postgres, and that a failed Compose job prints the
-container states, the backend's own log and its healthcheck history.
+The Postgres job must run the concurrent-seed test against real Postgres.
+The Compose quickstart job was removed from CI at the owner's request after
+repeated startup failures; the stack, `scripts/compose_smoke.py`, and the
+note on running it locally must stay.
 """
 
 from pathlib import Path
@@ -11,7 +11,8 @@ from typing import Any
 
 import yaml
 
-CI = Path(__file__).resolve().parents[2] / ".github" / "workflows" / "ci.yml"
+ROOT = Path(__file__).resolve().parents[2]
+CI = ROOT / ".github" / "workflows" / "ci.yml"
 
 
 def _job(name: str) -> dict[str, Any]:
@@ -26,9 +27,12 @@ def test_postgres_job_runs_the_concurrent_seed_test_on_postgres() -> None:
     assert runs[0]["env"]["SUAS_TEST_POSTGRES_URL"].startswith("postgresql://")
 
 
-def test_failed_compose_job_dumps_backend_state_and_logs() -> None:
-    steps = _job("compose")["steps"]
-    on_failure = "\n".join(s["run"] for s in steps if s.get("if") == "failure()")
-    assert "docker compose ps --all" in on_failure
-    assert "docker compose logs --no-color --timestamps backend" in on_failure
-    assert ".State.Health" in on_failure
+def test_compose_quickstart_is_local_only_not_a_ci_job() -> None:
+    """The Compose job was removed from CI; the stack and its smoke stay runnable."""
+    jobs: dict[str, Any] = yaml.safe_load(CI.read_text())["jobs"]
+    assert "compose" not in jobs
+    assert (ROOT / "scripts" / "compose_smoke.py").is_file()
+    practices = (ROOT / "docs" / "engineering-practices.md").read_text()
+    enforced, aspirational = practices.split("\n## Aspirational\n", 1)
+    assert "`compose`" not in enforced
+    assert "scripts/compose_smoke.py" in aspirational
