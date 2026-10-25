@@ -71,6 +71,100 @@ def chunk_identifier(document_path: str, ordinal: int) -> str:
     return f"c-{digest[:16]}"
 
 
+def _document_row(entry: ManifestEntry, document_id: str) -> CorpusDocumentRow:
+    """Return the record of where a verified document came from."""
+    return CorpusDocumentRow(
+        document_id=document_id,
+        path=entry.path,
+        sha256=entry.sha256,
+        source_url=entry.source_url,
+        retrieved_at=entry.retrieved_at,
+        kind=entry.kind,
+        airframe_config_id=entry.airframe_config_id,
+        ingested_at=datetime.now(UTC),
+    )
+
+
+def _quarantine_row(entry: ManifestEntry, result: ScreenResult) -> CorpusQuarantineRow:
+    """Return the quarantine record for a chunk that tripped the screener."""
+    return CorpusQuarantineRow(
+        quarantine_id=str(uuid4()),
+        document_path=entry.path,
+        airframe_config_id=entry.airframe_config_id,
+        pattern=result.pattern,
+        text=result.text,
+        quarantined_at=datetime.now(UTC),
+    )
+
+
+def _screen_document(
+    session: AsyncSession, entry: ManifestEntry, content: bytes, summary: IngestSummary
+) -> list[ScreenResult]:
+    """Screen every paragraph, quarantining the ones that trip, and return the clean ones."""
+    clean: list[ScreenResult] = []
+    for paragraph in split_paragraphs(content.decode("utf-8", errors="replace")):
+        result: ScreenResult = screen_chunk(paragraph)
+        if result.is_clean:
+            clean.append(result)
+            continue
+
+        summary.quarantined += 1
+        summary.patterns.append(result.pattern)
+        session.add(_quarantine_row(entry, result))
+    return clean
+
+
+async def _embed_clean(
+    embedder: EmbeddingProvider | None, clean: list[ScreenResult]
+) -> list[list[float]]:
+    """Return one vector per screened chunk, or none without an embedder or chunks.
+
+    Only screened chunks are embedded. A quarantined paragraph never becomes a
+    vector, so it cannot be retrieved even by accident.
+    """
+    if embedder is not None and clean:
+        return await embedder.embed([item.text for item in clean])
+    return []
+
+
+def _add_chunks(
+    session: AsyncSession,
+    entry: ManifestEntry,
+    document_id: str,
+    clean: list[ScreenResult],
+    vectors: list[list[float]],
+    embedder: EmbeddingProvider | None,
+    summary: IngestSummary,
+) -> None:
+    """Store the screened chunks, with their vectors when there are any."""
+    for index, item in enumerate(clean):
+        summary.chunks += 1
+        session.add(
+            CorpusChunkRow(
+                chunk_id=chunk_identifier(entry.path, index),
+                document_id=document_id,
+                airframe_config_id=entry.airframe_config_id,
+                field_path=entry.field_path,
+                page=None,
+                text=item.text,
+                embedding_json=json.dumps(vectors[index]) if vectors else None,
+                embedding_model=embedder.model_id if (embedder and vectors) else None,
+            )
+        )
+
+
+def _log_quarantine(entry: ManifestEntry, summary: IngestSummary) -> None:
+    """Warn when any chunk of a document was quarantined."""
+    if summary.quarantined:
+        logger.warning(
+            "Quarantined %d of %d chunks from %s: %s",
+            summary.quarantined,
+            summary.quarantined + summary.chunks,
+            entry.path,
+            sorted(set(summary.patterns)),
+        )
+
+
 async def ingest_document(
     session: AsyncSession,
     entry: ManifestEntry,
@@ -88,70 +182,15 @@ async def ingest_document(
     verify(entry, content, production=production)
 
     document_id: str = str(uuid4())
-    session.add(
-        CorpusDocumentRow(
-            document_id=document_id,
-            path=entry.path,
-            sha256=entry.sha256,
-            source_url=entry.source_url,
-            retrieved_at=entry.retrieved_at,
-            kind=entry.kind,
-            airframe_config_id=entry.airframe_config_id,
-            ingested_at=datetime.now(UTC),
-        )
-    )
+    session.add(_document_row(entry, document_id))
 
     summary = IngestSummary(path=entry.path, document_id=document_id)
-    clean: list[ScreenResult] = []
-    for paragraph in split_paragraphs(content.decode("utf-8", errors="replace")):
-        result: ScreenResult = screen_chunk(paragraph)
-        if result.is_clean:
-            clean.append(result)
-            continue
-
-        summary.quarantined += 1
-        summary.patterns.append(result.pattern)
-        session.add(
-            CorpusQuarantineRow(
-                quarantine_id=str(uuid4()),
-                document_path=entry.path,
-                airframe_config_id=entry.airframe_config_id,
-                pattern=result.pattern,
-                text=result.text,
-                quarantined_at=datetime.now(UTC),
-            )
-        )
-
-    # Only screened chunks are embedded. A quarantined paragraph never becomes a
-    # vector, so it cannot be retrieved even by accident.
-    vectors: list[list[float]] = []
-    if embedder is not None and clean:
-        vectors = await embedder.embed([item.text for item in clean])
-
-    for index, item in enumerate(clean):
-        summary.chunks += 1
-        session.add(
-            CorpusChunkRow(
-                chunk_id=chunk_identifier(entry.path, index),
-                document_id=document_id,
-                airframe_config_id=entry.airframe_config_id,
-                field_path=entry.field_path,
-                page=None,
-                text=item.text,
-                embedding_json=json.dumps(vectors[index]) if vectors else None,
-                embedding_model=embedder.model_id if (embedder and vectors) else None,
-            )
-        )
+    clean = _screen_document(session, entry, content, summary)
+    vectors = await _embed_clean(embedder, clean)
+    _add_chunks(session, entry, document_id, clean, vectors, embedder, summary)
 
     await session.commit()
-    if summary.quarantined:
-        logger.warning(
-            "Quarantined %d of %d chunks from %s: %s",
-            summary.quarantined,
-            summary.quarantined + summary.chunks,
-            entry.path,
-            sorted(set(summary.patterns)),
-        )
+    _log_quarantine(entry, summary)
     return summary
 
 
