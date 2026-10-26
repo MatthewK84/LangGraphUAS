@@ -9,6 +9,7 @@ the two servers; the browser holds nothing but its own session id.
 """
 
 import hashlib
+import logging
 from typing import Any
 
 import httpx
@@ -19,8 +20,9 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from suas.api.rate_limit_dep import _client_key
 from suas.api.security import session_key
-from suas.config import Settings, get_settings
+from suas.config import DEMO_SESSION_KEY_SECRET, Settings, get_settings
 from suas.db.retention import get_acknowledgement
+from suas.main import warn_on_weak_auth
 from tests.test_ack import _BODY
 from tests.test_replan import _snapshot
 
@@ -203,3 +205,15 @@ def test_every_session_shares_one_rate_limit_bucket() -> None:
     first = _client_key(_Request(), session_key(_SECRET, _SESSION_A))  # type: ignore[arg-type]
     second = _client_key(_Request(), session_key(_SECRET, _SESSION_B))  # type: ignore[arg-type]
     assert first == second == "sessions"
+
+
+@pytest.mark.parametrize(
+    ("secret", "warned"),
+    [(DEMO_SESSION_KEY_SECRET, True), (_SECRET, False)],
+)
+def test_the_public_demo_secret_is_named_at_startup(
+    caplog: pytest.LogCaptureFixture, secret: str, warned: bool
+) -> None:
+    with caplog.at_level(logging.WARNING, logger="suas.main"):
+        warn_on_weak_auth(Settings(session_key_secret=secret))
+    assert ("DEMO session secret in use" in caplog.text) is warned

@@ -22,7 +22,7 @@ from suas.api.exception_handlers import register_exception_handlers
 from suas.api.observability import MetricsRegistry, RequestContextMiddleware
 from suas.api.ratelimit import SlidingWindowLimiter
 from suas.api.routes import router
-from suas.config import Settings, describe_database_url, get_settings
+from suas.config import DEMO_SESSION_KEY_SECRET, Settings, describe_database_url, get_settings
 from suas.db.engine import create_engine, create_schema, create_session_factory
 from suas.db.retention import purge_expired_threads
 from suas.db.seed import seed_reference_data
@@ -104,13 +104,23 @@ async def _dispose_resources(resources: _Resources) -> None:
     await resources.engine.dispose()
 
 
+def warn_on_weak_auth(settings: Settings) -> None:
+    """Say at startup, by name, when authentication protects nothing."""
+    if not settings.auth_enabled:
+        logger.warning("API authentication is disabled; set SUAS_API_KEY in production")
+    if settings.session_key_secret == DEMO_SESSION_KEY_SECRET:
+        logger.warning(
+            "DEMO session secret in use: anyone can mint any browser's key. "
+            "Set SUAS_SESSION_KEY_SECRET to a private value before exposing this deployment"
+        )
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Manage startup and shutdown of all long-lived resources."""
     settings = get_settings()
     configure_logging(settings.log_level, json_output=settings.json_logs)
-    if not settings.auth_enabled:
-        logger.warning("API authentication is disabled; set SUAS_API_KEY in production")
+    warn_on_weak_auth(settings)
     logger.info("Database: %s", describe_database_url(settings.database_url))
     if not settings.uses_postgres:
         # Reaching this in a deployment means SUAS_DATABASE_URL never arrived and

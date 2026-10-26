@@ -85,6 +85,16 @@ def parse_operator_keys(api_keys: str, api_key: str) -> dict[str, str]:
     return keys
 
 
+# Session-key mode (#82) derives each browser's key from this secret, so a
+# guessable one lets anyone mint any browser's key. 32 characters is the floor.
+MIN_SESSION_SECRET_LENGTH: Final[int] = 32
+
+# The secret the default docker-compose.yml ships so the demo isolates browsers
+# with zero configuration. It is public, so it protects nothing on a reachable
+# deployment; the backend logs a warning whenever it is in use.
+DEMO_SESSION_KEY_SECRET: Final[str] = "demo-only-session-secret-from-docker-compose-never-deploy"  # noqa: S105 (public by design)
+
+
 class Settings(BaseSettings):
     """Strongly typed application settings loaded from the environment."""
 
@@ -146,6 +156,10 @@ class Settings(BaseSettings):
     # Per-operator keys (#81): "alpha:key-a,bravo:key-b". Each mission belongs to
     # the operator whose key planned it, and only that key can read it.
     api_keys: str = Field(default="")
+    # Anonymous per-browser operators (#82). When set, a key of the form
+    # session.<id>.<HMAC-SHA256(secret, id)> authenticates as its own operator.
+    # The dashboard proxy holds the same secret; the browser never sees it.
+    session_key_secret: str = Field(default="")
     cors_origins: str = Field(default="http://localhost:3000")
     weather_base_url: str = Field(default=DEFAULT_WEATHER_URL)
     # Per-request. Small, because a planning request is waiting on it.
@@ -199,6 +213,10 @@ class Settings(BaseSettings):
     def _refuse_ambiguous_keys(self) -> "Settings":
         """Fail at startup on a key list that cannot name each mission's owner."""
         parse_operator_keys(self.api_keys, self.api_key)
+        if self.session_key_secret and len(self.session_key_secret) < MIN_SESSION_SECRET_LENGTH:
+            raise ValueError(
+                f"SUAS_SESSION_KEY_SECRET must be at least {MIN_SESSION_SECRET_LENGTH} characters"
+            )
         return self
 
     @property
@@ -209,7 +227,7 @@ class Settings(BaseSettings):
     @property
     def auth_enabled(self) -> bool:
         """Return whether endpoint API-key authentication is enforced."""
-        return bool(self.operator_keys)
+        return bool(self.operator_keys or self.session_key_secret)
 
 
 @lru_cache(maxsize=1)
