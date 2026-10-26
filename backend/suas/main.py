@@ -20,7 +20,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 from suas import __version__
 from suas.api.exception_handlers import register_exception_handlers
 from suas.api.observability import MetricsRegistry, RequestContextMiddleware
-from suas.api.ratelimit import SlidingWindowLimiter
+from suas.api.ratelimit import SlidingWindowLimiter, build_limiter
 from suas.api.routes import router
 from suas.config import DEMO_SESSION_KEY_SECRET, Settings, describe_database_url, get_settings
 from suas.db.engine import create_engine, create_schema, create_session_factory
@@ -142,6 +142,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             checkpointer,
         )
         app.state.session_factory = resources.session_factory
+        app.state.limiter = build_limiter(settings, resources.session_factory)
         await _purge_checkpoints(resources.session_factory, checkpointer, settings)
         try:
             yield

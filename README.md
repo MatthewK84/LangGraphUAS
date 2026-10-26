@@ -370,7 +370,7 @@ and `SUAS_WEATHER_DEADLINE_S` (default 6s) across the whole operation including
 retries. Without the second, per-request timeouts multiply by the retry count and
 the endpoint hangs far longer than any single setting suggests.
 
-The cache is per process, like the rate limiter: `SUAS_WEATHER_CACHE_TTL_S`
+The cache is per process (unlike the shared rate limiter): `SUAS_WEATHER_CACHE_TTL_S`
 (default 600s). Each worker keeps its own, so a fresh reading in one worker is
 not a fresh reading in another.
 
@@ -684,8 +684,9 @@ Backend variables use the `SUAS_` prefix. Compose maps friendly names to them.
 | `SUAS_VERTICAL_SPEED_MPS` | `3` | Assumed climb and descent rate. |
 | `SUAS_CLIMB_EFFICIENCY` | `0.6` | Propulsive efficiency for the climb energy term. |
 | `SUAS_CHECKPOINT_RETENTION_DAYS` | `30` | Age at which graph checkpoints are purged. `0` disables retention. |
-| `SUAS_RATE_LIMIT_REQUESTS` | `30` | Requests allowed per window, per client, per worker. |
+| `SUAS_RATE_LIMIT_REQUESTS` | `30` | Requests allowed per window, per client (per worker unless shared). |
 | `SUAS_RATE_LIMIT_WINDOW_S` | `60` | Rate limit window in seconds. |
+| `SUAS_RATE_LIMIT_SHARED` | `false` | Keep the budget in the database so all workers share one ceiling. Compose sets `true`. |
 | `BACKEND_API_URL` | `http://localhost:8000` | Backend URL as reached by the Next.js **server**, not the browser. |
 | `BACKEND_API_KEY` | empty | Sent upstream as `X-API-Key` by the server-side proxy. Never exposed to the client. |
 | `BACKEND_SESSION_SECRET` | empty | Same value as `SUAS_SESSION_KEY_SECRET`. When set, each browser gets its own session cookie and operator, taking precedence over `BACKEND_API_KEY`. Server-only. |
@@ -770,10 +771,12 @@ the air.
 <details>
 <summary><b>Operational notes</b></summary>
 
-- **Rate limiting is per process.** Each worker enforces its own budget, so the
-  effective cluster ceiling is `SUAS_RATE_LIMIT_REQUESTS * worker_count`. It is a
-  spend guard against runaway model calls, not an exact global quota. Put a
-  shared limiter (Redis or the ingress) in front when you need a hard ceiling.
+- **One rate-limit ceiling across workers, when shared.** With
+  `SUAS_RATE_LIMIT_SHARED=true` (the Compose default) every worker draws on one
+  budget kept in the database, so the ceiling is `SUAS_RATE_LIMIT_REQUESTS`
+  whatever the worker count (#84). Left off, each worker keeps its own budget
+  in memory and the ceiling is that times the worker count; that is the local
+  default, where one process needs no shared state.
 - **Resuming an interrupt is not per process.** Two workers handed the same
   acknowledgement serialise on a per-thread mutex and a `FOR UPDATE` row lock;
   one proceeds, the other gets 409. Measured, not assumed: see

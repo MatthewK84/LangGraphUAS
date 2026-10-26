@@ -37,6 +37,9 @@ services:
       SUAS_CHECKPOINT_RETENTION_DAYS: ${CHECKPOINT_RETENTION_DAYS:-30}
       SUAS_RATE_LIMIT_REQUESTS: ${RATE_LIMIT_REQUESTS:-30}
       SUAS_RATE_LIMIT_WINDOW_S: ${RATE_LIMIT_WINDOW_S:-60}
+      # The image runs two uvicorn workers; one budget in Postgres keeps the
+      # ceiling at RATE_LIMIT_REQUESTS rather than twice that (#84).
+      SUAS_RATE_LIMIT_SHARED: ${RATE_LIMIT_SHARED:-true}
     depends_on:
       db:
         condition: service_healthy

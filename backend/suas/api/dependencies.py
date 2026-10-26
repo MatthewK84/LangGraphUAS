@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from langgraph.graph.state import CompiledStateGraph
 
     from suas.api.observability import MetricsRegistry
-    from suas.api.ratelimit import SlidingWindowLimiter
+    from suas.api.ratelimit import RateLimiter
 
 
 def get_graph(request: Request) -> "CompiledStateGraph":
@@ -36,9 +36,9 @@ def get_metrics(request: Request) -> "MetricsRegistry":
     return metrics
 
 
-def get_limiter(request: Request) -> "SlidingWindowLimiter":
+def get_limiter(request: Request) -> "RateLimiter":
     """Return the rate limiter stored on application state."""
-    limiter: SlidingWindowLimiter = request.app.state.limiter
+    limiter: RateLimiter = request.app.state.limiter
     return limiter
 
 
@@ -46,4 +46,4 @@ GraphDep = Annotated["CompiledStateGraph", Depends(get_graph)]
 ReplanGraphDep = Annotated["CompiledStateGraph", Depends(get_replan_graph)]
 SessionFactoryDep = Annotated[async_sessionmaker[AsyncSession], Depends(get_session_factory)]
 MetricsDep = Annotated["MetricsRegistry", Depends(get_metrics)]
-LimiterDep = Annotated["SlidingWindowLimiter", Depends(get_limiter)]
+LimiterDep = Annotated["RateLimiter", Depends(get_limiter)]

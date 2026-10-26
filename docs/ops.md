@@ -41,20 +41,29 @@ leave threads that resume into a corrupt state.
 
 ## Concurrency
 
-Three things in this service are per process, and each is a deliberate
+Two things in this service are per process, and each is a deliberate
 constraint rather than an oversight:
 
-- **Rate limiting.** The budget is per worker, so the cluster ceiling is
-  `SUAS_RATE_LIMIT_REQUESTS * worker_count`. It is a spend guard against runaway
-  model calls, not an exact quota. A shared limiter belongs in Redis or the
-  ingress.
 - **The weather cache.** A reading fresh in one worker is not fresh in another.
 - **Metrics.** Scrape every replica and aggregate in Prometheus.
 
 Resuming an interrupt is **not** in that list. Two workers must never resume the
 same `thread_id`, and that is enforced rather than assumed — see "Two workers,
 one interrupt" below. Running more than one worker is therefore safe for
-correctness; what it costs you is the precision of the three counters above.
+correctness; what it costs you is the precision of the two counters above.
+
+Rate limiting is shared when `SUAS_RATE_LIMIT_SHARED=true`, as Compose sets it
+(#84). Each client's recent request times sit in one `rate_limit_buckets` row,
+keyed by a SHA-256 of the client key so no API key is stored. Every admission
+locks that row (`FOR UPDATE`), prunes, decides and writes in one transaction,
+so concurrent workers on one client queue on the lock and the ceiling is
+exact. The cost is one short write transaction per rate-limited request, on
+the database those requests already use; if it is unreachable the request
+fails as the plan would have. Idle clients' rows stay until the table is
+truncated, which is always safe: it only resets budgets. Unshared, each worker
+keeps its own budget and the ceiling is the limit times the worker count.
+Measured with two uvicorn workers at a limit of 4 and 12 concurrent plans: 5
+admitted unshared, exactly 4 shared.
 
 ## Weather degradation
 

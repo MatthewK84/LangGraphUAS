@@ -43,9 +43,9 @@ async def enforce_rate_limit(
     if not settings.rate_limit_enabled:
         return
     key: str = _client_key(request, x_api_key)
-    if limiter.check(key):
+    retry_after: int = await limiter.admit(key)
+    if retry_after == 0:
         return
-    retry_after: int = limiter.retry_after_s(key)
     logger.warning("Rate limit exceeded for %s", key)
     raise HTTPException(
         status_code=status.HTTP_429_TOO_MANY_REQUESTS,

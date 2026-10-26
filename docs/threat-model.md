@@ -84,7 +84,7 @@ There are no debug endpoints that skip the ack.
 
 | Threat | Mitigation | Test |
 |---|---|---|
-| Mass plan requests with model and embedding calls | `?brief=false` for load runs, per-key rate limit, retrieval only inside `cite_limits` | 100 concurrent advisory plans |
+| Mass plan requests with model and embedding calls | `?brief=false` for load runs, per-key rate limit, one ceiling across workers when `SUAS_RATE_LIMIT_SHARED` (#84), retrieval only inside `cite_limits` | 100 concurrent advisory plans |
 | Weather hang | 2-3s timeout, advisory fallback | Fake-hang test |
 | Unbounded tool loops | No tools bound on `report` (ADR-004) | Bound-tool assertion |
 | Checkpoint table growth | `delete_thread` prune job | Retention job test |
