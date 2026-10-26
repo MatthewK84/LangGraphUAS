@@ -2,10 +2,10 @@
 
 import logging
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, Any, Final
+from typing import TYPE_CHECKING, Annotated, Any, Final
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Path, Request, Response, status
 from langgraph.types import Command, StateSnapshot
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
@@ -47,6 +47,7 @@ from suas.schemas.responses import (
     WeatherReading,
 )
 from suas.schemas.telemetry import TelemetrySnapshot
+from suas.schemas.thread_ids import MAX_THREAD_ID_LENGTH
 
 if TYPE_CHECKING:
     from langchain_core.runnables import RunnableConfig
@@ -99,6 +100,8 @@ def _figure_provenance(values: dict[str, Any]) -> dict[str, NumberProvenance]:
 
 
 _UNKNOWN_THREAD: Final[str] = "Unknown planning thread"
+# Looked up, not created, so lenient: ids stored before the format still work.
+ThreadIdPath = Annotated[str, Path(max_length=MAX_THREAD_ID_LENGTH)]
 
 
 async def _owner_of(
@@ -448,7 +451,7 @@ async def _record_signature(
     dependencies=[Depends(require_api_key), Depends(enforce_rate_limit)],
 )
 async def acknowledge_plan(
-    thread_id: str,
+    thread_id: ThreadIdPath,
     request: AckRequest,
     graph: GraphDep,
     metrics: MetricsDep,
@@ -571,7 +574,7 @@ async def replan_mission(
     dependencies=[Depends(require_api_key)],
 )
 async def get_thread_state(
-    thread_id: str,
+    thread_id: ThreadIdPath,
     graph: GraphDep,
     session_factory: SessionFactoryDep,
     operator: OperatorDep,

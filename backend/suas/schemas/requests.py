@@ -9,6 +9,7 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 from suas.schemas.assessment import AssessmentMode
+from suas.schemas.thread_ids import NEW_THREAD_ID_PATTERN
 
 
 class MissionParams(BaseModel):
@@ -28,7 +29,8 @@ class MissionRequest(BaseModel):
     aircraft_id: str = Field(min_length=1)
     payload_id: str = Field(min_length=1)
     mission_params: MissionParams
-    thread_id: str | None = Field(default=None)
+    # Never a ':' id: those are replan children, owned through their parent.
+    thread_id: str | None = Field(default=None, pattern=NEW_THREAD_ID_PATTERN)
     # What the caller would like this plan to count as. The backend decides what
     # it actually counts as; see suas.calculations.gate.
     assessment_mode: AssessmentMode = AssessmentMode.ADVISORY

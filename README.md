@@ -130,7 +130,11 @@ before entering state, which keeps checkpoint serialization simple and safe.
 The container sets `LANGGRAPH_STRICT_MSGPACK=true` to restrict checkpoint
 deserialization to known-safe types.
 
-Every request supplies a `thread_id`. The checkpointer persists state per thread,
+Every request supplies a `thread_id`, or gets a server-generated UUID. A
+client-chosen id must match `^[A-Za-z0-9_-]{1,128}$` (else 422): `:` is reserved
+for the server's replan children, `<id>:<n>`, which belong to their parent's
+operator. `GET`, ack and replan accept any id up to 255 characters, so ids stored
+before that rule still resolve. The checkpointer persists state per thread,
 so `GET /api/plan/{thread_id}` can retrieve a prior assessment and a follow-up
 request can resume the same conversation. Checkpoints are written with
 `durability="sync"`, so a crash between the assessment and the signature loses
