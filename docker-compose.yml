@@ -14,6 +14,21 @@ services:
       retries: 12
     restart: unless-stopped
 
+  # Migrations are a deploy step (#87): this one-shot service upgrades the
+  # schema and exits, and the backend starts only once it has succeeded. A
+  # restart of the backend alone never changes the schema, so a rollback holds.
+  migrate:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    command: ["migrate"]
+    environment:
+      SUAS_DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-suas}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-suas}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
   backend:
     build:
       context: .
@@ -45,6 +60,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     ports:
       - "8000:8000"
     restart: unless-stopped

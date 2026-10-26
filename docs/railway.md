@@ -130,7 +130,10 @@ startup naming the variable rather than falling back to a SQLite file the
 container cannot write.
 
 > **Check** the deploy log, reading the first lines rather than the last:
-> - `Running upgrade ... -> 0010` on the first deploy (migrations ran)
+> - in the **pre-deploy** log, `Running upgrade ... -> 0014` on a deploy that
+>   adds a migration: `railway.json` runs `alembic upgrade head` as its
+>   `preDeployCommand` (#87), and the app itself never migrates, so
+>   `MIGRATE_ON_START` stays unset here
 > - `Uvicorn running on http://[::]:8080` -- **square brackets** mean it bound
 >   IPv6, which is what the private network needs
 > - `Database: postgresql+psycopg://...railway.internal:5432/railway`
@@ -297,6 +300,11 @@ need.
 **502 with no traceback and the log shows a hardcoded port.** Something is
 overriding the image's entrypoint -- check for a Start Command in the service
 settings. The image owns startup; `railway.json` carries no `startCommand`.
+
+**`/ready` says `migrations: pending` after a deploy.** The pre-deploy step did
+not run or failed: check the deployment's pre-deploy log, then run
+`alembic upgrade head` from the service's shell (or redeploy). See
+[ops: Migrations](ops.md#migrations), which also covers rollback.
 
 **Briefs are deterministic fallback text.** `SUAS_OPENAI_API_KEY` is unset. A
 supported state, not an error: no model writes a number.

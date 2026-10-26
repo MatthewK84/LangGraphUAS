@@ -7,12 +7,13 @@ app never disagree about the target. Supports async drivers.
 import asyncio
 from logging.config import fileConfig
 
-from sqlalchemy import Connection, pool
+from sqlalchemy import Connection, pool, text
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
 from suas.config import get_settings
 from suas.db.models import Base
+from suas.db.startup_lock import STARTUP_LOCK_KEY
 
 config = context.config
 if config.config_file_name is not None:
@@ -42,9 +43,19 @@ def run_migrations_offline() -> None:
 
 
 def do_run_migrations(connection: Connection) -> None:
-    """Run migrations on an established connection."""
+    """Run migrations on an established connection, one process at a time.
+
+    On Postgres the upgrade holds the startup advisory lock for its whole
+    transaction, so replicas migrating at once run one after another and the
+    later ones find the database at head (#87). It is the lock the app's own
+    startup writes take, so they wait for a migration too.
+    """
     context.configure(connection=connection, target_metadata=target_metadata, compare_type=True)
     with context.begin_transaction():
+        if connection.dialect.name == "postgresql":
+            connection.execute(
+                text("SELECT pg_advisory_xact_lock(:key)"), {"key": STARTUP_LOCK_KEY}
+            )
         context.run_migrations()
 
 
