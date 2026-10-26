@@ -24,10 +24,13 @@ from suas.api.observability import MetricsRegistry
 from suas.api.routes import (
     _build_plan_response,
     _estimate_summary,
+    _figure_provenance,
     _record_violations,
     _resume_payload,
 )
 from suas.db.retention import get_acknowledgement
+from suas.reference_data import load_rows
+from suas.schemas.domain import Aircraft, Payload
 from suas.schemas.requests import AckRequest, MissionEdits
 from tests.test_ack import _BODY
 from tests.test_replan import _snapshot
@@ -341,3 +344,14 @@ async def test_a_plan_for_an_unknown_aircraft_answers_without_weather(
     assert body["weather"] is None
     assert body["is_viable"] is False
     assert 'suas_plan_outcomes_total{outcome="no_go"} 1' in app_with_graph.state.metrics.render()
+
+
+@pytest.mark.parametrize("missing", ["calculations", "aircraft", "payload"])
+def test_no_figure_provenance_without_calculations_aircraft_and_payload(missing: str) -> None:
+    aircraft = Aircraft.model_validate(load_rows("aircraft.json")[0]).model_dump(mode="json")
+    payload = Payload.model_validate(load_rows("payloads.json")[0]).model_dump(mode="json")
+    values = {"calculations": {"hover_power_w": 1.0}, "aircraft": aircraft, "payload": payload}
+    complete = _figure_provenance(values)
+    del values[missing]
+    assert complete
+    assert _figure_provenance(values) == {}

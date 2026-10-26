@@ -251,3 +251,15 @@ async def test_a_key_that_names_no_operator_is_refused(
     async with _client(keyed_app) as client:
         response = await client.post("/api/plan", json=_BODY, headers=headers)
     assert response.status_code == 401
+
+
+async def test_a_thread_id_with_a_colon_and_its_own_row_is_its_own_owners(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    """Only a row-less child falls back to its parent; a caller-chosen 'x:9' does not."""
+    async with session_factory() as session:
+        await record_thread(session, "shared-prefix", "bravo")
+        await record_thread(session, "shared-prefix:9", "alpha")
+
+    assert await _visible_to(session_factory, "shared-prefix:9", "alpha")
+    assert not await _visible_to(session_factory, "shared-prefix:9", "bravo")
