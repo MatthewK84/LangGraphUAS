@@ -162,6 +162,34 @@ Missions planned with auth off record no operator, and once auth is on no key
 can read them. Revoking a key hides that operator's missions until a key with
 the same id is configured again; key rotation that keeps the id is #83.
 
+## Browser sessions
+
+With `SUAS_SESSION_KEY_SECRET` on the backend and the same value as
+`BACKEND_SESSION_SECRET` on the frontend, each browser is its own operator
+(#82). The frontend sets an `HttpOnly`, `SameSite=Strict`, 30-day
+`suas_session` cookie holding a random 256-bit id (`Secure` when the request
+arrived over HTTPS, so terminate TLS in front of it and pass
+`X-Forwarded-Proto`), and signs it into the `X-API-Key` it sends upstream.
+`operator_key_id` stores `session:` plus a hash of the id, never the cookie.
+Sessions share one rate-limit bucket, so fresh cookies buy no extra allowance;
+per-instance limits are #84.
+
+- **Clearing cookies loses that browser's threads.** A new cookie is a new
+  operator, and nothing can recover the old one. The same happens when the
+  cookie expires or another browser is used.
+- **The Compose default is demo-only.** `docker-compose.yml` falls back to
+  `demo-only-session-secret-from-docker-compose-never-deploy`, which is public:
+  anyone who can reach the backend can forge any session with it. The backend
+  logs `DEMO session secret in use` at startup while it is. Set
+  `SESSION_KEY_SECRET` (`openssl rand -hex 32`) in `.env` for any shared
+  stack. Changing the secret orphans every existing browser's threads.
+- **Cross-site requests.** The proxy refuses any `POST` whose `Origin` is not
+  its own host (`X-Forwarded-Host`, then `Host`) with 403. A reverse proxy
+  must pass the public host through.
+- A secret shorter than 32 characters refuses to start. The backend still
+  accepts `SUAS_API_KEYS` keys alongside sessions, for scripts and the CSV
+  importer.
+
 ## Incident response
 
 These counters sit at zero in production. Any non-zero value on a real mission
