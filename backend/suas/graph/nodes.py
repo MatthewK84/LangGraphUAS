@@ -24,6 +24,7 @@ from suas.errors import ReportGenerationError, SuasError
 from suas.graph.dependencies import GraphDependencies
 from suas.graph.seal import find_contradiction, render_template_brief, unsupported_numerics
 from suas.graph.state import MissionState
+from suas.logging_config import annotate_trace
 from suas.rag.retrieve import retrieve
 from suas.schemas.assessment import AssessmentMode, DeterministicAssessment
 from suas.schemas.domain import Aircraft, Payload
@@ -75,6 +76,7 @@ def make_weather_node(deps: GraphDependencies) -> NodeFn:
     async def fetch_weather(state: MissionState) -> MissionState:
         params = MissionParams.model_validate(state["mission_params"])
         reading: WeatherReading = await deps.weather.fetch(params.latitude, params.longitude)
+        annotate_trace(weather_source=reading.source.value)
         return {"weather": reading.model_dump()}
 
     return fetch_weather
@@ -120,6 +122,7 @@ def make_calculations_node(deps: GraphDependencies) -> NodeFn:
                 "requested_mode": requested_mode.value,
             },
         )
+        annotate_trace(assessment_mode=assessment.mode.value)
         return {
             "calculations": calculations.model_dump(),
             "assessment": assessment.model_dump(mode="json"),

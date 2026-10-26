@@ -28,6 +28,7 @@ from suas.db.retention import (
     record_thread,
     thread_owner,
 )
+from suas.logging_config import annotate_trace
 from suas.schemas.assessment import AssessmentMode, DeterministicAssessment
 from suas.schemas.domain import Aircraft, Payload
 from suas.schemas.requests import AckRequest, MissionRequest
@@ -483,6 +484,7 @@ async def acknowledge_plan(
         snapshot = await graph.aget_state(_thread_config(thread_id))
         values = _require_awaiting_ack(snapshot)
         assessment_dump = _sub_dict(values, "assessment")
+        _trace_signed_run(values, assessment_dump)
         current_hash = _require_current_hash(assessment_dump, request.inputs_hash)
 
         final_state = await graph.ainvoke(
@@ -502,6 +504,18 @@ async def acknowledge_plan(
 
     _record_violations(metrics, state.get("seal_violations"))
     return _build_plan_response(state, thread_id)
+
+
+def _trace_signed_run(values: dict[str, Any], assessment_dump: dict[str, Any]) -> None:
+    """Carry the paused run's weather and granted mode onto the ack's log lines.
+
+    The nodes that set them ran in the plan request; the resume does not rerun them.
+    """
+    weather = _sub_dict(values, "weather")
+    annotate_trace(
+        weather_source=str(weather.get("source", "-")),
+        assessment_mode=str(assessment_dump.get("mode", "-")),
+    )
 
 
 @router.post(

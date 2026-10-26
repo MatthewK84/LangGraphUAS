@@ -209,8 +209,11 @@ Promotion is by image digest. Never by `latest`.
 
 #### Observability
 
-- **Logs** — JSON, carrying `request_id`, `mission_id`, `thread_id`, `node`,
-  `calculator_version`, `operator_key_id`. Coordinates redacted at `info`.
+- **Logs** — JSON; every line carries `request_id`, `calculator_version`,
+  `weather_source` and `assessment_mode` (the mode the gate granted), `-` until
+  each is known, on the failure path too (#110, `tests/test_trace_metadata.py`).
+  Still a target: `mission_id`, `thread_id`, `node`, `operator_key_id`, and
+  coordinates redacted at `info`.
 - **Metrics** — `/metrics` emits these per worker, every series from the first
   scrape (#112): `suas_http_requests_total{method,path,code}` and
   `suas_http_request_duration_seconds_sum{method,path}` (plan latency is

@@ -19,7 +19,8 @@ from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
 
-from suas.logging_config import request_id_var
+from suas.calculations.assessment import CALCULATOR_VERSION
+from suas.logging_config import request_id_var, start_trace, trace_var
 from suas.schemas.assessment import AssessmentMode
 from suas.schemas.responses import WeatherSource
 
@@ -201,11 +202,12 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
         incoming: str | None = request.headers.get(REQUEST_ID_HEADER)
         request_id: str = incoming if incoming else str(uuid4())
         token = request_id_var.set(request_id)
+        trace_token = start_trace(calculator_version=CALCULATOR_VERSION)
         started: float = time.perf_counter()
-        try:
-            response = await call_next(request)
-        finally:
-            request_id_var.reset(token)
+        # Not reset on an exception: the catch-all 500 handler logs outside this
+        # middleware, in the same task, and that line must still be tied to the
+        # request. Each served request runs in its own task, so nothing leaks.
+        response = await call_next(request)
         duration_s: float = time.perf_counter() - started
         self._metrics.record_request(
             request.method,
@@ -221,4 +223,7 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
             response.status_code,
             duration_s * 1000.0,
         )
+        # Reset after the access line, which used to be written without its id.
+        trace_var.reset(trace_token)
+        request_id_var.reset(token)
         return response
