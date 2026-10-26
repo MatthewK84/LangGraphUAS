@@ -49,6 +49,7 @@ text.
 | Poisoned datasheet PDF | Manifest allowlist, sha256, no user upload in v1 | Unlisted file rejected |
 | Prompt injection in a chunk | Seal; nonce-fenced evidence; quarantine at ingest | Trap corpus, contamination rate 0 |
 | Checkpoint blob rewritten | Ingest role cannot write application tables; strict msgpack; optional encrypted serializer | Unknown type fails closed |
+| Forged reading planted in the shared weather cache (#85) | The cache is a table in the application database, so writing it needs the same access as rewriting missions; a row is re-validated as a `WeatherReading` on load (a bad row is a miss, not an exception), only `live` readings are stored, and freshness is judged from the reading's own `fetched_at` against the TTL | `tests/test_shared_weather_cache.py`: degraded answers are never cached; an aged reading refetches as `live` or, on failure, comes back `cached_stale` |
 | Mass edited after ack without recalculation | Ack bound to `inputs_hash` and `calculator_version` | Edit invalidates the ack |
 | Hybrid search without a configuration filter | Same `WHERE` on both fusion legs | A query for the Astro cannot return ANAFI chunks |
 | Compromised CI-only analysis tool (crapper, dryer) | Installed from commit-pinned refs into a separate venv; the `ub-mode` job reads no secrets, has a read-only token, and is not part of any image | `ci.yml`: the job has `permissions: contents: read` and no `secrets.` reference |

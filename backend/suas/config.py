@@ -236,6 +236,9 @@ class Settings(BaseSettings):
     weather_deadline_s: float = Field(default=6.0, gt=0.0)
     # How long a reading stays good enough to fly on.
     weather_cache_ttl_s: float = Field(default=600.0, ge=0.0)
+    # Keep the cache in the database so every worker shares it (#85). Off by
+    # default: one local process needs no shared state. Compose turns it on.
+    weather_cache_shared: bool = Field(default=False)
     # Retrieval. 'hashing' needs nothing and understands nothing; 'http' calls
     # a model service such as the one in services/embeddings/.
     embedding_provider: str = Field(default="hashing", pattern="^(hashing|http)$")

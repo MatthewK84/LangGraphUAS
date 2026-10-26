@@ -56,7 +56,7 @@ async def _build_resources(settings: Settings) -> _Resources:
     async with session_factory() as session:
         await seed_reference_data(session)
     weather_client = httpx.AsyncClient(timeout=settings.weather_timeout_s)
-    weather_service = build_weather_service(settings, weather_client)
+    weather_service = build_weather_service(settings, weather_client, session_factory)
     deps = GraphDependencies(
         session_factory=session_factory,
         weather=weather_service,

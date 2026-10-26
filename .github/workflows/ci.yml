@@ -122,7 +122,7 @@ jobs:
       - name: Shared rate limit on Postgres
         env:
           SUAS_TEST_POSTGRES_URL: postgresql://suas:suas@localhost:5432/suas
-        run: python -m pytest -q -p no:cacheprovider tests/test_shared_rate_limit.py tests/test_retired_keys.py tests/test_sliding_window_limiter.py
+        run: python -m pytest -q -p no:cacheprovider tests/test_shared_rate_limit.py tests/test_retired_keys.py tests/test_sliding_window_limiter.py tests/test_shared_weather_cache.py
 
   calculator-version:
     name: Calculator version bump

@@ -41,16 +41,15 @@ leave threads that resume into a corrupt state.
 
 ## Concurrency
 
-Two things in this service are per process, and each is a deliberate
-constraint rather than an oversight:
+One thing in this service is per process, as a deliberate constraint rather
+than an oversight:
 
-- **The weather cache.** A reading fresh in one worker is not fresh in another.
 - **Metrics.** Scrape every replica and aggregate in Prometheus.
 
 Resuming an interrupt is **not** in that list. Two workers must never resume the
 same `thread_id`, and that is enforced rather than assumed — see "Two workers,
 one interrupt" below. Running more than one worker is therefore safe for
-correctness; what it costs you is the precision of the two counters above.
+correctness; what it costs you is the precision of the counters above.
 
 Rate limiting is shared when `SUAS_RATE_LIMIT_SHARED=true`, as Compose sets it
 (#84). Each client's recent request times sit in one `rate_limit_buckets` row,
@@ -64,6 +63,18 @@ truncated, which is always safe: it only resets budgets. Unshared, each worker
 keeps its own budget and the ceiling is the limit times the worker count.
 Measured with two uvicorn workers at a limit of 4 and 12 concurrent plans: 5
 admitted unshared, exactly 4 shared.
+
+The weather cache is shared when `SUAS_WEATHER_CACHE_SHARED=true`, as Compose
+sets it (#85). Each ~1 km cell's last live reading sits in one `weather_cache`
+row (migration 0014), so a reading any worker fetched is `cached_fresh` in every
+worker until `SUAS_WEATHER_CACHE_TTL_S` passes, judged from its own
+`fetched_at`; the TTL and the provenance states are unchanged. The cost is one
+read per weather lookup and one write per live fetch. Two workers that miss the
+same cell at the same moment may both fetch; the later write wins, which is
+harmless. If the database is unreachable the cache is a miss and the fetch goes
+to the provider, so weather still never raises. Rows are one per cell ever
+planned; deleting them only costs a refetch. Unshared, each worker keeps its
+own cache and the provider sees one request per worker per cell.
 
 ## Weather degradation
 
