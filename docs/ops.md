@@ -383,6 +383,29 @@ exporter does not emit (#112). The three an operator watches first:
   that waited on each other. Occasional is a double click; steady growth means
   a client retrying acks in a loop.
 
+## Logs
+
+Every log line carries the request id and three trace fields, so one grep for
+the id returns a request's whole story with no tracing vendor (#110):
+
+```bash
+grep '"request_id": "<X-Request-ID>"' app.log
+```
+
+| Field | Value |
+|---|---|
+| `request_id` | the `X-Request-ID` header, sent or generated |
+| `calculator_version` | the calculator build that ran, as in the assessment |
+| `weather_source` | the reading's provenance once fetched (`live`, `cached_fresh`, ...) |
+| `assessment_mode` | the mode the gate granted once the calculation ran |
+
+A field is `-` until it is known, so a plan that fails before weather is fetched
+still logs its request id and calculator version, including the catch-all
+`"Unhandled error"` line. An acknowledgement's lines carry the signed run's
+weather source and mode. With `SUAS_JSON_LOGS=false` the same fields appear as
+`calculator_version=... weather_source=... assessment_mode=...` after
+`[request_id]`.
+
 ## Incident response
 
 These counters sit at zero in production. Any non-zero value on a real mission
