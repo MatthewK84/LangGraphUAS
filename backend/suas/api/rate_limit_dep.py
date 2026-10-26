@@ -3,11 +3,10 @@
 import logging
 from typing import Annotated, Final
 
-from fastapi import Depends, Header, HTTPException, Request, status
+from fastapi import Header, HTTPException, Request, status
 
 from suas.api.dependencies import LimiterDep
 from suas.api.security import SESSION_KEY_PREFIX
-from suas.config import Settings, get_settings
 
 logger: Final[logging.Logger] = logging.getLogger(__name__)
 
@@ -36,12 +35,9 @@ def _client_key(request: Request, api_key: str | None) -> str:
 async def enforce_rate_limit(
     request: Request,
     limiter: LimiterDep,
-    settings: Annotated[Settings, Depends(get_settings)],
     x_api_key: Annotated[str | None, Header(alias="X-API-Key")] = None,
 ) -> None:
     """Reject the request when the caller has exceeded its allowance."""
-    if not settings.rate_limit_enabled:
-        return
     key: str = _client_key(request, x_api_key)
     retry_after: int = await limiter.admit(key)
     if retry_after == 0:

@@ -684,7 +684,7 @@ Backend variables use the `SUAS_` prefix. Compose maps friendly names to them.
 | `SUAS_VERTICAL_SPEED_MPS` | `3` | Assumed climb and descent rate. |
 | `SUAS_CLIMB_EFFICIENCY` | `0.6` | Propulsive efficiency for the climb energy term. |
 | `SUAS_CHECKPOINT_RETENTION_DAYS` | `30` | Age at which graph checkpoints are purged. `0` disables retention. |
-| `SUAS_RATE_LIMIT_REQUESTS` | `30` | Requests allowed per window, per client (per worker unless shared). |
+| `SUAS_RATE_LIMIT_REQUESTS` | `30` | Requests allowed per window, per client (per worker unless shared). At least 1; limiting cannot be switched off. |
 | `SUAS_RATE_LIMIT_WINDOW_S` | `60` | Rate limit window in seconds. |
 | `SUAS_RATE_LIMIT_SHARED` | `false` | Keep the budget in the database so all workers share one ceiling. Compose sets `true`. |
 | `BACKEND_API_URL` | `http://localhost:8000` | Backend URL as reached by the Next.js **server**, not the browser. |
