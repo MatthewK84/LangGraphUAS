@@ -383,3 +383,27 @@ def test_ci_runs_the_postgres_prune() -> None:
     steps = workflow["jobs"]["postgres-integration"]["steps"]
     runs = " ".join(str(step.get("run", "")) for step in steps)
     assert "tests/test_weather_stale_max_age.py" in runs
+
+
+# --- the in-memory cache ------------------------------------------------------
+
+
+async def test_the_memory_cache_evicts_readings_past_the_max_age_on_store() -> None:
+    cache = MemoryWeatherCache(max_age_s=_MAX_AGE_S, clock=_clock)
+    await cache.store((1.0, 1.0), _reading(_MAX_AGE_S + 0.001))
+    await cache.store((2.0, 2.0), _reading(_MAX_AGE_S))  # exactly the max age: kept
+    await cache.store((3.0, 3.0), _reading(None))
+
+    await cache.store(_KEY, _reading(1.0))
+
+    assert await cache.load((1.0, 1.0)) is None
+    assert await cache.load((3.0, 3.0)) is None
+    assert await cache.load((2.0, 2.0)) == _reading(_MAX_AGE_S)
+    assert await cache.load(_KEY) == _reading(1.0)
+
+
+def test_the_built_memory_caches_evict_at_the_configured_age() -> None:
+    built = build_weather_service(Settings(weather_stale_max_age_s=900.0), httpx.AsyncClient())
+    assert built._cache._max_age_s == 900.0  # type: ignore[union-attr]
+    service = WeatherService(httpx.AsyncClient(), "https://w.invalid", 1, stale_max_age_s=700.0)
+    assert service._cache._max_age_s == 700.0  # type: ignore[attr-defined]
