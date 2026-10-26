@@ -10,6 +10,7 @@ the browser's session id, which the secret only signs.
 """
 
 from collections.abc import Callable
+from pathlib import Path
 from typing import Any
 
 import httpx
@@ -139,3 +140,10 @@ async def test_rotation_does_not_hand_a_mission_to_another_operator(
         )
         assert ack.status_code == 404
 
+
+def test_ops_documents_rotation_without_claiming_it_orphans_threads() -> None:
+    ops = (Path(__file__).resolve().parents[2] / "docs" / "ops.md").read_text(encoding="utf-8")
+    section = ops.split("## Key rotation", 1)[1].split("\n## ", 1)[0]
+    for step in ("same id", "restart", "inputs_hash", "SESSION_KEY_SECRET"):
+        assert step in section, step
+    assert "orphans" not in ops
