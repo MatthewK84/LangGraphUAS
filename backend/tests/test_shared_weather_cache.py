@@ -58,7 +58,9 @@ def _worker(provider: Provider, cache: WeatherCache) -> WeatherService:
     return WeatherService(client, "https://weather.invalid/v1", 1, cache_ttl_s=600.0, cache=cache)
 
 
-async def _two_shared(url: str, provider: Provider) -> tuple[list[WeatherService], list[AsyncEngine]]:
+async def _two_shared(
+    url: str, provider: Provider
+) -> tuple[list[WeatherService], list[AsyncEngine]]:
     engines = [create_engine(url) for _ in range(2)]
     await create_schema(engines[0])
     workers = [_worker(provider, DatabaseWeatherCache(create_session_factory(e))) for e in engines]
@@ -183,7 +185,6 @@ def test_sharing_is_opt_in(tmp_path: Path) -> None:
     assert isinstance(_built(Settings(weather_cache_shared=True), factory), DatabaseWeatherCache)
     with pytest.raises(ValueError, match="session factory"):
         _built(Settings(weather_cache_shared=True))
-
 
 
 def test_compose_shares_the_cache_across_its_two_workers() -> None:

@@ -229,3 +229,16 @@ class ApiKeyLastSeenRow(Base):
 
     key_hash: Mapped[str] = mapped_column(String(64), primary_key=True)
     client_ip: Mapped[str] = mapped_column(String(45), nullable=False)
+
+
+class WeatherCacheRow(Base):
+    """The last live weather reading for one ~1 km cell, shared by every worker (#85).
+
+    ``cell`` is the rounded ``"lat,lon"``; ``reading`` is the reading as JSON,
+    including the ``fetched_at`` its freshness is judged by.
+    """
+
+    __tablename__ = "weather_cache"
+
+    cell: Mapped[str] = mapped_column(String(32), primary_key=True)
+    reading: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)

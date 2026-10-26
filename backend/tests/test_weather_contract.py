@@ -177,10 +177,10 @@ async def test_a_stale_cache_is_used_but_not_operational_grade() -> None:
 
     # Age the cached entry past its window, then make the provider fail.
     key = WeatherService._cache_key(34.0, -80.0)
-    aged = service._cache[key].model_copy(
-        update={"fetched_at": datetime.now(UTC) - timedelta(hours=2)}
-    )
-    service._cache[key] = aged
+    cached = await service._cache.load(key)
+    assert cached is not None
+    aged = cached.model_copy(update={"fetched_at": datetime.now(UTC) - timedelta(hours=2)})
+    await service._cache.store(key, aged)
     state["fail"] = True
 
     reading = await service.fetch(34.0, -80.0)

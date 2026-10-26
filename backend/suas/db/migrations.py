@@ -16,7 +16,7 @@ from sqlalchemy.exc import OperationalError, ProgrammingError
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
 
-EXPECTED_REVISION: Final[str] = "0013"
+EXPECTED_REVISION: Final[str] = "0014"
 """The alembic head this code needs. A test pins it to the migration scripts."""
 
 

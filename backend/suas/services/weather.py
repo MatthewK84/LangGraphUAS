@@ -18,6 +18,8 @@ from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, Final, Protocol
 
 import httpx
+from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
 from tenacity import (
     retry,
     retry_if_exception_type,
@@ -25,10 +27,14 @@ from tenacity import (
     wait_exponential,
 )
 
+from suas.db.dialect import upsert_insert
+from suas.db.models import WeatherCacheRow
 from suas.errors import SuasError
 from suas.schemas.responses import WeatherReading, WeatherSource
 
 if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+
     from suas.config import Settings
 
 logger: Final[logging.Logger] = logging.getLogger(__name__)
@@ -120,6 +126,83 @@ def _parse_current(current: dict[str, Any]) -> WeatherReading:
     )
 
 
+CacheKey = tuple[float, float]
+
+
+class WeatherCache(Protocol):
+    """Where live readings are kept for reuse inside the TTL."""
+
+    async def load(self, key: CacheKey) -> WeatherReading | None:
+        """Return the last live reading for a cell, if any."""
+        ...
+
+    async def store(self, key: CacheKey, reading: WeatherReading) -> None:
+        """Keep a live reading for a cell."""
+        ...
+
+
+class MemoryWeatherCache:
+    """One process's cache: the default, and enough for a single worker."""
+
+    def __init__(self) -> None:
+        self._readings: dict[CacheKey, WeatherReading] = {}
+
+    async def load(self, key: CacheKey) -> WeatherReading | None:
+        """Return the last live reading for a cell, if any."""
+        return self._readings.get(key)
+
+    async def store(self, key: CacheKey, reading: WeatherReading) -> None:
+        """Keep a live reading for a cell."""
+        self._readings[key] = reading
+
+
+def _cell(key: CacheKey) -> str:
+    """Return the row key for a cell; ``+ 0.0`` folds -0.00 into 0.00 as a dict does."""
+    latitude, longitude = key
+    return f"{latitude + 0.0:.2f},{longitude + 0.0:.2f}"
+
+
+_CACHE_FAILURES: Final = (OSError, SQLAlchemyError, ValueError)
+
+
+class DatabaseWeatherCache:
+    """The cache every worker shares, one row per cell in the database (#85).
+
+    Freshness is still judged from the reading's own ``fetched_at`` by the
+    service, so the TTL means what it did. A cache the service cannot reach
+    is a miss and a lost write, never an exception: ``fetch`` does not raise.
+    """
+
+    def __init__(self, session_factory: "async_sessionmaker[AsyncSession]") -> None:
+        self._session_factory = session_factory
+
+    async def load(self, key: CacheKey) -> WeatherReading | None:
+        """Return the last live reading any worker stored for a cell."""
+        query = select(WeatherCacheRow.reading).where(WeatherCacheRow.cell == _cell(key))
+        try:
+            async with self._session_factory() as session:
+                stored: dict[str, Any] | None = await session.scalar(query)
+            return None if stored is None else WeatherReading.model_validate(stored)
+        except _CACHE_FAILURES as exc:
+            logger.warning("Shared weather cache unreadable, treating as a miss: %s", exc)
+            return None
+
+    async def store(self, key: CacheKey, reading: WeatherReading) -> None:
+        """Keep a live reading where every worker can see it."""
+        try:
+            async with self._session_factory() as session, session.begin():
+                insert = upsert_insert(session, WeatherCacheRow).values(
+                    cell=_cell(key), reading=reading.model_dump(mode="json")
+                )
+                await session.execute(
+                    insert.on_conflict_do_update(
+                        index_elements=["cell"], set_={"reading": insert.excluded.reading}
+                    )
+                )
+        except _CACHE_FAILURES as exc:
+            logger.warning("Shared weather cache unwritable, reading not kept: %s", exc)
+
+
 class WeatherService:
     """Fetches current conditions for a coordinate."""
 
@@ -130,13 +213,14 @@ class WeatherService:
         retry_attempts: int,
         deadline_s: float = 6.0,
         cache_ttl_s: float = 600.0,
+        cache: WeatherCache | None = None,
     ) -> None:
         self._client = client
         self._base_url = base_url
         self._retry_attempts = retry_attempts
         self._deadline_s = deadline_s
         self._cache_ttl_s = cache_ttl_s
-        self._cache: dict[tuple[float, float], WeatherReading] = {}
+        self._cache: WeatherCache = MemoryWeatherCache() if cache is None else cache
 
     async def fetch(self, latitude: float, longitude: float) -> WeatherReading:
         """Return current conditions, never raising and never overstating them.
@@ -146,7 +230,7 @@ class WeatherService:
         patience.
         """
         key = self._cache_key(latitude, longitude)
-        cached: WeatherReading | None = self._cache.get(key)
+        cached: WeatherReading | None = await self._cache.load(key)
         if cached is not None and self._age_s(cached) <= self._cache_ttl_s:
             return cached.model_copy(update={"source": WeatherSource.CACHED_FRESH})
 
@@ -160,7 +244,7 @@ class WeatherService:
             logger.error("Weather payload unusable: %s", exc)
             return self._degrade(cached, WeatherSource.ERROR, "Live feed returned unusable data")
 
-        self._cache[key] = reading
+        await self._cache.store(key, reading)
         return reading
 
     def _degrade(
@@ -180,7 +264,7 @@ class WeatherService:
         return _degraded_reading(source, conditions)
 
     @staticmethod
-    def _cache_key(latitude: float, longitude: float) -> tuple[float, float]:
+    def _cache_key(latitude: float, longitude: float) -> CacheKey:
         """Return the cache key for a coordinate, rounded to about a kilometre."""
         return (round(latitude, 2), round(longitude, 2))
 
@@ -244,7 +328,22 @@ class FixtureWeather:
         return _degraded_reading(WeatherSource.FIXTURE, _FIXTURE_CONDITIONS)
 
 
-def build_weather_service(settings: "Settings", client: httpx.AsyncClient) -> WeatherProvider:
+def _build_cache(
+    settings: "Settings", session_factory: "async_sessionmaker[AsyncSession] | None"
+) -> WeatherCache:
+    """Return the shared cache when configured, else this process's own."""
+    if not settings.weather_cache_shared:
+        return MemoryWeatherCache()
+    if session_factory is None:
+        raise ValueError("SUAS_WEATHER_CACHE_SHARED needs the database session factory")
+    return DatabaseWeatherCache(session_factory)
+
+
+def build_weather_service(
+    settings: "Settings",
+    client: httpx.AsyncClient,
+    session_factory: "async_sessionmaker[AsyncSession] | None" = None,
+) -> WeatherProvider:
     """Return the fixture provider in demo mode, the live provider otherwise."""
     if settings.demo_mode:
         logger.warning("DEMO MODE: fixture weather, every plan is advisory")
@@ -255,4 +354,5 @@ def build_weather_service(settings: "Settings", client: httpx.AsyncClient) -> We
         retry_attempts=settings.weather_retry_attempts,
         deadline_s=settings.weather_deadline_s,
         cache_ttl_s=settings.weather_cache_ttl_s,
+        cache=_build_cache(settings, session_factory),
     )
