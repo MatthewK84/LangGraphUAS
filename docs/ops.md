@@ -383,3 +383,72 @@ On a quarantine hit: the affected configuration loses `citations_complete` and
 therefore cannot run operational until a human clears the quarantined chunk.
 This is the intended default — an aircraft whose paperwork contains something
 that looks like an attack does not fly on that paperwork.
+
+## Incident playbooks
+
+Four foreseeable failures, each with the signal that shows it and what to do
+(#114). `tests/test_incident_runbook.py` checks that every metric named here is
+exported with that label and every quoted log line is written by the code.
+
+### Weather provider down
+
+**Signal.** `suas_weather_source_total{source="fallback"}` climbs while
+`source="live"` stalls (today every reading that was not fetched live counts as
+`fallback`), and the logs show `"Weather request failed"` (unreachable) or
+`"Weather payload unusable"` (answered with nonsense).
+
+**Response.** Nothing needs a restart: the planner never raises on weather.
+For up to `SUAS_WEATHER_STALE_MAX_AGE_S` a cell answers `cached_stale`, then
+`fallback` or `error`, and none of those can be operational, so every plan is
+advisory until the provider is back. Confirm with Open-Meteo, tell operators
+that advisory plans are not flight approvals, and do not switch on
+`SUAS_DEMO_MODE`. Recovery is automatic on the next live fetch; check that
+`source="live"` climbs again.
+
+### Seal-violation spike
+
+**Signal.** `suas_llm_field_violations_total` jumps, split by cause in
+`suas_brief_suppressed_total{reason="contradiction"}` (the brief contradicted
+the sealed decision; log `"Brief contradicts sealed decision"`) and
+`reason="unsupported_numeric"` (a number the calculator never produced; log
+`"Brief states unsupported numeric"`).
+
+**Response.** The seal worked: each affected brief was replaced by the
+template. Decisions are unaffected and no acknowledgement is invalidated,
+since the decision was sealed and signed before the model ran. Keep the
+threads. Contradictions suggest an injected document, so check
+`suas_corpus_quarantine_open` and the retrieved chunks. Invented numbers
+suggest a model change, so check `SUAS_OPENAI_MODEL` and the provider's
+release notes. If the spike persists, unset `SUAS_OPENAI_API_KEY` and restart:
+briefs become deterministic text until it is fixed.
+
+### Quarantined corpus
+
+**Signal.** `suas_corpus_quarantine_open` above 0 (configurations with
+uncleared quarantine rows), ingest printing `"chunk(s) quarantined"`, and
+plans for that configuration carrying the `CORPUS_QUARANTINED` blocker.
+
+**Response.** Only that configuration loses operational mode, by design. Read
+the held text and the pattern that caught it:
+`SELECT quarantine_id, document_path, pattern, text FROM corpus_quarantine WHERE cleared_at IS NULL;`.
+If it is an innocent sentence in a real manual, record who cleared it:
+`UPDATE corpus_quarantine SET cleared_at = now(), cleared_by = '<name>' WHERE quarantine_id = '<id>';`.
+If it is not innocent, replace the document from the manufacturer, update its
+`sha256` in `corpus/manifest.json` and re-ingest. Never delete the row to make
+the blocker go away.
+
+### Leaked key
+
+**Signal.** Usually external: the Secret scan CI job's gitleaks reporting
+`leaks found`, or a secret-scanning alert. In the service, look for requests
+the operator did not make, `suas_http_requests_total{code="401"}` climbing
+once the key is rotated, and `"Retired key for"` lines from an overlap window
+you did not expect.
+
+**Response.** Rotate at once as in [Key rotation](#key-rotation), but give the
+leaked key **no** `SUAS_RETIRED_API_KEYS` overlap: the overlap follows the last
+client IP, which may be the attacker's. For a leaked session secret, rotate
+`SESSION_KEY_SECRET`; for the OpenAI key, revoke it at the provider. Then list
+what the key did:
+`SELECT thread_id, created_at, ack_actor, ack_at FROM mission_threads WHERE operator_key_id = '<id>' AND created_at > '<leak time>';`.
+Treat each ack in that window as unsigned until its operator confirms it.
