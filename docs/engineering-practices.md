@@ -243,6 +243,11 @@ Promotion is by image digest. Never by `latest`.
 
 - A new graph node, ingest source, or external dependency adds a STRIDE row to
   `docs/threat-model.md` before merge.
+- A new processor (any module in `suas` that imports a network client:
+  LangSmith, object storage, an embedder API) ships its STRIDE row in the same
+  PR, before the client is called. `tests/test_processor_rows.py` enforces it:
+  each such module is registered against the threat-model row that covers its
+  destination, so a new one fails CI until the row and the entry exist (#90).
 - A decision later code will assume gets an ADR. See `docs/adr/README.md`.
 
 ### Compose quickstart and golden path, local only

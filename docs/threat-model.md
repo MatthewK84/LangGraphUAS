@@ -2,6 +2,9 @@
 
 Reviewed at the end of each phase, and whenever a graph node, tool, or ingest
 path is added. A new node without a STRIDE row does not merge.
+A new processor, any module in `suas` that imports a network client, ships its
+row in the same PR, before the client is called; `tests/test_processor_rows.py`
+fails until the module is registered against the row that covers it (#90).
 
 ## Trust boundaries
 
