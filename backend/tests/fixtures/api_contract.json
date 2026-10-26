@@ -1,0 +1,615 @@
+{
+  "POST /api/plan": {
+    "request": {
+      "fields": {
+        "aircraft_id": [
+          "string"
+        ],
+        "assessment_mode": [
+          "string"
+        ],
+        "mission_params": [
+          "object"
+        ],
+        "mission_params.distance_m": [
+          "number"
+        ],
+        "mission_params.elevation_m": [
+          "number"
+        ],
+        "mission_params.hover_time_s": [
+          "number"
+        ],
+        "mission_params.latitude": [
+          "number"
+        ],
+        "mission_params.longitude": [
+          "number"
+        ],
+        "mission_params.target_altitude_m": [
+          "number"
+        ],
+        "payload_id": [
+          "string"
+        ],
+        "thread_id": [
+          "null",
+          "string"
+        ]
+      },
+      "required": [
+        "aircraft_id",
+        "mission_params",
+        "mission_params.distance_m",
+        "mission_params.elevation_m",
+        "mission_params.hover_time_s",
+        "mission_params.latitude",
+        "mission_params.longitude",
+        "mission_params.target_altitude_m",
+        "payload_id"
+      ]
+    },
+    "response": {
+      "aborted": [
+        "boolean"
+      ],
+      "assessment": [
+        "null",
+        "object"
+      ],
+      "assessment.blockers": [
+        "array"
+      ],
+      "assessment.blockers[]": [
+        "string"
+      ],
+      "assessment.calculator_version": [
+        "string"
+      ],
+      "assessment.decision": [
+        "string"
+      ],
+      "assessment.inputs_hash": [
+        "string"
+      ],
+      "assessment.mode": [
+        "string"
+      ],
+      "assessment.reasons": [
+        "array"
+      ],
+      "assessment.reasons[]": [
+        "string"
+      ],
+      "awaiting_ack": [
+        "boolean"
+      ],
+      "calculations": [
+        "null",
+        "object"
+      ],
+      "calculations.air_density_ratio": [
+        "number"
+      ],
+      "calculations.all_up_mass_kg": [
+        "number"
+      ],
+      "calculations.battery_check": [
+        "object"
+      ],
+      "calculations.battery_check.energy_required_wh": [
+        "number"
+      ],
+      "calculations.battery_check.is_viable": [
+        "boolean"
+      ],
+      "calculations.battery_check.margin_wh": [
+        "number"
+      ],
+      "calculations.battery_check.reserve_percent": [
+        "number"
+      ],
+      "calculations.battery_check.temperature_factor": [
+        "number"
+      ],
+      "calculations.battery_check.usable_capacity_wh": [
+        "number"
+      ],
+      "calculations.density_altitude_m": [
+        "number"
+      ],
+      "calculations.effective_hover_power_w": [
+        "number"
+      ],
+      "calculations.energy_breakdown": [
+        "object"
+      ],
+      "calculations.energy_breakdown.climb_wh": [
+        "number"
+      ],
+      "calculations.energy_breakdown.cruise_wh": [
+        "number"
+      ],
+      "calculations.energy_breakdown.descent_wh": [
+        "number"
+      ],
+      "calculations.energy_breakdown.hover_wh": [
+        "number"
+      ],
+      "calculations.energy_breakdown.total_wh": [
+        "number"
+      ],
+      "calculations.energy_required_wh": [
+        "number"
+      ],
+      "calculations.ground_speed_mps": [
+        "number"
+      ],
+      "calculations.payload_margin_kg": [
+        "number"
+      ],
+      "calculations.safety_flags": [
+        "object"
+      ],
+      "calculations.safety_flags.battery_viable": [
+        "boolean"
+      ],
+      "calculations.safety_flags.cruise_achievable": [
+        "boolean"
+      ],
+      "calculations.safety_flags.gust_within_limits": [
+        "boolean"
+      ],
+      "calculations.safety_flags.pack_temp_within_takeoff_limits": [
+        "boolean"
+      ],
+      "calculations.safety_flags.payload_within_limits": [
+        "boolean"
+      ],
+      "calculations.safety_flags.temperature_within_limits": [
+        "boolean"
+      ],
+      "calculations.safety_flags.wind_within_limits": [
+        "boolean"
+      ],
+      "degraded": [
+        "boolean"
+      ],
+      "is_viable": [
+        "boolean"
+      ],
+      "provenance": [
+        "object"
+      ],
+      "provenance{}": [
+        "object"
+      ],
+      "provenance{}.confidence": [
+        "string"
+      ],
+      "provenance{}.inputs": [
+        "array"
+      ],
+      "provenance{}.inputs[]": [
+        "string"
+      ],
+      "provenance{}.operational_grade": [
+        "boolean"
+      ],
+      "provenance{}.source": [
+        "string"
+      ],
+      "report": [
+        "string"
+      ],
+      "thread_id": [
+        "string"
+      ],
+      "warnings": [
+        "array"
+      ],
+      "warnings[]": [
+        "string"
+      ],
+      "weather": [
+        "null",
+        "object"
+      ],
+      "weather.conditions": [
+        "string"
+      ],
+      "weather.fetched_at": [
+        "null",
+        "string"
+      ],
+      "weather.humidity_percent": [
+        "number"
+      ],
+      "weather.source": [
+        "string"
+      ],
+      "weather.temperature_c": [
+        "number"
+      ],
+      "weather.wind_direction": [
+        "number"
+      ],
+      "weather.wind_gust_mps": [
+        "number"
+      ],
+      "weather.wind_speed_mps": [
+        "number"
+      ]
+    }
+  },
+  "POST /api/plan/{thread_id}/ack": {
+    "request": {
+      "fields": {
+        "action": [
+          "string"
+        ],
+        "actor": [
+          "string"
+        ],
+        "edits": [
+          "null",
+          "object"
+        ],
+        "edits.hover_time_s": [
+          "null",
+          "number"
+        ],
+        "edits.payload_id": [
+          "null",
+          "string"
+        ],
+        "edits.target_altitude_m": [
+          "null",
+          "number"
+        ],
+        "inputs_hash": [
+          "null",
+          "string"
+        ]
+      },
+      "required": [
+        "action",
+        "actor"
+      ]
+    },
+    "response": {
+      "aborted": [
+        "boolean"
+      ],
+      "assessment": [
+        "null",
+        "object"
+      ],
+      "assessment.blockers": [
+        "array"
+      ],
+      "assessment.blockers[]": [
+        "string"
+      ],
+      "assessment.calculator_version": [
+        "string"
+      ],
+      "assessment.decision": [
+        "string"
+      ],
+      "assessment.inputs_hash": [
+        "string"
+      ],
+      "assessment.mode": [
+        "string"
+      ],
+      "assessment.reasons": [
+        "array"
+      ],
+      "assessment.reasons[]": [
+        "string"
+      ],
+      "awaiting_ack": [
+        "boolean"
+      ],
+      "calculations": [
+        "null",
+        "object"
+      ],
+      "calculations.air_density_ratio": [
+        "number"
+      ],
+      "calculations.all_up_mass_kg": [
+        "number"
+      ],
+      "calculations.battery_check": [
+        "object"
+      ],
+      "calculations.battery_check.energy_required_wh": [
+        "number"
+      ],
+      "calculations.battery_check.is_viable": [
+        "boolean"
+      ],
+      "calculations.battery_check.margin_wh": [
+        "number"
+      ],
+      "calculations.battery_check.reserve_percent": [
+        "number"
+      ],
+      "calculations.battery_check.temperature_factor": [
+        "number"
+      ],
+      "calculations.battery_check.usable_capacity_wh": [
+        "number"
+      ],
+      "calculations.density_altitude_m": [
+        "number"
+      ],
+      "calculations.effective_hover_power_w": [
+        "number"
+      ],
+      "calculations.energy_breakdown": [
+        "object"
+      ],
+      "calculations.energy_breakdown.climb_wh": [
+        "number"
+      ],
+      "calculations.energy_breakdown.cruise_wh": [
+        "number"
+      ],
+      "calculations.energy_breakdown.descent_wh": [
+        "number"
+      ],
+      "calculations.energy_breakdown.hover_wh": [
+        "number"
+      ],
+      "calculations.energy_breakdown.total_wh": [
+        "number"
+      ],
+      "calculations.energy_required_wh": [
+        "number"
+      ],
+      "calculations.ground_speed_mps": [
+        "number"
+      ],
+      "calculations.payload_margin_kg": [
+        "number"
+      ],
+      "calculations.safety_flags": [
+        "object"
+      ],
+      "calculations.safety_flags.battery_viable": [
+        "boolean"
+      ],
+      "calculations.safety_flags.cruise_achievable": [
+        "boolean"
+      ],
+      "calculations.safety_flags.gust_within_limits": [
+        "boolean"
+      ],
+      "calculations.safety_flags.pack_temp_within_takeoff_limits": [
+        "boolean"
+      ],
+      "calculations.safety_flags.payload_within_limits": [
+        "boolean"
+      ],
+      "calculations.safety_flags.temperature_within_limits": [
+        "boolean"
+      ],
+      "calculations.safety_flags.wind_within_limits": [
+        "boolean"
+      ],
+      "degraded": [
+        "boolean"
+      ],
+      "is_viable": [
+        "boolean"
+      ],
+      "provenance": [
+        "object"
+      ],
+      "provenance{}": [
+        "object"
+      ],
+      "provenance{}.confidence": [
+        "string"
+      ],
+      "provenance{}.inputs": [
+        "array"
+      ],
+      "provenance{}.inputs[]": [
+        "string"
+      ],
+      "provenance{}.operational_grade": [
+        "boolean"
+      ],
+      "provenance{}.source": [
+        "string"
+      ],
+      "report": [
+        "string"
+      ],
+      "thread_id": [
+        "string"
+      ],
+      "warnings": [
+        "array"
+      ],
+      "warnings[]": [
+        "string"
+      ],
+      "weather": [
+        "null",
+        "object"
+      ],
+      "weather.conditions": [
+        "string"
+      ],
+      "weather.fetched_at": [
+        "null",
+        "string"
+      ],
+      "weather.humidity_percent": [
+        "number"
+      ],
+      "weather.source": [
+        "string"
+      ],
+      "weather.temperature_c": [
+        "number"
+      ],
+      "weather.wind_direction": [
+        "number"
+      ],
+      "weather.wind_gust_mps": [
+        "number"
+      ],
+      "weather.wind_speed_mps": [
+        "number"
+      ]
+    }
+  },
+  "POST /api/replan": {
+    "request": {
+      "fields": {
+        "alt_m": [
+          "number"
+        ],
+        "current_a": [
+          "null",
+          "number"
+        ],
+        "latitude": [
+          "number"
+        ],
+        "longitude": [
+          "number"
+        ],
+        "oat_c": [
+          "number"
+        ],
+        "payload_attached": [
+          "boolean"
+        ],
+        "phase": [
+          "string"
+        ],
+        "power_w": [
+          "null",
+          "number"
+        ],
+        "remaining_hover_s": [
+          "number"
+        ],
+        "remaining_leg_m": [
+          "number"
+        ],
+        "soc_fraction": [
+          "number"
+        ],
+        "source": [
+          "string"
+        ],
+        "thread_id": [
+          "string"
+        ],
+        "ts": [
+          "string"
+        ],
+        "voltage_v": [
+          "null",
+          "number"
+        ],
+        "wind_from_deg": [
+          "null",
+          "number"
+        ],
+        "wind_mps": [
+          "null",
+          "number"
+        ]
+      },
+      "required": [
+        "alt_m",
+        "latitude",
+        "longitude",
+        "oat_c",
+        "remaining_leg_m",
+        "soc_fraction",
+        "thread_id",
+        "ts"
+      ]
+    },
+    "response": {
+      "alerts": [
+        "array"
+      ],
+      "alerts[]": [
+        "object"
+      ],
+      "alerts[].briefed": [
+        "object"
+      ],
+      "alerts[].code": [
+        "string"
+      ],
+      "alerts[].delta": [
+        "object"
+      ],
+      "alerts[].live": [
+        "object"
+      ],
+      "alerts[].message": [
+        "string"
+      ],
+      "alerts[].recommended_action": [
+        "string"
+      ],
+      "alerts[].severity": [
+        "string"
+      ],
+      "briefed_margin_wh": [
+        "null",
+        "number"
+      ],
+      "live_energy": [
+        "null",
+        "object"
+      ],
+      "live_energy.available_wh": [
+        "number"
+      ],
+      "live_energy.required_wh": [
+        "number"
+      ],
+      "live_energy.reserve_wh": [
+        "number"
+      ],
+      "live_energy.residual_wh": [
+        "number"
+      ],
+      "live_energy.temperature_factor": [
+        "number"
+      ],
+      "operational_ok": [
+        "boolean"
+      ],
+      "parent_thread_id": [
+        "string"
+      ],
+      "recommended_action": [
+        "string"
+      ],
+      "severity": [
+        "string"
+      ],
+      "snapshot_age_s": [
+        "number"
+      ],
+      "thread_id": [
+        "string"
+      ]
+    }
+  }
+}
