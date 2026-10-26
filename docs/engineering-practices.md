@@ -211,9 +211,19 @@ Promotion is by image digest. Never by `latest`.
 
 - **Logs** — JSON, carrying `request_id`, `mission_id`, `thread_id`, `node`,
   `calculator_version`, `operator_key_id`. Coordinates redacted at `info`.
-- **Metrics** — plan latency, interrupt age, `llm_field_violations_total`,
-  weather source counts, checkpoint put/get latency, retrieval hit/miss, and the
-  five injection counters from `docs/injection-defense.md`.
+- **Metrics** — `/metrics` emits these per worker, every series from the first
+  scrape (#112): `suas_http_requests_total{method,path,code}` and
+  `suas_http_request_duration_seconds_sum{method,path}` (plan latency is
+  `path="/api/plan"`), `suas_plan_outcomes_total{outcome,mode}` with the mode
+  the gate granted, `suas_weather_source_total{source}` with the reading's own
+  provenance (`none` when a plan had none), the seal's
+  `suas_llm_field_violations_total` and `suas_brief_suppressed_total{reason}`,
+  `suas_hallucinated_citation_total`, `suas_corpus_quarantine_open`, and
+  `suas_lock_contention_total{lock}` (`lock="thread"`: acknowledgements of one
+  plan that waited on each other in one worker; waits across workers on the
+  mission row show in Postgres's `pg_stat_activity`). Interrupt age,
+  checkpoint latency, retrieval hit/miss and a per-field seal label have no
+  emitter yet, so none is named here. Sum across workers in the dashboard.
 - **Traces** — one span per graph node. Full prompts are never logged at `info`
   in production.
 

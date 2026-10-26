@@ -39,10 +39,10 @@ def test_metrics_registry_counts_requests_and_plans() -> None:
     registry = MetricsRegistry()
     registry.record_request("GET", "/health", 200, 0.01)
     registry.record_request("GET", "/health", 200, 0.02)
-    registry.record_plan(is_viable=True, weather_live=False)
+    registry.record_plan(is_viable=True, mode="advisory", weather_source="fallback")
     rendered = registry.render()
     assert 'suas_http_requests_total{method="GET",path="/health",code="200"} 2' in rendered
-    assert 'suas_plan_outcomes_total{outcome="go"} 1' in rendered
+    assert 'suas_plan_outcomes_total{outcome="go",mode="advisory"} 1' in rendered
     assert 'suas_weather_source_total{source="fallback"} 1' in rendered
 
 

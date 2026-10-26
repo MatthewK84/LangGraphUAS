@@ -343,7 +343,10 @@ async def test_a_plan_for_an_unknown_aircraft_answers_without_weather(
     body = response.json()
     assert body["weather"] is None
     assert body["is_viable"] is False
-    assert 'suas_plan_outcomes_total{outcome="no_go"} 1' in app_with_graph.state.metrics.render()
+    assert (
+        'suas_plan_outcomes_total{outcome="no_go",mode="advisory"} 1'
+        in app_with_graph.state.metrics.render()
+    )
 
 
 @pytest.mark.parametrize("missing", ["calculations", "aircraft", "payload"])

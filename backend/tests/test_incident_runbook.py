@@ -49,7 +49,7 @@ def _exporter() -> str:
     """Return /metrics as rendered after one event of every kind."""
     metrics = MetricsRegistry()
     metrics.record_request("GET", "/api/plan", 401, 0.01)
-    metrics.record_plan(is_viable=True, weather_live=False)
+    metrics.record_plan(is_viable=True, mode="advisory", weather_source="fallback")
     metrics.record_seal_violations(1)
     metrics.record_brief_suppressed("contradiction")
     metrics.record_hallucinated_citations(1)

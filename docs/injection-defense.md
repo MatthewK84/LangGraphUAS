@@ -136,8 +136,8 @@ Then, in order, each step a small pure function in `backend/suas/graph/seal.py`:
 
 1. **Parse.** Failure yields `brief_status=unavailable`. Never a retry loop that
    lets the model negotiate its way to a valid-looking object.
-2. **Drop sealed keys.** Increment `llm_field_violations_total{field}` on any
-   intersection.
+2. **Drop sealed keys.** Record each intersecting key as a violation (no
+   per-field metric label is emitted yet, #112).
 3. **Resolve citations.** A `chunk_id` not among the spans retrieved for this
    request is dropped and counted as `hallucinated_citation`.
    `resolve_citations` in `backend/suas/graph/seal.py` implements this, and is
@@ -214,9 +214,10 @@ becomes a row, and rows are never pruned.
 
 ## Metrics
 
-`injection_quarantine_total{pattern}`, `llm_field_violations_total{field}`,
-`hallucinated_citation_total`, `brief_suppressed_total{reason}`,
-`unverified_span_total`.
+`suas_corpus_quarantine_open`, `suas_llm_field_violations_total`,
+`suas_brief_suppressed_total{reason}`, `suas_hallucinated_citation_total`.
+(Earlier drafts also named a per-pattern quarantine counter, a per-field
+violation label and an unverified-span counter; nothing emits them, see #112.)
 
-All five sit at zero in production. Non-zero is an incident — see `docs/ops.md`,
+All four sit at zero in production. Non-zero is an incident — see `docs/ops.md`,
 including the rule that a suppressed brief does not invalidate an ack.
