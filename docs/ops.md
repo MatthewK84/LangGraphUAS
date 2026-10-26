@@ -43,6 +43,47 @@ Start the new image only after its migration step: the app's `create_all`
 creates missing tables on any database, and a table it created first makes the
 migration that creates it fail. `/ready` answers 503 `pending` in that window.
 
+## Backup and restore
+
+An acknowledgement is a signature on one assessment: `mission_threads` keeps
+the `inputs_hash` the operator signed, and the LangGraph checkpoint keeps the
+sealed assessment it was signed against. Both live in the planner's one
+Postgres database, along with the catalog, flight logs and corpus, so one
+`pg_dump` snapshot keeps them consistent (#113). Continuous replication or
+point-in-time recovery is the platform's job, not this one.
+
+Run these from a checkout with the backend installed (`pip install -e
+backend`) and PostgreSQL client tools at least as new as the server. The
+image has no `pg_dump`. From `backend/`:
+
+1. **Back up** the live database:
+   `SUAS_DATABASE_URL=<live> scripts/backup.sh suas.dump`
+   (`pg_dump --format=custom`, one snapshot; no owner or grants).
+2. **Restore into an empty database**, never over the live one:
+   `CREATE DATABASE suas_restored;`, then
+   `SUAS_DATABASE_URL=<restored> scripts/restore.sh suas.dump`.
+   It is one transaction that stops at the first error, so it lands whole or
+   not at all.
+3. **Migrate** only if the backup predates the release you will serve:
+   `SUAS_DATABASE_URL=<restored> alembic upgrade head` (see
+   [Migrations](#migrations)).
+4. **Verify** every signature:
+   `SUAS_DATABASE_URL=<restored> python scripts/verify_restore.py`.
+   It compares each stored ack's `inputs_hash` with its checkpoint's sealed
+   assessment and prints `N acknowledgement(s) verified, 0 broken`. Exit 1
+   lists each `thread: signed <hash>, checkpoint has <hash|nothing>`; do not
+   serve that database.
+5. **Switch**: point `SUAS_DATABASE_URL` at the restored database and restart
+   the planner. `/ready` answers 200, signed plans read back with the hash they
+   were signed on, and a plan that was waiting for a signature still waits.
+   It accepts its original `inputs_hash` and refuses any other with 409.
+
+`tests/test_backup_restore.py` runs exactly these steps on Postgres in CI
+(postgres-integration): it backs up a database holding one signed and one
+pending plan, restores it into an empty one, verifies, serves it, and signs the
+pending plan. Restored threads keep their `created_at`, so retention purges
+old ones on its next pass as it would have.
+
 ## Retention
 
 LangGraph's Postgres saver has no TTL, so retention is ours.

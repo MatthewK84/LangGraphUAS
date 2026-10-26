@@ -851,7 +851,7 @@ from strict typing, and CI scripts may write to stdout. All domain logic
 ```text
 backend/
   alembic/          async migration environment and versioned migrations
-  scripts/          entrypoint, smoke check, corpus ingest, load test, generators, CI helpers
+  scripts/          entrypoint, smoke check, backup and restore, corpus ingest, load test, generators, CI helpers
   suas/
     api/            routes, security, rate limiting, observability, error handlers
     calculations/   pure physics, battery, and assessment functions

@@ -1,8 +1,8 @@
 """What the readiness probe knows about the database schema version.
 
-``alembic upgrade head`` runs before the server starts (docker-entrypoint.sh),
-so a deployed database whose ``alembic_version`` row is not
-:data:`EXPECTED_REVISION` is running code ahead of its schema.
+``alembic upgrade head`` runs as a deploy step before the server starts
+(docs/ops.md, Migrations), so a deployed database whose ``alembic_version``
+row is not :data:`EXPECTED_REVISION` is running code ahead of its schema.
 """
 
 from __future__ import annotations
