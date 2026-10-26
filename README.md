@@ -417,7 +417,7 @@ headroom, select `Freefly_Astro_Max`.
 | --- | --- | --- |
 | `GET` | `/health` | Liveness. Touches no dependencies. |
 | `GET` | `/ready` | Readiness: database reachable, schema at the code's alembic revision, checkpoint store readable. Returns 503 otherwise; a missing model key does not count. See [ops](docs/ops.md#readiness). |
-| `GET` | `/metrics` | Prometheus text exposition: request counts, latency, plan outcomes, weather provenance. |
+| `GET` | `/metrics` | Prometheus text exposition: request counts, latency, plan outcomes by granted mode, weather provenance, seal violations, lock contention ([practices](docs/engineering-practices.md#observability)). |
 | `GET` | `/api/aircraft` | Selectable airframes. Drives the client dropdown. |
 | `GET` | `/api/payloads` | Selectable payloads. Drives the client dropdown. |
 | `POST` | `/api/plan` | Assess a mission; pauses for a person with `awaiting_ack: true`. |

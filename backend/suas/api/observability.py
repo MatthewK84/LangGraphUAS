@@ -20,6 +20,8 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
 
 from suas.logging_config import request_id_var
+from suas.schemas.assessment import AssessmentMode
+from suas.schemas.responses import WeatherSource
 
 logger: Final[logging.Logger] = logging.getLogger(__name__)
 
@@ -48,8 +50,13 @@ class MetricsRegistry:
         self._lock = Lock()
         self._requests: dict[tuple[str, str, int], int] = {}
         self._latency_sum_s: dict[tuple[str, str], float] = {}
-        self._plan_outcomes: dict[str, int] = {"go": 0, "no_go": 0}
-        self._weather_source: dict[str, int] = {"live": 0, "fallback": 0}
+        # Every documented series exists from the first scrape, at zero, so a
+        # dashboard built from docs/engineering-practices.md has no gaps (#112).
+        self._plan_outcomes: dict[tuple[str, str], int] = {
+            (outcome, mode.value): 0 for outcome in ("go", "no_go") for mode in AssessmentMode
+        }
+        self._weather_source: dict[str, int] = {source.value: 0 for source in WeatherSource}
+        self._lock_contention: dict[str, int] = {"thread": 0}
         # Expected to stay at zero. A non-zero value means a brief was produced
         # that disagrees with the sealed assessment, which is an incident.
         self._seal_violations: int = 0
@@ -68,11 +75,22 @@ class MetricsRegistry:
             lat_key = (method, path)
             self._latency_sum_s[lat_key] = self._latency_sum_s.get(lat_key, 0.0) + duration_s
 
-    def record_plan(self, *, is_viable: bool, weather_live: bool) -> None:
-        """Record the outcome of one mission plan."""
+    def record_plan(self, *, is_viable: bool, mode: str, weather_source: str) -> None:
+        """Record one plan: its outcome, the mode granted, and its weather's provenance.
+
+        ``weather_source`` is the reading's own source (``none`` when the plan
+        had no reading), not a live-or-not flag: a cached reading and a
+        provider outage call for different responses (docs/ops.md).
+        """
         with self._lock:
-            self._plan_outcomes["go" if is_viable else "no_go"] += 1
-            self._weather_source["live" if weather_live else "fallback"] += 1
+            key = ("go" if is_viable else "no_go", mode)
+            self._plan_outcomes[key] = self._plan_outcomes.get(key, 0) + 1
+            self._weather_source[weather_source] = self._weather_source.get(weather_source, 0) + 1
+
+    def set_lock_contention(self, lock: str, waits: int) -> None:
+        """Record how many acquisitions of ``lock`` have had to wait so far."""
+        with self._lock:
+            self._lock_contention[lock] = max(0, waits)
 
     def record_seal_violations(self, count: int) -> None:
         """Record seal violations observed while producing one brief."""
@@ -100,7 +118,7 @@ class MetricsRegistry:
             self._hallucinated_citations += count
 
     def set_quarantine_open(self, count: int) -> None:
-        """Record how many corpus chunks are currently awaiting review."""
+        """Record how many configurations have corpus chunks awaiting review."""
         with self._lock:
             self._quarantine_open = max(0, count)
 
@@ -126,11 +144,13 @@ class MetricsRegistry:
                     f'path="{path}"}} {total:.6f}'
                 )
             lines += [
-                "# HELP suas_plan_outcomes_total Mission plan go/no-go outcomes.",
+                "# HELP suas_plan_outcomes_total Mission plan go/no-go outcomes, by granted mode.",
                 "# TYPE suas_plan_outcomes_total counter",
             ]
-            for outcome, count in sorted(self._plan_outcomes.items()):
-                lines.append(f'suas_plan_outcomes_total{{outcome="{outcome}"}} {count}')
+            for (outcome, mode), count in sorted(self._plan_outcomes.items()):
+                lines.append(
+                    f'suas_plan_outcomes_total{{outcome="{outcome}",mode="{mode}"}} {count}'
+                )
             lines += [
                 "# HELP suas_weather_source_total Weather readings by provenance.",
                 "# TYPE suas_weather_source_total counter",
@@ -157,11 +177,15 @@ class MetricsRegistry:
                 f"suas_hallucinated_citation_total {self._hallucinated_citations}",
             ]
             lines += [
-                "# HELP suas_corpus_quarantine_open Corpus chunks held back by the "
-                "ingest screener.",
+                "# HELP suas_corpus_quarantine_open Airframe configurations with corpus "
+                "chunks held back by the ingest screener.",
                 "# TYPE suas_corpus_quarantine_open gauge",
                 f"suas_corpus_quarantine_open {self._quarantine_open}",
+                "# HELP suas_lock_contention_total Lock acquisitions that had to wait.",
+                "# TYPE suas_lock_contention_total counter",
             ]
+            for lock, waits in sorted(self._lock_contention.items()):
+                lines.append(f'suas_lock_contention_total{{lock="{lock}"}} {waits}')
             return "\n".join(lines) + "\n"
 
 

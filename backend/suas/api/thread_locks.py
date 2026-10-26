@@ -23,6 +23,16 @@ _MAX_TRACKED: Final[int] = 4096
 
 _locks: Final[dict[str, asyncio.Lock]] = {}
 
+# How many acquisitions found their thread's lock already held, so had to wait:
+# two acknowledgements of one plan racing inside this worker. /metrics reports
+# it as suas_lock_contention_total{lock="thread"} (#112).
+_contended: list[int] = [0]
+
+
+def contended_waits() -> int:
+    """Return how many acquisitions in this process have had to wait."""
+    return _contended[0]
+
 
 def _lock_for(thread_id: str) -> asyncio.Lock:
     """Return the lock for a thread, creating it if this is the first caller."""
@@ -51,7 +61,9 @@ class thread_lock:  # noqa: N801 - reads as a context manager at the call site
         self._lock = _lock_for(thread_id)
 
     async def __aenter__(self) -> "thread_lock":
-        """Acquire the lock."""
+        """Acquire the lock, counting the acquisition if it has to wait."""
+        if self._lock.locked():
+            _contended[0] += 1
         await self._lock.acquire()
         return self
 

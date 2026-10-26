@@ -30,7 +30,7 @@ _DOCS = (
     "docs/injection-defense.md",
     "README.md",
 )
-_REFERENCE = re.compile(r"`(suas_[a-z_]+)(?:\{([^}`]*)\})?`")
+_REFERENCE = re.compile(r"`(suas_[a-z_]+_(?:total|open|sum))(?:\{([^}`]*)\})?`")
 _UNPREFIXED = re.compile(
     r"`(?:injection_quarantine|llm_field_violations|hallucinated_citation|brief_suppressed|unverified_span)_total"
 )

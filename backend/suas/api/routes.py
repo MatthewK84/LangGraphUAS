@@ -16,7 +16,7 @@ from suas.api.number_provenance import number_provenance
 from suas.api.observability import MetricsRegistry
 from suas.api.rate_limit_dep import enforce_rate_limit
 from suas.api.security import OperatorDep, require_api_key
-from suas.api.thread_locks import thread_lock
+from suas.api.thread_locks import contended_waits, thread_lock
 from suas.db.corpus import open_quarantine_configs
 from suas.db.flight_logs import apply_flight_log, store_flight_log
 from suas.db.migrations import MigrationState, migration_state
@@ -28,7 +28,7 @@ from suas.db.retention import (
     record_thread,
     thread_owner,
 )
-from suas.schemas.assessment import DeterministicAssessment
+from suas.schemas.assessment import AssessmentMode, DeterministicAssessment
 from suas.schemas.domain import Aircraft, Payload
 from suas.schemas.requests import AckRequest, MissionRequest
 from suas.schemas.responses import (
@@ -248,6 +248,7 @@ async def metrics_endpoint(
     """
     async with session_factory() as session:
         metrics.set_quarantine_open(len(await open_quarantine_configs(session)))
+    metrics.set_lock_contention("thread", contended_waits())
     return Response(content=metrics.render(), media_type="text/plain; version=0.0.4")
 
 
@@ -298,10 +299,17 @@ async def plan_mission(
     result: PlanResponse = _build_plan_response(dict(final_state), thread_id)
     metrics.record_plan(
         is_viable=result.is_viable,
-        weather_live=result.weather is None or result.weather.is_live,
+        mode=_granted_mode(result),
+        weather_source=result.weather.source.value if result.weather else "none",
     )
     _record_violations(metrics, final_state.get("seal_violations"))
     return result
+
+
+def _granted_mode(result: PlanResponse) -> str:
+    """Return the mode the gate granted; a plan with no assessment is advisory."""
+    assessment = result.assessment
+    return (assessment.mode if assessment else AssessmentMode.ADVISORY).value
 
 
 def _record_violations(metrics: MetricsRegistry, violations: object) -> None:

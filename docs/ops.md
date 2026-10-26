@@ -366,14 +366,32 @@ session secret, each with a plan left waiting for a signature.
 `tests/test_retired_keys.py` covers the overlap window: same IP, another IP,
 expiry, a spoofed `X-Forwarded-For`, a trusted proxy and the new key.
 
+## Metrics
+
+`GET /metrics` is per worker; sum each series across workers and replicas.
+The full list, labels included, is in
+[engineering practices: Observability](engineering-practices.md#observability),
+and `tests/test_metric_labels.py` fails if any doc names a metric or label the
+exporter does not emit (#112). The three an operator watches first:
+
+- `suas_plan_outcomes_total{outcome,mode}`: `mode="operational"` falling to
+  zero while plans continue means the gate is withholding operational mode;
+  the plans' `blockers` say why.
+- `suas_weather_source_total{source}`: anything but `live` and `cached_fresh`
+  rising is the weather playbook below.
+- `suas_lock_contention_total{lock="thread"}`: acknowledgements of one plan
+  that waited on each other. Occasional is a double click; steady growth means
+  a client retrying acks in a loop.
+
 ## Incident response
 
 These counters sit at zero in production. Any non-zero value on a real mission
 is an incident, not a curiosity:
 
-`injection_quarantine_total{pattern}`, `llm_field_violations_total{field}`,
-`hallucinated_citation_total`, `brief_suppressed_total{reason}`,
-`unverified_span_total`.
+`suas_corpus_quarantine_open`, `suas_llm_field_violations_total`,
+`suas_brief_suppressed_total{reason}`, `suas_hallucinated_citation_total`.
+(Earlier drafts also named a per-pattern quarantine counter, a per-field
+violation label and an unverified-span counter; nothing emits them, see #112.)
 
 **A suppressed brief does not invalidate an acknowledgement.** The decision was
 computed and signed before the model ran (ADR-004). Preserve the sealed
@@ -392,9 +410,9 @@ exported with that label and every quoted log line is written by the code.
 
 ### Weather provider down
 
-**Signal.** `suas_weather_source_total{source="fallback"}` climbs while
-`source="live"` stalls (today every reading that was not fetched live counts as
-`fallback`), and the logs show `"Weather request failed"` (unreachable) or
+**Signal.** `suas_weather_source_total{source="fallback"}` (or
+`source="error"`, or `source="cached_stale"` first) climbs while
+`source="live"` stalls, and the logs show `"Weather request failed"` (unreachable) or
 `"Weather payload unusable"` (answered with nonsense).
 
 **Response.** Nothing needs a restart: the planner never raises on weather.
