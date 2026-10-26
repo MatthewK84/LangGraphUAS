@@ -468,6 +468,15 @@ behind it, the `mode` granted, any `blockers`, plus `inputs_hash` and
 written by `suas/calculations/` and never by the language model. `is_viable`
 remains as a derived alias for `decision == "go"`.
 
+Beside `calculations`, `provenance` says what each watt and watt-hour rests on.
+It has one entry per W or Wh figure, keyed by its path (`effective_hover_power_w`,
+`energy_breakdown.cruise_wh`, `battery_check.margin_wh`, and so on), with the
+weakest `source` and lowest `confidence` among the reference fields the figure
+was computed from, `operational_grade` (true only when every one of them is
+`datasheet` or `flight_log`), and those `inputs`. A figure computed from even one
+estimate is labelled as one, and the dashboard shows the label beside the
+number. Weather's own provenance is `weather.source`.
+
 </details>
 
 <details>

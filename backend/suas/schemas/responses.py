@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 
 from suas.schemas.alerts import Alert, RecommendedAction, Severity
 from suas.schemas.assessment import DeterministicAssessment
+from suas.schemas.provenance import Confidence, FieldSource
 
 
 class WeatherSource(StrEnum):
@@ -126,6 +127,21 @@ class Calculations(BaseModel):
     safety_flags: SafetyFlags
 
 
+class NumberProvenance(BaseModel):
+    """What one W or Wh figure in ``Calculations`` rests on (#79).
+
+    ``source`` and ``confidence`` are the weakest among ``inputs``, the reference
+    fields the figure was computed from. ``operational_grade`` is true only when
+    every input is, by the same rule the operational gate applies, so a client
+    never has to repeat that rule to know a watt is an estimate.
+    """
+
+    source: FieldSource
+    confidence: Confidence
+    operational_grade: bool
+    inputs: list[str]
+
+
 class PlanResponse(BaseModel):
     """The complete result of a mission planning run.
 
@@ -142,6 +158,8 @@ class PlanResponse(BaseModel):
     awaiting_ack: bool = False
     aborted: bool = False
     calculations: Calculations | None
+    # One entry per W and Wh figure in ``calculations``, keyed by its dotted path.
+    provenance: dict[str, NumberProvenance] = Field(default_factory=dict)
     weather: WeatherReading | None
     report: str
     thread_id: str
@@ -197,6 +215,7 @@ class ThreadStateResponse(BaseModel):
     is_viable: bool | None
     report: str | None
     calculations: Calculations | None
+    provenance: dict[str, NumberProvenance] = Field(default_factory=dict)
     weather: WeatherReading | None
     assessment: DeterministicAssessment | None = None
     awaiting_ack: bool = False

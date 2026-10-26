@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from suas import __version__
 from suas.api.dependencies import GraphDep, MetricsDep, ReplanGraphDep, SessionFactoryDep
+from suas.api.number_provenance import number_provenance
 from suas.api.observability import MetricsRegistry
 from suas.api.rate_limit_dep import enforce_rate_limit
 from suas.api.security import require_api_key
@@ -27,6 +28,7 @@ from suas.db.retention import (
     record_thread,
 )
 from suas.schemas.assessment import DeterministicAssessment
+from suas.schemas.domain import Aircraft, Payload
 from suas.schemas.requests import AckRequest, MissionRequest
 from suas.schemas.responses import (
     AircraftSummary,
@@ -34,6 +36,7 @@ from suas.schemas.responses import (
     FlightLogResponse,
     HealthResponse,
     LiveEnergyView,
+    NumberProvenance,
     PayloadSummary,
     PlanResponse,
     PowerEstimateSummary,
@@ -86,6 +89,14 @@ def _collect_warnings(weather: WeatherReading | None) -> list[str]:
     return [_DEGRADED_WEATHER_WARNING.format(state=weather.source.value.replace("_", " "))]
 
 
+def _figure_provenance(values: dict[str, Any]) -> dict[str, NumberProvenance]:
+    """Return what each W and Wh figure rests on, or ``{}`` when nothing was calculated."""
+    aircraft, payload = values.get("aircraft"), values.get("payload")
+    if not (values.get("calculations") and aircraft and payload):
+        return {}
+    return number_provenance(Aircraft.model_validate(aircraft), Payload.model_validate(payload))
+
+
 def _build_plan_response(final_state: dict[str, Any], thread_id: str) -> PlanResponse:
     """Convert the graph's final state into a typed API response."""
     weather_dump = final_state.get("weather")
@@ -106,6 +117,7 @@ def _build_plan_response(final_state: dict[str, Any], thread_id: str) -> PlanRes
         else bool(final_state.get("is_viable", False)),
         assessment=assessment,
         calculations=calculations,
+        provenance=_figure_provenance(final_state),
         weather=weather,
         report=str(final_state.get("report", "")),
         thread_id=thread_id,
@@ -524,6 +536,7 @@ async def get_thread_state(thread_id: str, graph: GraphDep) -> ThreadStateRespon
         is_viable=bool(values.get("is_viable", False)),
         report=str(values.get("report", "")),
         calculations=Calculations.model_validate(calc_dump) if calc_dump else None,
+        provenance=_figure_provenance(values),
         weather=WeatherReading.model_validate(weather_dump) if weather_dump else None,
         assessment=(
             DeterministicAssessment.model_validate(assessment_dump) if assessment_dump else None

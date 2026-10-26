@@ -54,6 +54,27 @@ export interface Calculations {
   readonly safety_flags: SafetyFlags;
 }
 
+/**
+ * What one W or Wh figure in `Calculations` rests on: the weakest source and
+ * lowest confidence among the reference fields it was computed from.
+ * `operational_grade` is the backend gate's own rule, so it is not repeated here.
+ */
+export interface NumberProvenance {
+  readonly source:
+    | "datasheet"
+    | "flight_log"
+    | "secondary"
+    | "derived"
+    | "estimate"
+    | "unknown";
+  readonly confidence: "low" | "medium" | "high";
+  readonly operational_grade: boolean;
+  readonly inputs: readonly string[];
+}
+
+/** Keyed by the figure's dotted path in `Calculations`. */
+export type FigureProvenance = Readonly<Record<string, NumberProvenance>>;
+
 export type Decision = "go" | "no_go" | "insufficient_data";
 
 export type AssessmentMode = "advisory" | "operational";
@@ -88,6 +109,7 @@ export interface PlanResult {
   readonly aborted: boolean;
   readonly weather: WeatherReading | null;
   readonly calculations: Calculations | null;
+  readonly provenance: FigureProvenance;
   readonly report: string;
   readonly thread_id: string;
   readonly degraded: boolean;

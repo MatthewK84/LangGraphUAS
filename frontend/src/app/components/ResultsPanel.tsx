@@ -1,8 +1,10 @@
 import type { JSX } from "react";
 
+import { Figure } from "@/app/components/Figure";
 import type {
   Assessment,
   Calculations,
+  FigureProvenance,
   PlanResult,
   WeatherReading,
 } from "@/lib/types";
@@ -159,8 +161,10 @@ function TelemetryCard({
 
 function PerformanceCard({
   calculations,
+  provenance,
 }: {
   readonly calculations: Calculations;
+  readonly provenance: FigureProvenance;
 }): JSX.Element {
   return (
     <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 shadow-sm">
@@ -189,7 +193,12 @@ function PerformanceCard({
         <p>
           Hover Power (corrected):{" "}
           <span className="text-white font-medium">
-            {calculations.effective_hover_power_w} W
+            <Figure
+              value={calculations.effective_hover_power_w}
+              unit="W"
+              path="effective_hover_power_w"
+              provenance={provenance}
+            />
           </span>
         </p>
         <p>
@@ -201,7 +210,12 @@ function PerformanceCard({
         <p>
           Energy Budget:{" "}
           <span className="text-white font-medium">
-            {calculations.energy_required_wh} Wh
+            <Figure
+              value={calculations.energy_required_wh}
+              unit="Wh"
+              path="energy_required_wh"
+              provenance={provenance}
+            />
           </span>
         </p>
         <p>
@@ -217,8 +231,10 @@ function PerformanceCard({
 
 function EnergyCard({
   calculations,
+  provenance,
 }: {
   readonly calculations: Calculations;
+  readonly provenance: FigureProvenance;
 }): JSX.Element {
   const parts = calculations.energy_breakdown;
   const battery = calculations.battery_check;
@@ -231,24 +247,57 @@ function EnergyCard({
       <div className="mt-2 space-y-1 text-sm">
         <p>
           Climb:{" "}
-          <span className="text-white font-medium">{parts.climb_wh} Wh</span>
+          <span className="text-white font-medium">
+            <Figure
+              value={parts.climb_wh}
+              unit="Wh"
+              path="energy_breakdown.climb_wh"
+              provenance={provenance}
+            />
+          </span>
         </p>
         <p>
           Cruise:{" "}
-          <span className="text-white font-medium">{parts.cruise_wh} Wh</span>
+          <span className="text-white font-medium">
+            <Figure
+              value={parts.cruise_wh}
+              unit="Wh"
+              path="energy_breakdown.cruise_wh"
+              provenance={provenance}
+            />
+          </span>
         </p>
         <p>
           Hover:{" "}
-          <span className="text-white font-medium">{parts.hover_wh} Wh</span>
+          <span className="text-white font-medium">
+            <Figure
+              value={parts.hover_wh}
+              unit="Wh"
+              path="energy_breakdown.hover_wh"
+              provenance={provenance}
+            />
+          </span>
         </p>
         <p>
           Descent:{" "}
-          <span className="text-white font-medium">{parts.descent_wh} Wh</span>
+          <span className="text-white font-medium">
+            <Figure
+              value={parts.descent_wh}
+              unit="Wh"
+              path="energy_breakdown.descent_wh"
+              provenance={provenance}
+            />
+          </span>
         </p>
         <p className="pt-1 border-t border-slate-700">
           Usable Capacity:{" "}
           <span className="text-white font-medium">
-            {battery.usable_capacity_wh} Wh
+            <Figure
+              value={battery.usable_capacity_wh}
+              unit="Wh"
+              path="battery_check.usable_capacity_wh"
+              provenance={provenance}
+            />
           </span>
           {derated && (
             <span className="text-amber-400">
@@ -266,7 +315,12 @@ function EnergyCard({
                 : "text-rose-400 font-medium"
             }
           >
-            {battery.margin_wh} Wh
+            <Figure
+              value={battery.margin_wh}
+              unit="Wh"
+              path="battery_check.margin_wh"
+              provenance={provenance}
+            />
           </span>
         </p>
       </div>
@@ -313,10 +367,16 @@ export function ResultsPanel(props: ResultsPanelProps): JSX.Element {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {result.weather !== null && <TelemetryCard weather={result.weather} />}
         {result.calculations !== null && (
-          <PerformanceCard calculations={result.calculations} />
+          <PerformanceCard
+            calculations={result.calculations}
+            provenance={result.provenance}
+          />
         )}
         {result.calculations !== null && (
-          <EnergyCard calculations={result.calculations} />
+          <EnergyCard
+            calculations={result.calculations}
+            provenance={result.provenance}
+          />
         )}
       </div>
       <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-xl">
