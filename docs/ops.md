@@ -160,7 +160,8 @@ included. Moving those missions to a named operator is an `UPDATE
 mission_threads SET operator_key_id = ...`; nothing else stores the owner.
 Missions planned with auth off record no operator, and once auth is on no key
 can read them. Revoking a key hides that operator's missions until a key with
-the same id is configured again; key rotation that keeps the id is #83.
+the same id is configured again; to replace a key, keep its id (see Key
+rotation).
 
 ## Browser sessions
 
@@ -182,13 +183,44 @@ per-instance limits are #84.
   anyone who can reach the backend can forge any session with it. The backend
   logs `DEMO session secret in use` at startup while it is. Set
   `SESSION_KEY_SECRET` (`openssl rand -hex 32`) in `.env` for any shared
-  stack. Changing the secret orphans every existing browser's threads.
+  stack. Changing the secret later keeps every browser's threads (see Key
+  rotation).
 - **Cross-site requests.** The proxy refuses any `POST` whose `Origin` is not
   its own host (`X-Forwarded-Host`, then `Host`) with 403. A reverse proxy
   must pass the public host through.
 - A secret shorter than 32 characters refuses to start. The backend still
   accepts `SUAS_API_KEYS` keys alongside sessions, for scripts and the CSV
   importer.
+
+## Key rotation
+
+A mission belongs to an operator id, not to a key, and an acknowledgement is
+bound to the assessment's `inputs_hash`, not to the key that sends it (#83). So
+rotating a key strands nothing:
+
+1. Replace the key under the same id: `alpha:old` becomes `alpha:new` in
+   `SUAS_API_KEYS`, or set a new `SUAS_API_KEY` for `default`. A key under a
+   different id is a different operator, and that operator cannot see the old
+   id's missions.
+2. Restart every backend worker. Settings are read once per process, so a
+   worker keeps the old key until it restarts. Once it has restarted the old
+   key gets 401 immediately. There is no overlap window: a script still
+   holding the old key fails rather than acting under a stale identity.
+3. Open interrupts carry on. The operator reads the pending plan with the new
+   key and signs it. The signature must still match the `inputs_hash` it was
+   shown; a stale hash is 409 as before.
+
+The session secret rotates the same way. Set a new `SESSION_KEY_SECRET` (both
+`SUAS_SESSION_KEY_SECRET` and `BACKEND_SESSION_SECRET`) and restart the backend
+and the frontend. A browser's operator is a digest of its session id, which
+the secret only signs, so every browser keeps its cookie and its threads, and
+keys signed with the old secret stop working. Requests between the two
+restarts get 401 and succeed on retry. Leaving the public demo secret is the
+case that needs rotating: moving to a private one keeps every browser's
+missions.
+
+`tests/test_key_rotation.py` covers a named key, the `default` key and the
+session secret, each with a plan left waiting for a signature.
 
 ## Incident response
 
