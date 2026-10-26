@@ -34,10 +34,15 @@ process purges without a restart (#86). No cron or scheduler is needed. A pass:
   `SUAS_RATE_LIMIT_WINDOW_S`. An idle row admits exactly as a missing one, so
   this changes no decision. Rows are read `FOR UPDATE SKIP LOCKED`, so a bucket
   mid-admission is skipped rather than waited on.
-- **Leaves `weather_cache` alone.** A reading past its TTL is still the
-  `cached_stale` answer when the provider fails, so expiring rows would change
-  what a plan is told; there is one row per cell ever planned, and deleting
-  rows by hand only costs a refetch.
+- **Prunes `weather_cache` rows past `SUAS_WEATHER_STALE_MAX_AGE_S`**
+  (default 10800s), judged from each reading's own `fetched_at`; a row with
+  none counts as infinitely old. Such a reading is never served: when the
+  provider fails, a reading within the max age is the `cached_stale` answer and
+  an older one is treated as missing, so the plan gets the same `fallback` or
+  `error` reading an empty cache gives. Pruning therefore changes no answer.
+  Rows are paged in key order (1000 per transaction) and read `FOR UPDATE SKIP
+  LOCKED`, and the delete matches the `fetched_at` it judged, so a reading
+  another worker stored meanwhile is kept, on SQLite too.
 
 Failures in a pass are logged and never stop the app. The single retention
 window applies to every status; a status-aware policy like the one below is
@@ -97,7 +102,7 @@ own cache and the provider sees one request per worker per cell.
 |---|---|
 | `live` | yes |
 | `cached_fresh` (< 10 min) | yes |
-| `cached_stale` | no — `degraded: true` |
+| `cached_stale` (≤ `SUAS_WEATHER_STALE_MAX_AGE_S`, default 3 h) | no — `degraded: true` |
 | `fallback` | no — `degraded: true` |
 | `error` | no — `degraded: true` |
 

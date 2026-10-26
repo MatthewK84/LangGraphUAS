@@ -14,11 +14,13 @@ turning a provider's bad day into a 500 from the planning endpoint.
 import asyncio
 import logging
 import math
+from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, Any, Final, Protocol
+from typing import TYPE_CHECKING, Any, Final, Protocol, cast
 
 import httpx
-from sqlalchemy import select
+from pydantic import ValidationError
+from sqlalchemy import CursorResult, delete, or_, select, tuple_
 from sqlalchemy.exc import SQLAlchemyError
 from tenacity import (
     retry,
@@ -203,6 +205,84 @@ class DatabaseWeatherCache:
             logger.warning("Shared weather cache unwritable, reading not kept: %s", exc)
 
 
+def _utcnow() -> datetime:
+    """Return the current time, aware, for judging a reading's age."""
+    return datetime.now(UTC)
+
+
+def _age_s(fetched_at: datetime | None, now: datetime) -> float:
+    """Return how old a reading is, treating unknown as infinitely old."""
+    if fetched_at is None:
+        return math.inf
+    return (now - fetched_at).total_seconds()
+
+
+_MAX_CELLS_PER_PRUNE: Final[int] = 1000
+
+
+def _stored_fetched_at(stored: dict[str, Any]) -> datetime | None:
+    """Return a stored reading's fetch time; an unreadable row has none."""
+    try:
+        return WeatherReading.model_validate(stored).fetched_at
+    except ValidationError:
+        return None
+
+
+def _expired_cells(
+    rows: Sequence[WeatherCacheRow], max_age_s: float, now: datetime
+) -> list[WeatherCacheRow]:
+    """Return the rows whose reading is past the max age."""
+    return [row for row in rows if _age_s(_stored_fetched_at(row.reading), now) > max_age_s]
+
+
+def _unchanged(rows: list[WeatherCacheRow]) -> Any:
+    """Match these rows only while they still hold the reading that was judged.
+
+    SQLite has no row locks, so another worker may store a live reading between
+    the read and the delete; matching on the stored ``fetched_at`` misses it.
+    """
+    fetched_at = WeatherCacheRow.reading["fetched_at"].as_string()
+    dated = [
+        (row.cell, str(row.reading["fetched_at"])) for row in rows if row.reading.get("fetched_at")
+    ]
+    undated = [row.cell for row in rows if not row.reading.get("fetched_at")]
+    return or_(
+        tuple_(WeatherCacheRow.cell, fetched_at).in_(dated),
+        WeatherCacheRow.cell.in_(undated) & fetched_at.is_(None),
+    )
+
+
+async def prune_stale_weather(
+    session_factory: "async_sessionmaker[AsyncSession]",
+    max_age_s: float,
+    clock: Callable[[], datetime] = _utcnow,
+) -> int:
+    """Delete shared readings past the stale max age; return how many.
+
+    Such a row is never served (an outage answers as if it were missing), so
+    pruning changes no answer. Rows are paged in key order and read under
+    ``FOR UPDATE SKIP LOCKED``: a row mid-store is left for the next pass.
+    """
+    pruned, after = 0, ""
+    while True:
+        async with session_factory() as session, session.begin():
+            page = (
+                select(WeatherCacheRow)
+                .where(WeatherCacheRow.cell > after)
+                .order_by(WeatherCacheRow.cell)
+                .limit(_MAX_CELLS_PER_PRUNE)
+                .with_for_update(skip_locked=True)
+            )
+            rows = list((await session.execute(page)).scalars())
+            if not rows:
+                return pruned
+            expired = _expired_cells(rows, max_age_s, clock())
+            if expired:
+                deleted = await session.execute(delete(WeatherCacheRow).where(_unchanged(expired)))
+                pruned += cast("CursorResult[Any]", deleted).rowcount
+            after = rows[-1].cell
+
+
 class WeatherService:
     """Fetches current conditions for a coordinate."""
 
@@ -214,12 +294,16 @@ class WeatherService:
         deadline_s: float = 6.0,
         cache_ttl_s: float = 600.0,
         cache: WeatherCache | None = None,
+        stale_max_age_s: float = 10800.0,
+        clock: Callable[[], datetime] = _utcnow,
     ) -> None:
         self._client = client
         self._base_url = base_url
         self._retry_attempts = retry_attempts
         self._deadline_s = deadline_s
         self._cache_ttl_s = cache_ttl_s
+        self._stale_max_age_s = stale_max_age_s
+        self._clock = clock
         self._cache: WeatherCache = MemoryWeatherCache() if cache is None else cache
 
     async def fetch(self, latitude: float, longitude: float) -> WeatherReading:
@@ -233,6 +317,8 @@ class WeatherService:
         cached: WeatherReading | None = await self._cache.load(key)
         if cached is not None and self._age_s(cached) <= self._cache_ttl_s:
             return cached.model_copy(update={"source": WeatherSource.CACHED_FRESH})
+        if cached is not None and self._age_s(cached) > self._stale_max_age_s:
+            cached = None  # too old to stand in for the weather now: as if missing
 
         try:
             async with asyncio.timeout(self._deadline_s):
@@ -268,12 +354,9 @@ class WeatherService:
         """Return the cache key for a coordinate, rounded to about a kilometre."""
         return (round(latitude, 2), round(longitude, 2))
 
-    @staticmethod
-    def _age_s(reading: WeatherReading) -> float:
+    def _age_s(self, reading: WeatherReading) -> float:
         """Return how old a cached reading is, treating unknown as infinitely old."""
-        if reading.fetched_at is None:
-            return math.inf
-        return (datetime.now(UTC) - reading.fetched_at).total_seconds()
+        return _age_s(reading.fetched_at, self._clock())
 
     async def _request(self, latitude: float, longitude: float) -> WeatherReading:
         """Perform the retried HTTP request and parse the result."""
@@ -354,5 +437,6 @@ def build_weather_service(
         retry_attempts=settings.weather_retry_attempts,
         deadline_s=settings.weather_deadline_s,
         cache_ttl_s=settings.weather_cache_ttl_s,
+        stale_max_age_s=settings.weather_stale_max_age_s,
         cache=_build_cache(settings, session_factory),
     )
