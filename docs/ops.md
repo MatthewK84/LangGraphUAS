@@ -372,6 +372,27 @@ session secret, each with a plan left waiting for a signature.
 `tests/test_retired_keys.py` covers the overlap window: same IP, another IP,
 expiry, a spoofed `X-Forwarded-For`, a trusted proxy and the new key.
 
+## Tracing
+
+LangSmith tracing is off by default and opt-in per deployment (#109):
+
+| Setting | Default | Maps to |
+|---|---|---|
+| `SUAS_LANGSMITH_TRACING` | `false` | turns tracing on; needs the key |
+| `SUAS_LANGSMITH_API_KEY` | empty | `LANGSMITH_API_KEY` |
+| `SUAS_LANGSMITH_ENDPOINT` | `https://api.smith.langchain.com` | `LANGSMITH_ENDPOINT` |
+| `SUAS_LANGSMITH_PROJECT` | `suas-mission-planner` | `LANGSMITH_PROJECT` |
+| `SUAS_LANGSMITH_REDACT` | `true` | local machines only may set `false` |
+
+The `SUAS_` values configure one client built in `suas/tracing.py`; do not set
+the `LANGSMITH_*` variables themselves. The app refuses to start with
+`LANGSMITH_TRACING=true` or `LANGCHAIN_TRACING_V2=true`, because LangChain's
+default client sends every run unredacted. With redaction on, coordinates and
+all text (briefs, prompts, messages) arrive as `[redacted]`; numbers, flags,
+run names and timings remain. Queued runs are flushed on shutdown. Adding the
+key to a deployment is a new processor: the threat-model row is in
+`docs/threat-model.md` under Information disclosure.
+
 ## Metrics
 
 `GET /metrics` is per worker; sum each series across workers and replicas.

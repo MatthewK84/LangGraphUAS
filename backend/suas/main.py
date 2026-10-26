@@ -7,6 +7,7 @@ disposed on shutdown so nothing leaks between runs.
 
 import asyncio
 import logging
+import os
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager, suppress
 from dataclasses import dataclass
@@ -40,6 +41,7 @@ from suas.logging_config import configure_logging
 from suas.rag.provider import build_embedder
 from suas.services.llm import ReportService
 from suas.services.weather import build_weather_service, prune_stale_weather
+from suas.tracing import build_tracing, refuse_unredacted_tracing, trace_graph
 
 logger: Final[logging.Logger] = logging.getLogger(__name__)
 
@@ -179,6 +181,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     settings = get_settings()
     configure_logging(settings.log_level, json_output=settings.json_logs)
     warn_on_weak_auth(settings)
+    refuse_unredacted_tracing(os.environ)
+    tracing = build_tracing(settings)
     logger.info("Database: %s", describe_database_url(settings.database_url))
     if not settings.uses_postgres:
         # Reaching this in a deployment means SUAS_DATABASE_URL never arrived and
@@ -192,12 +196,15 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         )
     resources = await _build_resources(settings)
     async with build_checkpointer(settings) as checkpointer:
-        app.state.graph = build_mission_graph(resources.deps, checkpointer)
+        app.state.graph = trace_graph(build_mission_graph(resources.deps, checkpointer), tracing)
         # Same checkpointer: a replan is a child thread of the briefed one, so
         # both live in one durable store and age out under one retention policy.
-        app.state.replan_graph = build_replan_graph(
-            ReplanDependencies(battery_reserve_percent=resources.deps.battery_reserve_percent),
-            checkpointer,
+        app.state.replan_graph = trace_graph(
+            build_replan_graph(
+                ReplanDependencies(battery_reserve_percent=resources.deps.battery_reserve_percent),
+                checkpointer,
+            ),
+            tracing,
         )
         app.state.session_factory = resources.session_factory
         app.state.limiter = build_limiter(settings, resources.session_factory)
@@ -214,6 +221,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             with suppress(asyncio.CancelledError):
                 await housekeeping
             await _dispose_resources(resources)
+            tracing.flush()
 
 
 def create_app() -> FastAPI:
