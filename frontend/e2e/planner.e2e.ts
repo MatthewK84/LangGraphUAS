@@ -1,0 +1,61 @@
+// The dashboard and the planner, in separate containers, agree (#116).
+//
+// Runs against Compose in demo mode (scripts/e2e.sh): the backend uses its
+// fixture weather reading, so no live METAR is needed and every plan is
+// advisory. scripts/compose_smoke.py, which e2e.sh runs first, holds the
+// catalog to src/lib/types.ts field by field; this suite drives what an
+// operator does in a real browser: the catalog renders, a plan, an ack.
+import { expect, test } from "@playwright/test";
+
+test("catalog load, plan and ack run through both containers", async ({
+  page,
+}) => {
+  await page.goto("/");
+
+  const aircraft = page.getByLabel("Aircraft Platform");
+  await expect(
+    aircraft.locator("option", { hasText: "Skydio X10D" }),
+  ).toHaveCount(1);
+  await expect(
+    page.getByText("Unable to load the platform catalog"),
+  ).toHaveCount(0);
+  // A renamed catalog field renders as a blank or "undefined" option.
+  for (const label of await aircraft.locator("option").allTextContents()) {
+    expect(label.trim()).not.toBe("");
+    expect(label).not.toContain("undefined");
+  }
+  await aircraft.selectOption("Skydio_X10D");
+  // Location is required; the demo backend serves fixture weather for it.
+  await page.getByLabel("Latitude").fill("34.0");
+  await page.getByLabel("Longitude").fill("-80.0");
+
+  const planned = page.waitForResponse(
+    (response) =>
+      response.url().endsWith("/api/plan") &&
+      response.request().method() === "POST",
+  );
+  await page
+    .getByRole("button", { name: "Analyze flight feasibility" })
+    .click();
+  const plan = (await (await planned).json()) as {
+    weather: { source: string } | null;
+  };
+  // Demo mode's fixture reading: no live provider was asked.
+  expect(plan.weather?.source).toBe("fixture");
+
+  const review = page.getByRole("region", { name: "Assessment review" });
+  await expect(review).toBeVisible();
+  await expect(review).toContainText("advisory");
+
+  await review.getByRole("checkbox").check();
+  await review
+    .getByRole("button", { name: "Acknowledge and generate brief" })
+    .click();
+
+  await expect(review).toHaveCount(0);
+  const report = page.locator("h3", { hasText: "AI Safety Officer Report" });
+  await expect(report.locator("xpath=..")).not.toContainText(
+    "Unable to record the acknowledgement",
+  );
+  await expect(report.locator("xpath=following-sibling::div")).not.toBeEmpty();
+});

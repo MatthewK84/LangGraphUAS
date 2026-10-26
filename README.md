@@ -68,7 +68,9 @@ weather provider. Every plan uses a fixed fixture reading tagged `fixture`, so
 the gate blocks operational (`WEATHER_NOT_LIVE`) and every plan is advisory.
 Never fly on a demo plan. With the stack up, `python3 scripts/compose_smoke.py`
 checks the catalog through the frontend against the frontend's types and walks
-plan, acknowledge and read-back. It runs locally; it is not a CI job.
+plan, acknowledge and read-back. `scripts/e2e.sh` brings the stack up, runs
+the smoke and then a Playwright browser test of the same path, and tears it
+down. Both run locally; neither is a CI job.
 
 ### Live weather
 

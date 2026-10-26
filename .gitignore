@@ -13,6 +13,8 @@ venv/
 # Node / Next
 node_modules/
 .next/
+test-results/
+playwright-report/
 out/
 npm-debug.log*
 yarn-error.log*

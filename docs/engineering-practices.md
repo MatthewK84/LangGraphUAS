@@ -255,3 +255,12 @@ the aircraft and payload catalog through the frontend proxy against
 `frontend/src/lib/types.ts`, and the golden path (plan, pending read-back,
 acknowledgement, signed read-back, still advisory on fixture weather). Nothing
 in CI runs it.
+
+`scripts/e2e.sh` runs the same in one command and then drives a real browser
+through both containers (`frontend/e2e/planner.e2e.ts`, Playwright, Chromium):
+the catalog renders with no blank or `undefined` option, a plan comes back on
+`fixture` weather, the advisory review is acknowledged and the brief renders.
+It starts the stack with `DEMO_MODE=true`, tears it down with `down -v` on exit
+(`E2E_KEEP=1` keeps it) and needs Docker plus `npx playwright install chromium`
+once. It is local only, like the smoke, so a flaky Docker start never blocks a
+merge; vitest does not pick up `*.e2e.ts`.
