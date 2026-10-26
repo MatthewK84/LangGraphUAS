@@ -21,10 +21,15 @@ from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from suas.api.key_overlap import last_ip, record_key_use
 from suas.api.security import session_key
 from suas.config import Settings, get_settings
+from suas.db.engine import create_engine, create_schema, create_session_factory
 from suas.db.models import ApiKeyLastSeenRow
 from tests.test_ack import _BODY
+from tests.test_shared_rate_limit import postgres_url
+
+__all__ = ["postgres_url"]  # a fixture, used by name
 
 _OLD = "alpha-old-key"
 _NEW = "alpha-new-key"
@@ -41,7 +46,9 @@ def _at(minutes: float) -> str:
 
 
 def _rotated(minutes: float = 10, **extra: Any) -> Settings:
-    return Settings(api_keys=f"alpha:{_NEW}", retired_api_keys=f"alpha:{_OLD}@{_at(minutes)}", **extra)
+    return Settings(
+        api_keys=f"alpha:{_NEW}", retired_api_keys=f"alpha:{_OLD}@{_at(minutes)}", **extra
+    )
 
 
 def _client(app: FastAPI, ip: str) -> httpx.AsyncClient:
@@ -214,6 +221,7 @@ async def test_session_keys_record_no_ip(
         (f"alpha:{_OLD}@{_at(24 * 60)}", "SUAS_RETIRED_KEY_MAX_GRACE_S"),
         (f"bravo:{_OLD}@{_at(10)}", "configured operator"),
         (f"alpha:{_NEW}@{_at(10)}", "still a current key"),
+        (f"alpha:{_OLD}@{_at(10)},alpha:{_OLD}@{_at(5)}", "must not repeat a key"),
     ],
 )
 def test_a_retired_key_list_that_cannot_be_honoured_is_refused(retired: str, message: str) -> None:
@@ -248,3 +256,35 @@ def test_ops_documents_the_overlap_window() -> None:
         assert phrase in rotation
     assert "There is no overlap window" not in rotation
     assert "SUAS_RETIRED_API_KEYS" in (docs / "threat-model.md").read_text()
+
+
+async def _moves_with_the_key(url: str) -> list[str | None]:
+    engine = create_engine(url)
+    await create_schema(engine)
+    factory = create_session_factory(engine)
+    try:
+        seen = []
+        for ip in (_HOME, _HOME, _ELSEWHERE):
+            await record_key_use(factory, _OLD, ip)
+            seen.append(await last_ip(factory, _OLD))
+        seen.append(await last_ip(factory, _NEW))
+        return seen
+    finally:
+        await engine.dispose()
+
+
+async def test_the_recorded_ip_follows_the_key_on_sqlite(tmp_path: Path) -> None:
+    url = f"sqlite+aiosqlite:///{tmp_path / 'seen.db'}"
+    assert await _moves_with_the_key(url) == [_HOME, _HOME, _ELSEWHERE, None]
+
+
+async def test_the_recorded_ip_follows_the_key_on_postgres(postgres_url: str) -> None:
+    assert await _moves_with_the_key(postgres_url) == [_HOME, _HOME, _ELSEWHERE, None]
+
+
+def test_ci_runs_the_postgres_upsert() -> None:
+    import yaml
+
+    ci = Path(__file__).resolve().parents[2] / ".github" / "workflows" / "ci.yml"
+    steps = yaml.safe_load(ci.read_text(encoding="utf-8"))["jobs"]["postgres-integration"]["steps"]
+    assert any("test_retired_keys.py" in step.get("run", "") for step in steps)

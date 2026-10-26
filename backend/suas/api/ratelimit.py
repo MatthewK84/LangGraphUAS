@@ -14,10 +14,10 @@ from collections.abc import Callable
 from typing import Final, Protocol
 
 from sqlalchemy import select
-from sqlalchemy.dialects import postgresql, sqlite
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from suas.config import Settings
+from suas.db.dialect import upsert_insert
 from suas.db.models import RateLimitBucketRow
 
 _MAX_TRACKED_CLIENTS: Final[int] = 10_000
@@ -110,9 +110,8 @@ class DatabaseLimiter:
         """Record a request; return 0 if admitted, else seconds until it would be."""
         bucket: str = hashlib.sha256(client_key.encode()).hexdigest()
         async with self._session_factory() as session, session.begin():
-            dialect = postgresql if session.bind.dialect.name == "postgresql" else sqlite
             await session.execute(
-                dialect.insert(RateLimitBucketRow)
+                upsert_insert(session, RateLimitBucketRow)
                 .values(bucket=bucket, hits=[])
                 .on_conflict_do_nothing(index_elements=["bucket"])
             )

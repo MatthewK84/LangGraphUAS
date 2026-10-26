@@ -4,8 +4,9 @@ All runtime configuration is declared here with explicit types and defaults
 (Principle 8). Nothing reads ``os.environ`` directly elsewhere in the code.
 """
 
+from datetime import UTC, datetime, timedelta
 from functools import lru_cache
-from typing import Final
+from typing import Final, NamedTuple
 
 from pydantic import AliasChoices, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -85,6 +86,61 @@ def parse_operator_keys(api_keys: str, api_key: str) -> dict[str, str]:
     return keys
 
 
+class RetiredKey(NamedTuple):
+    """A rotated API key still honoured, from its last client IP, until it expires."""
+
+    operator_id: str
+    key: str
+    expires_at: datetime
+
+
+_RETIRED_FORMAT: Final[str] = "Each SUAS_RETIRED_API_KEYS entry must be operator_id:key@expiry"
+
+
+def _parse_retired_entry(entry: str) -> RetiredKey:
+    """Return one ``operator_id:key@expiry`` entry; the expiry is ISO 8601 with a zone."""
+    credential, separator, expiry = entry.strip().rpartition("@")
+    operator_id, colon, key = (part.strip() for part in credential.partition(":"))
+    try:
+        expires_at = datetime.fromisoformat(expiry)
+    except ValueError:
+        raise ValueError(_RETIRED_FORMAT) from None
+    if not (separator and colon and operator_id and key):
+        raise ValueError(_RETIRED_FORMAT)
+    if expires_at.tzinfo is None:
+        raise ValueError("A SUAS_RETIRED_API_KEYS expiry must name its time zone, e.g. ...Z")
+    return RetiredKey(operator_id, key, expires_at)
+
+
+def parse_retired_keys(retired_api_keys: str) -> list[RetiredKey]:
+    """Return every entry of ``SUAS_RETIRED_API_KEYS``."""
+    return [_parse_retired_entry(entry) for entry in retired_api_keys.split(",") if entry.strip()]
+
+
+def check_retired_keys(
+    retired: list[RetiredKey], current: dict[str, str], max_grace_s: float, now: datetime
+) -> None:
+    """Refuse a retired key that is not a rotation, or whose window is not short.
+
+    A retired key must belong to an operator that still exists (rotation keeps
+    the id, #83), must not be anyone's current key, and must expire within
+    ``SUAS_RETIRED_KEY_MAX_GRACE_S``.
+    """
+    latest = now + timedelta(seconds=max_grace_s)
+    if len({entry.key for entry in retired}) != len(retired):
+        raise ValueError("SUAS_RETIRED_API_KEYS must not repeat a key")
+    for entry in retired:
+        if entry.operator_id not in current:
+            raise ValueError(f"Retired key for {entry.operator_id!r}: not a configured operator")
+        if entry.key in current.values():
+            raise ValueError(f"Retired key for {entry.operator_id!r} is still a current key")
+        if entry.expires_at > latest:
+            raise ValueError(
+                f"Retired key for {entry.operator_id!r} expires later than "
+                "SUAS_RETIRED_KEY_MAX_GRACE_S from now"
+            )
+
+
 # Session-key mode (#82) derives each browser's key from this secret, so a
 # guessable one lets anyone mint any browser's key. 32 characters is the floor.
 MIN_SESSION_SECRET_LENGTH: Final[int] = 32
@@ -160,6 +216,15 @@ class Settings(BaseSettings):
     # session.<id>.<HMAC-SHA256(secret, id)> authenticates as its own operator.
     # The dashboard proxy holds the same secret; the browser never sees it.
     session_key_secret: str = Field(default="")
+    # Rotation overlap: "alpha:old-key@2026-10-26T18:00:00Z". Until its expiry
+    # the old key is accepted only from the client IP that last used it before
+    # the rotation. Off by default; expiries are capped at max_grace_s from
+    # startup so the window stays short.
+    retired_api_keys: str = Field(default="")
+    retired_key_max_grace_s: float = Field(default=3600.0, gt=0.0, le=7 * 24 * 3600.0)
+    # Peers whose X-Forwarded-For is believed, comma-separated IPs. Empty: the
+    # peer address is the client, whatever the header says.
+    trusted_proxies: str = Field(default="")
     cors_origins: str = Field(default="http://localhost:3000")
     weather_base_url: str = Field(default=DEFAULT_WEATHER_URL)
     # Per-request. Small, because a planning request is waiting on it.
@@ -210,7 +275,12 @@ class Settings(BaseSettings):
     @model_validator(mode="after")
     def _refuse_ambiguous_keys(self) -> "Settings":
         """Fail at startup on a key list that cannot name each mission's owner."""
-        parse_operator_keys(self.api_keys, self.api_key)
+        check_retired_keys(
+            self.retired_keys,
+            self.operator_keys,
+            self.retired_key_max_grace_s,
+            datetime.now(UTC),
+        )
         if self.session_key_secret and len(self.session_key_secret) < MIN_SESSION_SECRET_LENGTH:
             raise ValueError(
                 f"SUAS_SESSION_KEY_SECRET must be at least {MIN_SESSION_SECRET_LENGTH} characters"
@@ -221,6 +291,16 @@ class Settings(BaseSettings):
     def operator_keys(self) -> dict[str, str]:
         """Return operator id -> API key for every configured operator."""
         return parse_operator_keys(self.api_keys, self.api_key)
+
+    @property
+    def retired_keys(self) -> list[RetiredKey]:
+        """Return the rotated keys still inside their overlap window's config."""
+        return parse_retired_keys(self.retired_api_keys)
+
+    @property
+    def trusted_proxy_set(self) -> frozenset[str]:
+        """Return the peers whose X-Forwarded-For header is honoured."""
+        return frozenset(ip.strip() for ip in self.trusted_proxies.split(",") if ip.strip())
 
     @property
     def auth_enabled(self) -> bool:
