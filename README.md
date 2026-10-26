@@ -370,9 +370,13 @@ and `SUAS_WEATHER_DEADLINE_S` (default 6s) across the whole operation including
 retries. Without the second, per-request timeouts multiply by the retry count and
 the endpoint hangs far longer than any single setting suggests.
 
-The cache is per process (unlike the shared rate limiter): `SUAS_WEATHER_CACHE_TTL_S`
-(default 600s). Each worker keeps its own, so a fresh reading in one worker is
-not a fresh reading in another.
+Live readings are cached for `SUAS_WEATHER_CACHE_TTL_S` (default 600s) per ~1 km
+cell. With `SUAS_WEATHER_CACHE_SHARED=true` (the Compose default) the cache is a
+database table every worker shares, so a reading one worker fetched is
+`cached_fresh` in all of them (#85). Left off, each worker keeps its own cache in
+memory, which is the local default. Only live readings are cached; a degraded
+answer is never reused, and freshness is always judged from the reading's own
+`fetched_at`.
 
 <details>
 <summary><b>Platforms and payloads</b></summary>
@@ -689,6 +693,7 @@ Backend variables use the `SUAS_` prefix. Compose maps friendly names to them.
 | `SUAS_CHECKPOINT_RETENTION_DAYS` | `30` | Age at which graph checkpoints are purged. `0` disables retention. |
 | `SUAS_RATE_LIMIT_REQUESTS` | `30` | Requests allowed per window, per client (per worker unless shared). At least 1; limiting cannot be switched off. |
 | `SUAS_RATE_LIMIT_WINDOW_S` | `60` | Rate limit window in seconds. |
+| `SUAS_WEATHER_CACHE_SHARED` | `false` | Keep weather readings in the database so all workers share one cache. Compose sets `true`. |
 | `SUAS_RATE_LIMIT_SHARED` | `false` | Keep the budget in the database so all workers share one ceiling. Compose sets `true`. |
 | `BACKEND_API_URL` | `http://localhost:8000` | Backend URL as reached by the Next.js **server**, not the browser. |
 | `BACKEND_API_KEY` | empty | Sent upstream as `X-API-Key` by the server-side proxy. Never exposed to the client. |
