@@ -146,3 +146,8 @@ def test_the_prefixed_name_wins_over_the_conventional_one(
     monkeypatch.setenv("SUAS_DATABASE_URL", "postgresql://u:p@explicit/db")
 
     assert Settings().database_url == "postgresql+psycopg://u:p@explicit/db"
+
+
+def test_a_limit_of_one_request_is_still_a_limit() -> None:
+    # The smallest allowed limit must enforce, not switch limiting off.
+    assert Settings(rate_limit_requests=1).rate_limit_enabled

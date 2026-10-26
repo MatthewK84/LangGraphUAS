@@ -20,7 +20,12 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from suas.api.rate_limit_dep import _client_key
 from suas.api.security import session_key
-from suas.config import DEMO_SESSION_KEY_SECRET, Settings, get_settings
+from suas.config import (
+    DEMO_SESSION_KEY_SECRET,
+    MIN_SESSION_SECRET_LENGTH,
+    Settings,
+    get_settings,
+)
 from suas.db.retention import get_acknowledgement
 from suas.main import warn_on_weak_auth
 from tests.test_ack import _BODY
@@ -172,6 +177,24 @@ async def test_without_the_secret_a_session_key_is_just_a_wrong_key(
     async with _client(app_with_graph) as client:
         response = await client.post("/api/plan", json=_BODY, headers=_as(_SESSION_A))
     assert response.status_code == 401
+
+
+async def test_without_a_secret_a_key_signed_with_an_empty_secret_is_refused(
+    app_with_graph: FastAPI,
+) -> None:
+    # Unconfigured must mean off: an empty secret is public, so anyone can sign with it.
+    app_with_graph.dependency_overrides[get_settings] = lambda: Settings(api_keys="ops:ops-secret")
+    forged = {"X-API-Key": session_key("", _SESSION_A)}
+    async with _client(app_with_graph) as client:
+        response = await client.post("/api/plan", json=_BODY, headers=forged)
+    assert response.status_code == 401
+
+
+def test_a_secret_of_exactly_the_minimum_length_starts() -> None:
+    secret = "s" * MIN_SESSION_SECRET_LENGTH
+    assert Settings(session_key_secret=secret).auth_enabled
+    with pytest.raises(ValidationError):
+        Settings(session_key_secret=secret[:-1])
 
 
 async def test_the_mission_row_holds_a_digest_not_the_session_id(
