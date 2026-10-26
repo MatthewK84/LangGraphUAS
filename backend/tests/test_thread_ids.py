@@ -12,23 +12,36 @@ characters, the bound replan already had. Validation is syntactic and runs
 before any lookup, so a refusal says nothing about what exists.
 """
 
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
 import httpx
 import pytest
 from fastapi import FastAPI
+from langgraph.checkpoint.memory import InMemorySaver
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from suas.api.routes import _visible_to
 from suas.config import Settings, get_settings
-from suas.db.retention import record_thread
+from suas.db.models import MissionThreadRow
+from suas.db.retention import purge_expired_threads, record_thread
 from tests.test_ack import _BODY
 from tests.test_replan import _snapshot
 
 _ALPHA = {"X-API-Key": "alpha-secret"}
 _BRAVO = {"X-API-Key": "bravo-secret"}
 _ROOT = Path(__file__).resolve().parents[2]
+
+
+class _DeleteLog(InMemorySaver):
+    def __init__(self) -> None:
+        super().__init__()
+        self.deleted: list[str] = []
+
+    async def adelete_thread(self, thread_id: str) -> None:
+        self.deleted.append(thread_id)
+        await super().adelete_thread(thread_id)
 
 
 def _client(app: FastAPI) -> httpx.AsyncClient:
@@ -64,7 +77,19 @@ async def test_a_plain_new_id_is_accepted(app_with_graph: FastAPI, thread_id: st
 
 @pytest.mark.parametrize(
     "thread_id",
-    ["parent:1", "a:b", ":", "", "x" * 129, "has space", "dot.ted", "slash/ed", "ünï", "tab\t"],
+    [
+        "parent:1",
+        "a:b",
+        ":",
+        "",
+        "x" * 129,
+        "has space",
+        "dot.ted",
+        "slash/ed",
+        "ünï",
+        "tab\t",
+        "nl\n",
+    ],
 )
 async def test_a_new_id_outside_the_format_is_422(app_with_graph: FastAPI, thread_id: str) -> None:
     async with _client(app_with_graph) as client:
@@ -112,27 +137,51 @@ async def test_the_refusal_is_the_same_whether_the_parent_exists(keyed_app: Fast
     assert _without_input(taken) == _without_input(free)
 
 
-async def test_a_stored_colon_id_belongs_to_its_parents_owner(
-    keyed_app: FastAPI, session_factory: async_sessionmaker[AsyncSession]
-) -> None:
-    # A row planned before this fix, squatting on bravo's first replan id.
-    async with _client(keyed_app) as client:
-        victim = (await _plan(client, None, **_BRAVO)).json()["thread_id"]
+async def _legacy_squat(
+    client: httpx.AsyncClient, session_factory: async_sessionmaker[AsyncSession]
+) -> str:
+    """Bravo's thread, and alpha's row on its first replan id from before the format."""
+    victim: str = (await _plan(client, None, **_BRAVO)).json()["thread_id"]
     async with session_factory() as session:
         await record_thread(session, f"{victim}:1", "alpha")
-
-    assert not await _visible_to(session_factory, f"{victim}:1", "alpha")
-    assert await _visible_to(session_factory, f"{victim}:1", "bravo")
+    return victim
 
 
-async def test_a_stored_colon_id_with_no_parent_stays_its_owners(
-    session_factory: async_sessionmaker[AsyncSession],
+async def test_a_replan_skips_a_child_id_stored_as_a_thread(
+    keyed_app: FastAPI, session_factory: async_sessionmaker[AsyncSession]
 ) -> None:
-    async with session_factory() as session:
-        await record_thread(session, "orphan:1", "alpha")
+    async with _client(keyed_app) as client:
+        victim = await _legacy_squat(client, session_factory)
+        first = await client.post("/api/replan", json=_snapshot(victim), headers=_BRAVO)
+        second = await client.post("/api/replan", json=_snapshot(victim), headers=_BRAVO)
 
-    assert await _visible_to(session_factory, "orphan:1", "alpha")
-    assert not await _visible_to(session_factory, "orphan:1", "bravo")
+    assert [first.json()["thread_id"], second.json()["thread_id"]] == [
+        f"{victim}:2",
+        f"{victim}:3",
+    ]
+    # The stored row stays its planner's (as #81 pinned); bravo's replans never land on it.
+    assert await _visible_to(session_factory, f"{victim}:1", "alpha")
+    assert not await _visible_to(session_factory, f"{victim}:1", "bravo")
+    assert await _visible_to(session_factory, f"{victim}:2", "bravo")
+
+
+async def test_purging_a_thread_leaves_a_child_id_stored_as_a_thread(
+    keyed_app: FastAPI, session_factory: async_sessionmaker[AsyncSession]
+) -> None:
+    async with _client(keyed_app) as client:
+        victim = await _legacy_squat(client, session_factory)
+        await client.post("/api/replan", json=_snapshot(victim), headers=_BRAVO)
+    async with session_factory() as session:
+        row = await session.get(MissionThreadRow, victim)
+        assert row is not None
+        row.created_at = datetime.now(UTC) - timedelta(days=45)
+        await session.commit()
+    saver = _DeleteLog()
+
+    assert await purge_expired_threads(session_factory, saver, retention_days=30.0) == 1
+    assert saver.deleted == [victim, f"{victim}:2"]
+    async with session_factory() as session:
+        assert await session.get(MissionThreadRow, f"{victim}:1") is not None
 
 
 # --- lookups --------------------------------------------------------------------
