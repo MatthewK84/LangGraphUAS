@@ -15,7 +15,7 @@ import yaml
 from fastapi import FastAPI
 from langgraph.graph.state import CompiledStateGraph
 
-from suas.config import Settings
+from suas.config import DEMO_SESSION_KEY_SECRET, Settings
 from suas.schemas.responses import WeatherReading, WeatherSource
 from suas.services.weather import FixtureWeather, WeatherService, build_weather_service
 
@@ -76,11 +76,16 @@ async def test_an_operational_request_in_demo_mode_comes_back_advisory(
     assert "WEATHER_NOT_LIVE" in assessment["blockers"]
 
 
+# The one committed default: the public demo session secret (#82). It is not a
+# credential anyone holds; the backend names it in a startup warning.
+_DEMO_SESSION_DEFAULT = "${SESSION_KEY_SECRET:-" + DEMO_SESSION_KEY_SECRET + "}"
+
+
 def test_compose_holds_no_secret_values() -> None:
     for service, variable, value in _compose_environment():
         for password in _URL_PASSWORD.findall(value):
             assert _INTERPOLATION_ONLY.fullmatch(password), f"{service}.{variable}"
-        if _SECRET_NAME.search(variable):
+        if _SECRET_NAME.search(variable) and value != _DEMO_SESSION_DEFAULT:
             assert _INTERPOLATION_ONLY.fullmatch(value), f"{service}.{variable} = {value!r}"
 
 

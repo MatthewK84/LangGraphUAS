@@ -72,3 +72,27 @@ def test_a_boolean_is_not_a_number() -> None:
 
 def test_an_empty_catalog_is_a_break() -> None:
     assert _load().contract_breaks("payloads", [], {"id": "string"}) == ["payloads empty"]
+
+
+# --- #82: the smoke drives the proxy like a browser -------------------------
+
+
+def test_a_post_carries_the_dashboard_origin() -> None:
+    request = _load().build_request("http://localhost:3000/api/plan", {"a": 1})
+    assert request.get_header("Origin") == "http://localhost:3000"
+    assert request.get_method() == "POST"
+
+
+def test_each_browser_keeps_its_own_cookies() -> None:
+    import urllib.request
+
+    smoke = _load()
+    first, second = smoke.new_browser(), smoke.new_browser()
+    jars = [
+        handler.cookiejar
+        for opener in (first, second)
+        for handler in opener.handlers
+        if isinstance(handler, urllib.request.HTTPCookieProcessor)
+    ]
+    assert len(jars) == 2
+    assert jars[0] is not jars[1]

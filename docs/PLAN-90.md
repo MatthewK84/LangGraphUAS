@@ -45,7 +45,8 @@ ahead of the dates. What follows is measured from `main`, not from the plan.
   mass, and the dashboard shows that tag beside each number.
 - **Each mission belongs to the key that planned it.** Each API key is named
   by its operator; another key's thread reads exactly as an unknown one
-  (#81).
+  (#81). Through the dashboard each browser is its own operator, from an
+  anonymous signed session cookie (#82).
 
 ### Blocking operational mode
 
@@ -71,12 +72,12 @@ one lab configuration pass, or by writing the refusal down.
 ### Next three PRs
 
 #74 to #78 wait on data or a decision (a ticket to open, a datasheet, a flight
-log, a gate review), so the next three continue wave 2 now that #81 is on
+log, a gate review), so the next three continue wave 2 now that #82 is on
 `main`:
 
-1. **#82** — the frontend proxy must not be a shared god key.
-2. **#83** — key rotation without breaking open interrupts.
-3. **#84** — a shared rate limiter.
+1. **#83** — key rotation without breaking open interrupts.
+2. **#84** — a shared rate limiter.
+3. **#85** — a shared weather cache.
 
 Updated in any PR that changes what is on `main`.
 

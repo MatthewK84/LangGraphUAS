@@ -161,9 +161,21 @@ the answer an unknown thread gets (`found: false` on `GET`, 404 elsewhere), so
 holding someone's thread id tells you nothing. A key list that repeats an id or
 a key refuses to start.
 
-A key is still an operator, not a user: there are no accounts or roles. The
-frontend proxy sends one key, so every browser behind it is the same operator
-until #82 lands.
+Each browser is its own operator (#82). The Next.js server gives every new
+browser a random 256-bit session id in an `HttpOnly`, `SameSite=Strict`
+cookie (`Secure` over HTTPS), and sends the backend
+`session.<id>.<HMAC-SHA256(secret, id)>` instead of a shared key. The backend
+checks the MAC with `SUAS_SESSION_KEY_SECRET` and scopes missions to that
+session, so two browsers cannot read, acknowledge or replan each other's
+threads. Neither the secret nor any derived key reaches the browser, and a
+`POST` whose `Origin` is not this app's is refused with 403 before it reaches
+the backend. The session is anonymous: clearing cookies loses that browser's
+threads, and there are still no accounts or roles.
+
+Default Compose ships a public, demo-only secret so this works with no setup;
+the backend logs a warning while it is in use. Set `SESSION_KEY_SECRET` (32 or
+more random characters) before anyone else can reach the stack. Without
+`BACKEND_SESSION_SECRET` the proxy falls back to the single `BACKEND_API_KEY`.
 
 </details>
 
@@ -664,6 +676,7 @@ Backend variables use the `SUAS_` prefix. Compose maps friendly names to them.
 | `SUAS_OPENAI_MODEL` | `gpt-4o-mini` | Chat model name. |
 | `SUAS_API_KEY` | empty | When set, planning endpoints require header `X-API-Key`. Known as operator `default`. |
 | `SUAS_API_KEYS` | empty | Per-operator keys, `id:key,id:key`. A mission is visible only to the key that planned it. |
+| `SUAS_SESSION_KEY_SECRET` | empty | Enables per-browser operators: verifies the proxy's signed session keys. 32+ characters. Compose defaults to a demo-only value. |
 | `SUAS_CORS_ORIGINS` | `http://localhost:3000` | Comma-separated allowed origins. Only needed for non-browser clients now that the UI proxies server-side. |
 | `SUAS_LOG_LEVEL` | `INFO` | Root log level. |
 | `SUAS_JSON_LOGS` | `true` | Emit structured JSON logs. Set false for readable local output. |
@@ -675,6 +688,7 @@ Backend variables use the `SUAS_` prefix. Compose maps friendly names to them.
 | `SUAS_RATE_LIMIT_WINDOW_S` | `60` | Rate limit window in seconds. |
 | `BACKEND_API_URL` | `http://localhost:8000` | Backend URL as reached by the Next.js **server**, not the browser. |
 | `BACKEND_API_KEY` | empty | Sent upstream as `X-API-Key` by the server-side proxy. Never exposed to the client. |
+| `BACKEND_SESSION_SECRET` | empty | Same value as `SUAS_SESSION_KEY_SECRET`. When set, each browser gets its own session cookie and operator, taking precedence over `BACKEND_API_KEY`. Server-only. |
 
 </details>
 

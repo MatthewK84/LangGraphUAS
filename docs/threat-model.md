@@ -21,7 +21,8 @@ path is added. A new node without a STRIDE row does not merge.
 [Blue List HTTP]                       untrusted until snapshotted and hashed
 ```
 
-Assets: the sealed assessment, coordinates, flight logs, API keys, checkpoint
+Assets: the sealed assessment, coordinates, flight logs, API keys, the session
+secret, checkpoint
 blobs, Blue-list snapshot integrity, operator identity.
 
 The AI-specific point that governs the rest: retrieved documents and model
@@ -33,6 +34,8 @@ text.
 | Threat | Mitigation | Test |
 |---|---|---|
 | Stolen key resumes another operator's thread | Keys scoped to `mission_threads.operator_key_id` (#81); a mismatch answers exactly as an unknown thread (404, or `found: false` on `GET`) | `tests/test_operator_keys.py`: cross-key read, ack, replan and plan-onto are refused as unknown |
+| One browser resumes another browser's thread through the shared proxy | Each browser gets a random 256-bit session id in an `HttpOnly`, `SameSite=Strict` cookie; the proxy signs it as `session.<id>.<HMAC-SHA256(SUAS_SESSION_KEY_SECRET, id)>` and the backend scopes the mission to it (#82). Default Compose uses a public, demo-only `SESSION_KEY_SECRET` that anyone can forge sessions with; the backend warns at startup while it is set | `tests/test_session_keys.py`: two sessions cannot read, ack or replan each other's threads and get the unknown-thread answer; forged, unsigned and wrong-secret keys get 401. `scripts/compose_smoke.py`: a second cookie jar cannot read or sign the first one's thread |
+| Cross-site request forges a plan or an ack from an operator's browser | `SameSite=Strict` cookie, and the proxy refuses any `POST` whose `Origin` is missing or not its own host with 403 before calling the backend | `frontend/src/lib/server/session.test.ts`: cross-origin and Origin-less POSTs return 403 without a backend call |
 | Forged "live" weather | `source` is tagged by our client from transport outcome, never read from the response body | A fake body cannot set `source=live` when the request failed |
 | Demo mode left on in a deployment (#97) | `SUAS_DEMO_MODE` defaults off in Settings, Compose and `.env.example`. Demo weather is tagged `fixture`, never operational grade, so the gate blocks operational (`WEATHER_NOT_LIVE`) and every plan says advisory. The backend logs a `DEMO MODE` warning at startup | `tests/test_demo_mode.py`: an operational request on fixture weather comes back advisory; `scripts/compose_smoke.py` checks the same end to end when run locally |
 | Forged Blue List page | Snapshot plus `content_hash`; the gate reads the snapshot, never a request-path scrape | Tampered hash fails the gate |
@@ -74,7 +77,7 @@ There are no debug endpoints that skip the ack.
 | Coordinates in logs or checkpoints | Redacted at `info`; minimal state; encryption option | Log fixture carries no raw coordinates |
 | Corpus exfiltration via the brief | Top-4 spans, `field_path` filtered | A brief cannot quote another airframe |
 | Open metrics endpoint | Bound to the internal network | Compose test |
-| Provider keys in the browser bundle | Server-only proxy | Bundle scan |
+| Provider keys in the browser bundle | Server-only proxy; `BACKEND_*` read only under `lib/server/`, imported only by API route handlers. The session secret and derived keys stay on the Next server; the browser holds only its own session id | `session.test.ts`: source checks, and no response carries the secret or MAC; `test_session_keys.py`: no backend response echoes the secret or MAC |
 
 ## Denial of service
 

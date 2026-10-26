@@ -10,6 +10,7 @@ the format.
 
 - Every W and Wh figure in a plan response now carries its own provenance (weakest source, lowest confidence, operational grade, inputs), and the dashboard shows it beside each number, so an estimate can no longer render as a measured watt; a test perturbs each reference field through the calculator to keep the figure-to-input table honest (#79).
 - Per-operator API keys: `SUAS_API_KEYS=id:key,...` (the single `SUAS_API_KEY` stays as operator `default`), each mission records the key that planned it (migration 0011 backfills existing ones to `default`), and another key's thread reads, acks and replans exactly as an unknown one (#81). Two follow-up tests kill the mutants CI reported surviving in the new provenance guard and the replan-child owner lookup (#79, #81).
+- Each browser is its own operator: the Next server issues an `HttpOnly`, `SameSite=Strict` session cookie and signs it with `SUAS_SESSION_KEY_SECRET` into the key it sends upstream, so two browsers cannot read, ack or replan each other's threads, and cross-origin `POST`s get 403; Compose ships a labelled demo-only secret, and clearing cookies loses that browser's threads (#82).
 
 ## Week of 2026-10-19
 

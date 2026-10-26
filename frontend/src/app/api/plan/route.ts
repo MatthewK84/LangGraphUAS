@@ -1,4 +1,5 @@
-import { PLAN_TIMEOUT_MS, forwardToBackend } from "@/lib/server/backend";
+import { PLAN_TIMEOUT_MS } from "@/lib/server/backend";
+import { forwardForBrowser } from "@/lib/server/session";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +16,7 @@ export async function POST(request: Request): Promise<Response> {
       },
     );
   }
-  return forwardToBackend({
+  return forwardForBrowser(request, {
     path: "/api/plan",
     method: "POST",
     timeoutMs: PLAN_TIMEOUT_MS,

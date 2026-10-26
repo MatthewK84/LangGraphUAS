@@ -6,12 +6,15 @@ through the frontend's server-side proxy, the path the dashboard uses:
 - the catalog must match the interfaces in ``frontend/src/lib/types.ts``, so a
   contract break between the containers fails the run (#116);
 - the golden path is plan, read the pending thread, acknowledge, read it back.
-  On fixture weather every plan must stay advisory.
+  On fixture weather every plan must stay advisory;
+- a second browser (its own cookie jar) can neither read nor sign the first
+  browser's thread (#82).
 
 Standard library only, so CI runs it with the runner's own ``python3``. Prints
 each check and exits non-zero if any fails.
 """
 
+import http.cookiejar
 import json
 import re
 import sys
@@ -52,16 +55,38 @@ OPERATIONAL_PLAN: Final[dict[str, Any]] = {
 }
 
 
-def call(url: str, body: dict[str, Any] | None = None) -> tuple[int, Any]:
-    """Return (status, parsed JSON or None) for a GET, or a JSON POST when ``body`` is set."""
+def new_browser() -> urllib.request.OpenerDirector:
+    """Return an opener with its own cookie jar: one simulated browser (#82)."""
+    return urllib.request.build_opener(
+        urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar())
+    )
+
+
+DASHBOARD: Final[urllib.request.OpenerDirector] = new_browser()
+
+
+def build_request(
+    url: str, body: dict[str, Any] | None = None
+) -> urllib.request.Request:
+    """Build a GET, or a JSON POST from the dashboard's origin when ``body`` is set."""
     if not url.startswith(("http://localhost:", "http://127.0.0.1:")):
         raise ValueError(f"compose smoke only calls the local stack, not {url!r}")
+    headers = {"Content-Type": "application/json"}
+    if body is not None:
+        headers["Origin"] = FRONTEND  # the proxy refuses cross-origin POSTs (#82)
     data = None if body is None else json.dumps(body).encode()
-    request = urllib.request.Request(  # noqa: S310 (local http only, checked above)
-        url, data=data, headers={"Content-Type": "application/json"}
-    )
+    return urllib.request.Request(url, data=data, headers=headers)  # noqa: S310 (local http only, checked above)
+
+
+def call(
+    url: str,
+    body: dict[str, Any] | None = None,
+    browser: urllib.request.OpenerDirector = DASHBOARD,
+) -> tuple[int, Any]:
+    """Return (status, parsed JSON or None) for a GET, or a JSON POST when ``body`` is set."""
+    request = build_request(url, body)
     try:
-        with urllib.request.urlopen(request, timeout=60) as response:  # noqa: S310 (fixed localhost URLs)
+        with browser.open(request, timeout=60) as response:
             status, raw = response.status, response.read()
     except urllib.error.HTTPError as error:
         status, raw = error.code, error.read()
@@ -179,6 +204,9 @@ def golden_path_checks() -> list[tuple[str, bool]]:
         "actor": "compose-smoke",
         "inputs_hash": (plan.get("assessment") or {}).get("inputs_hash"),
     }
+    stranger = new_browser()
+    peek_status, peek = call(thread, browser=stranger)
+    steal_status, _ = call(f"{thread}/ack", signature, browser=stranger)
     ack_status, acked = call(f"{thread}/ack", signature)
     final_status, final = call(thread)
     acked, final, pending = acked or {}, final or {}, pending or {}
@@ -195,6 +223,11 @@ def golden_path_checks() -> list[tuple[str, bool]]:
             "pending thread readable",
             pending_status == 200 and pending.get("awaiting_ack") is True,
         ),
+        (
+            "another browser sees the thread as unknown",
+            peek_status == 200 and (peek or {}).get("found") is False,
+        ),
+        ("another browser cannot sign it", steal_status == 404),
         (
             "acknowledgement accepted",
             ack_status == 200 and acked.get("awaiting_ack") is False,

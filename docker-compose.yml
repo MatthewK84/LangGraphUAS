@@ -26,6 +26,10 @@ services:
       SUAS_OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
       SUAS_API_KEY: ${API_KEY:-}
       SUAS_API_KEYS: ${API_KEYS:-}
+      # Per-browser operators (#82). The default is a PUBLIC, demo-only secret:
+      # anyone can forge any session with it. Set SESSION_KEY_SECRET (32+ chars)
+      # for any shared deployment. The backend warns at startup while it is used.
+      SUAS_SESSION_KEY_SECRET: ${SESSION_KEY_SECRET:-demo-only-session-secret-from-docker-compose-never-deploy}
       SUAS_CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
       SUAS_LOG_LEVEL: ${LOG_LEVEL:-INFO}
       SUAS_JSON_LOGS: ${JSON_LOGS:-true}
@@ -48,6 +52,9 @@ services:
       # server's own /api routes, which proxy to the backend with the key.
       BACKEND_API_URL: ${BACKEND_API_URL:-http://backend:8000}
       BACKEND_API_KEY: ${API_KEY:-}
+      # Must equal the backend's SUAS_SESSION_KEY_SECRET; demo-only default.
+      # Each browser gets its own httpOnly session cookie and operator.
+      BACKEND_SESSION_SECRET: ${SESSION_KEY_SECRET:-demo-only-session-secret-from-docker-compose-never-deploy}
     depends_on:
       - backend
     ports:

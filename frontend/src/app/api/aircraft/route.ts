@@ -1,9 +1,10 @@
-import { CATALOG_TIMEOUT_MS, forwardToBackend } from "@/lib/server/backend";
+import { CATALOG_TIMEOUT_MS } from "@/lib/server/backend";
+import { forwardForBrowser } from "@/lib/server/session";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request): Promise<Response> {
-  return forwardToBackend({
+  return forwardForBrowser(request, {
     path: "/api/aircraft",
     method: "GET",
     timeoutMs: CATALOG_TIMEOUT_MS,

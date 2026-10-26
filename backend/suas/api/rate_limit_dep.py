@@ -6,11 +6,15 @@ from typing import Annotated, Final
 from fastapi import Depends, Header, HTTPException, Request, status
 
 from suas.api.dependencies import LimiterDep
+from suas.api.security import SESSION_KEY_PREFIX
 from suas.config import Settings, get_settings
 
 logger: Final[logging.Logger] = logging.getLogger(__name__)
 
 _ANONYMOUS: Final[str] = "anonymous"
+# Every browser session shares one bucket, as every browser shared the proxy's
+# one key before #82: a fresh cookie must not buy a fresh allowance.
+_SESSIONS: Final[str] = "sessions"
 
 
 def _client_key(request: Request, api_key: str | None) -> str:
@@ -19,6 +23,8 @@ def _client_key(request: Request, api_key: str | None) -> str:
     Prefers the API key so a shared NAT egress does not throttle every client
     behind it together. Falls back to the peer address.
     """
+    if api_key and api_key.startswith(SESSION_KEY_PREFIX):
+        return _SESSIONS
     if api_key:
         return f"key:{api_key}"
     client = request.client

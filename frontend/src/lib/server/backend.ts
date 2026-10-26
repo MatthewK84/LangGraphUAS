@@ -16,6 +16,8 @@ export interface BackendRequest {
   readonly timeoutMs: number;
   readonly requestId: string | null;
   readonly body?: string;
+  // A per-browser key from session.ts; overrides BACKEND_API_KEY when set.
+  readonly apiKey?: string;
 }
 
 function backendBaseUrl(): string {
@@ -25,7 +27,7 @@ function backendBaseUrl(): string {
 
 function buildHeaders(request: BackendRequest): Record<string, string> {
   const headers: Record<string, string> = {};
-  const apiKey: string = process.env.BACKEND_API_KEY ?? "";
+  const apiKey: string = request.apiKey ?? process.env.BACKEND_API_KEY ?? "";
   if (apiKey.length > 0) {
     headers["X-API-Key"] = apiKey;
   }
