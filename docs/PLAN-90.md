@@ -49,6 +49,8 @@ ahead of the dates. What follows is measured from `main`, not from the plan.
   anonymous signed session cookie (#82).
   Rotating a key under the same id, or the session secret, keeps every
   open interrupt (#83).
+- **One rate-limit ceiling across workers.** With the shared limiter, as
+  Compose runs it, two workers allow the configured limit, not twice it (#84).
 
 ### Blocking operational mode
 
@@ -74,12 +76,12 @@ one lab configuration pass, or by writing the refusal down.
 ### Next three PRs
 
 #74 to #78 wait on data or a decision (a ticket to open, a datasheet, a flight
-log, a gate review), so the next three continue wave 2 now that #83 is on
+log, a gate review), so the next three continue wave 2 now that #84 is on
 `main`:
 
-1. **#84** — a shared rate limiter.
-2. **#85** — a shared weather cache.
-3. **#86** — a checkpoint purge job.
+1. **#85** — a shared weather cache.
+2. **#86** — a checkpoint purge job.
+3. **#87** — migrations as an explicit deploy step.
 
 Updated in any PR that changes what is on `main`.
 
