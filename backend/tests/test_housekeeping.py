@@ -13,6 +13,7 @@ postgres-integration CI job does.
 
 import asyncio
 import hashlib
+import logging
 import re
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -30,7 +31,7 @@ from suas.config import Settings, get_settings
 from suas.db.engine import create_engine, create_schema, create_session_factory
 from suas.db.models import MissionThreadRow, RateLimitBucketRow
 from suas.db.retention import next_replan_thread_id, purge_expired_threads, record_thread
-from suas.main import lifespan
+from suas.main import _prune_rate_limit_buckets, lifespan
 from tests.test_shared_rate_limit import postgres_url
 
 __all__ = ["postgres_url"]  # a fixture, used by name
@@ -238,6 +239,32 @@ async def test_an_admission_survives_its_idle_row_being_pruned(postgres_url: str
     finally:
         for engine in engines:
             await engine.dispose()
+
+
+class _DownDatabase:
+    def __call__(self) -> Any:
+        raise RuntimeError("database is down")
+
+
+async def test_a_failed_prune_is_logged_and_swallowed(caplog: pytest.LogCaptureFixture) -> None:
+    with caplog.at_level(logging.ERROR, logger="suas.main"):
+        result = await _prune_rate_limit_buckets(_DownDatabase(), Settings())  # type: ignore[arg-type]
+
+    assert result is None
+    assert "Rate-limit pruning pass failed: database is down" in caplog.text
+
+
+async def test_a_prune_logs_what_it_removed_and_only_then(
+    session_factory: async_sessionmaker[AsyncSession], caplog: pytest.LogCaptureFixture
+) -> None:
+    with caplog.at_level(logging.INFO, logger="suas.main"):
+        await _prune_rate_limit_buckets(session_factory, Settings())
+        assert "idle rate-limit buckets" not in caplog.text
+        await _buckets(session_factory, idle=[1.0], other=[2.0])
+        await _prune_rate_limit_buckets(session_factory, Settings())
+
+    assert "Pruned 2 idle rate-limit buckets" in caplog.text
+    assert await _buckets_left(session_factory) == {}
 
 
 # --- the schedule -------------------------------------------------------------

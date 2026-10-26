@@ -264,6 +264,8 @@ class Settings(BaseSettings):
     rate_limit_shared: bool = Field(default=False)
     metrics_enabled: bool = Field(default=True)
     checkpoint_retention_days: float = Field(default=30.0, ge=0.0)
+    # How often every worker repeats retention after its startup pass (#86).
+    retention_interval_s: float = Field(default=3600.0, gt=0.0)
 
     @property
     def cors_origin_list(self) -> list[str]:

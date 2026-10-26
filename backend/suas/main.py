@@ -5,9 +5,10 @@ HTTP client, and the checkpointer-backed graph. All are created on startup and
 disposed on shutdown so nothing leaks between runs.
 """
 
+import asyncio
 import logging
 from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 from dataclasses import dataclass
 from typing import Any, Final
 
@@ -20,7 +21,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 from suas import __version__
 from suas.api.exception_handlers import register_exception_handlers
 from suas.api.observability import MetricsRegistry, RequestContextMiddleware
-from suas.api.ratelimit import SlidingWindowLimiter, build_limiter
+from suas.api.ratelimit import SlidingWindowLimiter, build_limiter, prune_idle_buckets
 from suas.api.routes import router
 from suas.config import DEMO_SESSION_KEY_SECRET, Settings, describe_database_url, get_settings
 from suas.db.engine import create_engine, create_schema, create_session_factory
@@ -82,10 +83,10 @@ async def _purge_checkpoints(
     checkpointer: BaseCheckpointSaver[Any],
     settings: Settings,
 ) -> None:
-    """Age out old checkpoints on boot. Never blocks startup on failure.
+    """Age out old checkpoints. Never raises: retention is housekeeping, not a gate.
 
-    Every worker runs this, unlocked on purpose: the deletes are idempotent, so
-    concurrent passes only repeat work and cannot fail on a unique key.
+    Every worker runs this; ``purge_expired_threads`` claims each thread by
+    deleting its row, so concurrent passes purge each thread once.
     """
     try:
         purged: int = await purge_expired_threads(
@@ -95,7 +96,41 @@ async def _purge_checkpoints(
         logger.error("Checkpoint retention pass failed: %s", exc)
         return
     if purged > 0:
-        logger.info("Startup retention purged %d expired threads", purged)
+        logger.info("Retention purged %d expired threads", purged)
+
+
+async def _prune_rate_limit_buckets(
+    session_factory: async_sessionmaker[AsyncSession], settings: Settings
+) -> None:
+    """Drop shared rate-limit rows with no hit left in the window. Never raises."""
+    try:
+        pruned: int = await prune_idle_buckets(session_factory, settings.rate_limit_window_s)
+    except Exception as exc:  # Housekeeping, like retention.
+        logger.error("Rate-limit pruning pass failed: %s", exc)
+        return
+    if pruned > 0:
+        logger.info("Pruned %d idle rate-limit buckets", pruned)
+
+
+async def _housekeep(
+    session_factory: async_sessionmaker[AsyncSession],
+    checkpointer: BaseCheckpointSaver[Any],
+    settings: Settings,
+) -> None:
+    """Run one retention pass over everything that ages out."""
+    await _purge_checkpoints(session_factory, checkpointer, settings)
+    await _prune_rate_limit_buckets(session_factory, settings)
+
+
+async def _housekeep_forever(
+    session_factory: async_sessionmaker[AsyncSession],
+    checkpointer: BaseCheckpointSaver[Any],
+    settings: Settings,
+) -> None:
+    """Repeat retention every ``retention_interval_s`` until cancelled at shutdown."""
+    while True:
+        await asyncio.sleep(settings.retention_interval_s)
+        await _housekeep(session_factory, checkpointer, settings)
 
 
 async def _dispose_resources(resources: _Resources) -> None:
@@ -143,10 +178,18 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         )
         app.state.session_factory = resources.session_factory
         app.state.limiter = build_limiter(settings, resources.session_factory)
-        await _purge_checkpoints(resources.session_factory, checkpointer, settings)
+        await _housekeep(resources.session_factory, checkpointer, settings)
+        # Startup's pass alone left a long-lived process never purging (#86).
+        housekeeping = asyncio.create_task(
+            _housekeep_forever(resources.session_factory, checkpointer, settings),
+            name="suas-housekeeping",
+        )
         try:
             yield
         finally:
+            housekeeping.cancel()
+            with suppress(asyncio.CancelledError):
+                await housekeeping
             await _dispose_resources(resources)
 
 

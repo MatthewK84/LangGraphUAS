@@ -13,7 +13,7 @@ from collections import deque
 from collections.abc import Callable
 from typing import Final, Protocol
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from suas.config import Settings
@@ -21,6 +21,8 @@ from suas.db.dialect import upsert_insert
 from suas.db.models import RateLimitBucketRow
 
 _MAX_TRACKED_CLIENTS: Final[int] = 10_000
+# Bound one prune pass, as retention bounds one purge.
+_MAX_BUCKETS_PER_PRUNE: Final[int] = 1000
 
 
 class RateLimiter(Protocol):
@@ -110,10 +112,13 @@ class DatabaseLimiter:
         """Record a request; return 0 if admitted, else seconds until it would be."""
         bucket: str = hashlib.sha256(client_key.encode()).hexdigest()
         async with self._session_factory() as session, session.begin():
+            # Insert-or-touch, not insert-or-nothing: touching locks an existing
+            # row now, so a concurrent prune cannot delete it before the lock.
+            insert = upsert_insert(session, RateLimitBucketRow).values(bucket=bucket, hits=[])
             await session.execute(
-                upsert_insert(session, RateLimitBucketRow)
-                .values(bucket=bucket, hits=[])
-                .on_conflict_do_nothing(index_elements=["bucket"])
+                insert.on_conflict_do_update(
+                    index_elements=["bucket"], set_={"bucket": insert.excluded.bucket}
+                )
             )
             locked = select(RateLimitBucketRow).where(RateLimitBucketRow.bucket == bucket)
             row = (await session.execute(locked.with_for_update())).scalar_one()
@@ -124,6 +129,30 @@ class DatabaseLimiter:
                 return _retry_after_s(hits[0], now, self._window_s)
             row.hits = [*hits, now]
             return 0
+
+
+async def prune_idle_buckets(
+    session_factory: async_sessionmaker[AsyncSession],
+    window_s: float,
+    clock: Callable[[], float] = time.time,
+) -> int:
+    """Delete shared buckets with no hit left in the window; return how many.
+
+    An idle row admits exactly as a missing one does, since admission recreates
+    it empty, so pruning changes no decision. Rows are read under
+    ``FOR UPDATE SKIP LOCKED``: a bucket mid-admission is busy rather than
+    idle, and is left for the next pass instead of being waited on.
+    """
+    async with session_factory() as session, session.begin():
+        candidates = select(RateLimitBucketRow).limit(_MAX_BUCKETS_PER_PRUNE)
+        rows = (await session.execute(candidates.with_for_update(skip_locked=True))).scalars()
+        cutoff: float = clock() - window_s
+        idle: list[str] = [row.bucket for row in rows if all(hit <= cutoff for hit in row.hits)]
+        if idle:
+            await session.execute(
+                delete(RateLimitBucketRow).where(RateLimitBucketRow.bucket.in_(idle))
+            )
+    return len(idle)
 
 
 def build_limiter(
