@@ -691,6 +691,7 @@ Backend variables use the `SUAS_` prefix. Compose maps friendly names to them.
 | `SUAS_VERTICAL_SPEED_MPS` | `3` | Assumed climb and descent rate. |
 | `SUAS_CLIMB_EFFICIENCY` | `0.6` | Propulsive efficiency for the climb energy term. |
 | `SUAS_CHECKPOINT_RETENTION_DAYS` | `30` | Age at which graph checkpoints are purged. `0` disables retention. |
+| `SUAS_RETENTION_INTERVAL_S` | `3600` | How often each worker repeats retention after startup. |
 | `SUAS_RATE_LIMIT_REQUESTS` | `30` | Requests allowed per window, per client (per worker unless shared). At least 1; limiting cannot be switched off. |
 | `SUAS_RATE_LIMIT_WINDOW_S` | `60` | Rate limit window in seconds. |
 | `SUAS_WEATHER_CACHE_SHARED` | `false` | Keep weather readings in the database so all workers share one cache. Compose sets `true`. |
@@ -804,11 +805,12 @@ the air.
 - **Reference power figures are estimates.** See Data provenance. Swap in
   measured values before relying on the energy budget operationally. Edit
   `backend/suas/data/*.json`; the change is applied on the next restart.
-- **Checkpoint retention runs at startup.** Threads older than
-  `SUAS_CHECKPOINT_RETENTION_DAYS` are purged through the checkpointer's own
-  API, capped at 1000 threads per pass. A long-running process that never
-  restarts will not purge; schedule a periodic restart or call the purge from
-  your own scheduler. Retention failures are logged and never block startup.
+- **Retention runs at startup and then every `SUAS_RETENTION_INTERVAL_S`**
+  (default 3600s) in every worker, so no restart or external scheduler is
+  needed (#86). Threads older than `SUAS_CHECKPOINT_RETENTION_DAYS` are purged
+  with their replan children through the checkpointer's own API, capped at
+  1000 threads per pass; each thread is claimed by one worker. Idle shared
+  rate-limit rows are pruned too. Failures are logged and never stop the app.
 
 </details>
 
