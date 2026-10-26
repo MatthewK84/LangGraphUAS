@@ -380,7 +380,10 @@ database table every worker shares, so a reading one worker fetched is
 `cached_fresh` in all of them (#85). Left off, each worker keeps its own cache in
 memory, which is the local default. Only live readings are cached; a degraded
 answer is never reused, and freshness is always judged from the reading's own
-`fetched_at`.
+`fetched_at`. A cached reading answers an outage as `cached_stale` only until
+`SUAS_WEATHER_STALE_MAX_AGE_S` (default 10800s, 3 h); past that the outage gets
+the same `fallback` or `error` reading an empty cache gives, and the retention
+pass deletes the shared row.
 
 <details>
 <summary><b>Platforms and payloads</b></summary>
@@ -698,6 +701,7 @@ Backend variables use the `SUAS_` prefix. Compose maps friendly names to them.
 | `SUAS_RETENTION_INTERVAL_S` | `3600` | How often each worker repeats retention after startup. |
 | `SUAS_RATE_LIMIT_REQUESTS` | `30` | Requests allowed per window, per client (per worker unless shared). At least 1; limiting cannot be switched off. |
 | `SUAS_RATE_LIMIT_WINDOW_S` | `60` | Rate limit window in seconds. |
+| `SUAS_WEATHER_STALE_MAX_AGE_S` | `10800` | Oldest cached reading an outage may fall back to as `cached_stale`; older is answered as no cache and pruned. At least `SUAS_WEATHER_CACHE_TTL_S`. |
 | `SUAS_WEATHER_CACHE_SHARED` | `false` | Keep weather readings in the database so all workers share one cache. Compose sets `true`. |
 | `SUAS_RATE_LIMIT_SHARED` | `false` | Keep the budget in the database so all workers share one ceiling. Compose sets `true`. |
 | `BACKEND_API_URL` | `http://localhost:8000` | Backend URL as reached by the Next.js **server**, not the browser. |
@@ -814,7 +818,8 @@ the air.
   needed (#86). Threads older than `SUAS_CHECKPOINT_RETENTION_DAYS` are purged
   with their replan children through the checkpointer's own API, capped at
   1000 threads per pass; each thread is claimed by one worker. Idle shared
-  rate-limit rows are pruned too. Failures are logged and never stop the app.
+  rate-limit rows and weather readings past `SUAS_WEATHER_STALE_MAX_AGE_S`
+  are pruned too. Failures are logged and never stop the app.
 
 </details>
 
