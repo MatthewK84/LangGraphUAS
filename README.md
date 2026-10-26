@@ -153,11 +153,17 @@ enabling auth published the key to every visitor. Only the Next.js server needs
 network reach to the backend now; the backend does not have to be exposed to
 browsers at all.
 
-The key still authenticates the *deployment*, not individual users. There is no
-per-user identity, so any caller who can reach the proxy can plan a mission and
-can fetch any `thread_id` they know. Thread ids are UUIDv4 and so are not
-practically enumerable, but put real authentication in front of this before
-serving distinct tenants.
+Keys are per operator (#81). `SUAS_API_KEYS=alpha:key-a,bravo:key-b` gives
+each key an operator id; the older single `SUAS_API_KEY` still works as operator
+`default`. Each mission records the id of the key that planned it, and only that
+key can read, acknowledge or replan it. Asking with another key gets exactly
+the answer an unknown thread gets (`found: false` on `GET`, 404 elsewhere), so
+holding someone's thread id tells you nothing. A key list that repeats an id or
+a key refuses to start.
+
+A key is still an operator, not a user: there are no accounts or roles. The
+frontend proxy sends one key, so every browser behind it is the same operator
+until #82 lands.
 
 </details>
 
@@ -656,7 +662,8 @@ Backend variables use the `SUAS_` prefix. Compose maps friendly names to them.
 | `SUAS_OPENAI_API_KEY` | empty | Enables the model-generated report. |
 | `SUAS_DEMO_MODE` | `false` | Fixture weather instead of the live provider; every plan advisory. Compose: `DEMO_MODE`. |
 | `SUAS_OPENAI_MODEL` | `gpt-4o-mini` | Chat model name. |
-| `SUAS_API_KEY` | empty | When set, planning endpoints require header `X-API-Key`. |
+| `SUAS_API_KEY` | empty | When set, planning endpoints require header `X-API-Key`. Known as operator `default`. |
+| `SUAS_API_KEYS` | empty | Per-operator keys, `id:key,id:key`. A mission is visible only to the key that planned it. |
 | `SUAS_CORS_ORIGINS` | `http://localhost:3000` | Comma-separated allowed origins. Only needed for non-browser clients now that the UI proxies server-side. |
 | `SUAS_LOG_LEVEL` | `INFO` | Root log level. |
 | `SUAS_JSON_LOGS` | `true` | Emit structured JSON logs. Set false for readable local output. |

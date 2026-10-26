@@ -82,6 +82,11 @@ class MissionThreadRow(Base):
     # child thread, so the briefed assessment stays addressable and immutable.
     replan_count: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
 
+    # The id of the API key that planned this mission (#81). Only that key can
+    # read, acknowledge or replan it. Null when planned with auth off, and then
+    # unreadable once auth is turned on.
+    operator_key_id: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
+
 
 class FlightLogRow(Base):
     """An uploaded flight log and the power estimates derived from it.

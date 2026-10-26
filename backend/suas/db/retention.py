@@ -27,13 +27,33 @@ logger: Final[logging.Logger] = logging.getLogger(__name__)
 _MAX_THREADS_PER_PURGE: Final[int] = 1000
 
 
-async def record_thread(session: AsyncSession, thread_id: str) -> None:
-    """Record a thread's first-seen time, leaving an existing row untouched."""
+async def record_thread(
+    session: AsyncSession, thread_id: str, operator_key_id: str | None = None
+) -> None:
+    """Record a thread's first-seen time and owner, leaving an existing row untouched."""
     existing: MissionThreadRow | None = await session.get(MissionThreadRow, thread_id)
     if existing is not None:
         return
-    session.add(MissionThreadRow(thread_id=thread_id, created_at=datetime.now(UTC)))
+    session.add(
+        MissionThreadRow(
+            thread_id=thread_id,
+            created_at=datetime.now(UTC),
+            operator_key_id=operator_key_id,
+        )
+    )
     await session.commit()
+
+
+async def thread_owner(session: AsyncSession, thread_id: str) -> tuple[bool, str | None]:
+    """Return ``(known, operator_key_id)`` for a thread or a replan child of one.
+
+    A replan child (``<parent>:<n>``) has no row of its own and belongs to its
+    parent's operator.
+    """
+    row: MissionThreadRow | None = await session.get(MissionThreadRow, thread_id)
+    if row is None and ":" in thread_id:
+        row = await session.get(MissionThreadRow, thread_id.rpartition(":")[0])
+    return (row is not None, row.operator_key_id if row is not None else None)
 
 
 async def lock_thread_for_update(

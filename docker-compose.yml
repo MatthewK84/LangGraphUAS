@@ -25,6 +25,7 @@ services:
       SUAS_DEMO_MODE: ${DEMO_MODE:-false}
       SUAS_OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
       SUAS_API_KEY: ${API_KEY:-}
+      SUAS_API_KEYS: ${API_KEYS:-}
       SUAS_CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
       SUAS_LOG_LEVEL: ${LOG_LEVEL:-INFO}
       SUAS_JSON_LOGS: ${JSON_LOGS:-true}

@@ -15,7 +15,7 @@ from suas.api.dependencies import GraphDep, MetricsDep, ReplanGraphDep, SessionF
 from suas.api.number_provenance import number_provenance
 from suas.api.observability import MetricsRegistry
 from suas.api.rate_limit_dep import enforce_rate_limit
-from suas.api.security import require_api_key
+from suas.api.security import OperatorDep, require_api_key
 from suas.api.thread_locks import thread_lock
 from suas.db.corpus import open_quarantine_configs
 from suas.db.flight_logs import apply_flight_log, store_flight_log
@@ -26,6 +26,7 @@ from suas.db.retention import (
     next_replan_thread_id,
     record_acknowledgement,
     record_thread,
+    thread_owner,
 )
 from suas.schemas.assessment import DeterministicAssessment
 from suas.schemas.domain import Aircraft, Payload
@@ -95,6 +96,55 @@ def _figure_provenance(values: dict[str, Any]) -> dict[str, NumberProvenance]:
     if not (values.get("calculations") and aircraft and payload):
         return {}
     return number_provenance(Aircraft.model_validate(aircraft), Payload.model_validate(payload))
+
+
+_UNKNOWN_THREAD: Final[str] = "Unknown planning thread"
+
+
+async def _owner_of(
+    session_factory: async_sessionmaker[AsyncSession], thread_id: str
+) -> tuple[bool, str | None]:
+    """Return whether the thread has a mission row, and whose key planned it."""
+    async with session_factory() as session:
+        return await thread_owner(session, thread_id)
+
+
+async def _visible_to(
+    session_factory: async_sessionmaker[AsyncSession], thread_id: str, operator: str | None
+) -> bool:
+    """Return whether this operator may see the thread at all.
+
+    With auth off there are no operators to separate. With it on, a thread is
+    visible only to the key that planned it; one with no mission row, or planned
+    with auth off, belongs to nobody and is visible to no key.
+    """
+    if operator is None:
+        return True
+    known, owner = await _owner_of(session_factory, thread_id)
+    return known and owner == operator
+
+
+async def _require_visible(
+    session_factory: async_sessionmaker[AsyncSession], thread_id: str, operator: str | None
+) -> None:
+    """Refuse another operator's thread exactly as an unknown one is refused (#81)."""
+    if not await _visible_to(session_factory, thread_id, operator):
+        raise HTTPException(status_code=404, detail=_UNKNOWN_THREAD)
+
+
+async def _require_claimable(
+    session_factory: async_sessionmaker[AsyncSession], thread_id: str, operator: str | None
+) -> None:
+    """Refuse to plan onto a thread id another operator already holds.
+
+    A new id is free to take. An id another key planned is refused as unknown,
+    which tells the caller only that the id is taken, never what is in it.
+    """
+    if operator is None:
+        return
+    known, owner = await _owner_of(session_factory, thread_id)
+    if known and owner != operator:
+        raise HTTPException(status_code=404, detail=_UNKNOWN_THREAD)
 
 
 def _build_plan_response(final_state: dict[str, Any], thread_id: str) -> PlanResponse:
@@ -225,9 +275,11 @@ async def plan_mission(
     graph: GraphDep,
     metrics: MetricsDep,
     session_factory: SessionFactoryDep,
+    operator: OperatorDep,
 ) -> PlanResponse:
     """Plan and assess a single mission, returning the go/no-go result."""
     thread_id: str = request.thread_id or str(uuid4())
+    await _require_claimable(session_factory, thread_id, operator)
     initial: MissionState = {
         "aircraft_id": request.aircraft_id,
         "payload_id": request.payload_id,
@@ -238,7 +290,7 @@ async def plan_mission(
     # Recorded before the run so a thread that writes a checkpoint and then
     # fails is still eligible for retention rather than leaking.
     async with session_factory() as session:
-        await record_thread(session, thread_id)
+        await record_thread(session, thread_id, operator)
     final_state = await graph.ainvoke(initial, config=_thread_config(thread_id), durability="sync")
     result: PlanResponse = _build_plan_response(dict(final_state), thread_id)
     metrics.record_plan(
@@ -327,7 +379,7 @@ def _require_awaiting_ack(snapshot: StateSnapshot | None) -> dict[str, Any]:
     """Return the thread's values, or refuse an unknown or already-resumed thread."""
     values = _state_values(snapshot)
     if not values:
-        raise HTTPException(status_code=404, detail="Unknown planning thread")
+        raise HTTPException(status_code=404, detail=_UNKNOWN_THREAD)
     if not (snapshot and snapshot.next):
         raise HTTPException(status_code=409, detail="This plan is not awaiting acknowledgement")
     return values
@@ -401,12 +453,14 @@ async def acknowledge_plan(
     graph: GraphDep,
     metrics: MetricsDep,
     session_factory: SessionFactoryDep,
+    operator: OperatorDep,
 ) -> PlanResponse:
     """Record an operator's decision on a pending assessment and resume the run.
 
     Nothing downstream of this runs until it does: the report node sits after the
     review step precisely so a brief cannot exist without a signature.
     """
+    await _require_visible(session_factory, thread_id, operator)
     # Everything below runs under two locks on this one thread: an in-process
     # mutex, and a row lock on the mission row. Two workers handed the same
     # acknowledgement therefore serialise rather than both resuming the
@@ -450,6 +504,7 @@ async def replan_mission(
     graph: GraphDep,
     replan_graph: ReplanGraphDep,
     session_factory: SessionFactoryDep,
+    operator: OperatorDep,
 ) -> ReplanResponse:
     """Compare a briefed plan against what the aircraft is reporting.
 
@@ -458,10 +513,11 @@ async def replan_mission(
     runs while an aircraft is in the air, which is the worst moment to wait on one
     or to let one influence what the operator is told.
     """
+    await _require_visible(session_factory, snapshot.thread_id, operator)
     parent = await graph.aget_state(_thread_config(snapshot.thread_id))
     briefed = _state_values(parent)
     if not briefed:
-        raise HTTPException(status_code=404, detail="Unknown planning thread")
+        raise HTTPException(status_code=404, detail=_UNKNOWN_THREAD)
 
     assessment_dump = _sub_dict(briefed, "assessment")
     if not assessment_dump:
@@ -514,9 +570,18 @@ async def replan_mission(
     tags=["planning"],
     dependencies=[Depends(require_api_key)],
 )
-async def get_thread_state(thread_id: str, graph: GraphDep) -> ThreadStateResponse:
-    """Return the persisted state for a previously planned mission thread."""
-    snapshot = await graph.aget_state(_thread_config(thread_id))
+async def get_thread_state(
+    thread_id: str,
+    graph: GraphDep,
+    session_factory: SessionFactoryDep,
+    operator: OperatorDep,
+) -> ThreadStateResponse:
+    """Return the persisted state for a previously planned mission thread.
+
+    Another operator's thread reads exactly as one that was never planned.
+    """
+    visible = await _visible_to(session_factory, thread_id, operator)
+    snapshot = await graph.aget_state(_thread_config(thread_id)) if visible else None
     values = _state_values(snapshot)
     if not values:
         return ThreadStateResponse(
