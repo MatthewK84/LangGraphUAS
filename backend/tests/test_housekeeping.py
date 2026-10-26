@@ -13,8 +13,10 @@ postgres-integration CI job does.
 
 import asyncio
 import hashlib
+import json
 import logging
 import re
+import sqlite3
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, TypedDict
@@ -26,6 +28,7 @@ from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
+from suas.api import ratelimit
 from suas.api.ratelimit import DatabaseLimiter, prune_idle_buckets
 from suas.config import Settings, get_settings
 from suas.db.engine import create_engine, create_schema, create_session_factory
@@ -236,6 +239,94 @@ async def test_an_admission_survives_its_idle_row_being_pruned(postgres_url: str
             await pruning.delete(row)
         assert await asyncio.wait_for(admission, timeout=5.0) == 0
         assert await _buckets_left(factories[0]) == {bucket: [_NOW]}
+    finally:
+        for engine in engines:
+            await engine.dispose()
+
+
+_LIVE = [_NOW - 5.0]
+_IDLE = [_NOW - 600.0]
+
+
+def _behind_a_full_batch() -> dict[str, list[float]]:
+    # Hex digests, as real buckets are: the live ones sort first, so a single
+    # unordered batch of 1000 may never reach the idle ones behind them.
+    live = {f"a{i:063x}": _LIVE for i in range(1001)}
+    return live | {f"f{i:063x}": _IDLE for i in range(5)}
+
+
+async def test_idle_buckets_behind_a_full_batch_of_live_ones_are_pruned(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    rows = _behind_a_full_batch()
+    await _buckets(session_factory, **rows)
+
+    pruned = await prune_idle_buckets(session_factory, _WINDOW_S, clock=lambda: _NOW)
+
+    assert pruned == 5
+    assert await _buckets_left(session_factory) == {k: v for k, v in rows.items() if v == _LIVE}
+
+
+async def test_a_hit_admitted_mid_prune_keeps_its_bucket(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # SQLite has no row locks: a worker may admit a request after the prune
+    # judged the bucket idle and before it deletes it. The delete must miss it.
+    path = tmp_path / "race.db"
+    engine = create_engine(f"sqlite+aiosqlite:///{path}")
+    await create_schema(engine)
+    factory = create_session_factory(engine)
+    await _buckets(factory, idle=_IDLE)
+    real = ratelimit._idle_buckets
+
+    def judge_then_admit(rows: Any, cutoff: float) -> Any:
+        idle = real(rows, cutoff)
+        with sqlite3.connect(path) as other_worker:
+            other_worker.execute("UPDATE rate_limit_buckets SET hits = ?", (json.dumps(_LIVE),))
+        return idle
+
+    monkeypatch.setattr(ratelimit, "_idle_buckets", judge_then_admit)
+    try:
+        assert await prune_idle_buckets(factory, _WINDOW_S, clock=lambda: _NOW) == 0
+        assert await _buckets_left(factory) == {"idle": _LIVE}
+    finally:
+        await engine.dispose()
+
+
+async def test_two_workers_page_past_a_full_batch_on_postgres(postgres_url: str) -> None:
+    factories, engines = await _two_workers(postgres_url)
+    try:
+        rows = _behind_a_full_batch() | {f"f{i:063x}": _IDLE for i in range(5, 40)}
+        await _buckets(factories[0], **rows)
+
+        counts = await asyncio.gather(
+            *(prune_idle_buckets(f, _WINDOW_S, clock=lambda: _NOW) for f in factories)
+        )
+
+        assert sum(counts) == 40
+        assert await _buckets_left(factories[1]) == {k: v for k, v in rows.items() if v == _LIVE}
+    finally:
+        for engine in engines:
+            await engine.dispose()
+
+
+async def test_a_busy_bucket_behind_a_full_batch_is_skipped_on_postgres(
+    postgres_url: str,
+) -> None:
+    factories, engines = await _two_workers(postgres_url)
+    try:
+        rows = _behind_a_full_batch()
+        await _buckets(factories[0], **rows)
+        busy = "f" + "0" * 63
+        async with factories[0]() as admitting, admitting.begin():
+            locked = select(RateLimitBucketRow).where(RateLimitBucketRow.bucket == busy)
+            row = (await admitting.execute(locked.with_for_update())).scalar_one()
+            pruned = await asyncio.wait_for(
+                prune_idle_buckets(factories[1], _WINDOW_S, clock=lambda: _NOW), timeout=5.0
+            )
+            row.hits = [_NOW]
+        assert pruned == 4
+        assert (await _buckets_left(factories[1]))[busy] == [_NOW]
     finally:
         for engine in engines:
             await engine.dispose()

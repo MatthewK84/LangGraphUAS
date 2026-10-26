@@ -383,7 +383,7 @@ answer is never reused, and freshness is always judged from the reading's own
 `fetched_at`. A cached reading answers an outage as `cached_stale` only until
 `SUAS_WEATHER_STALE_MAX_AGE_S` (default 10800s, 3 h); past that the outage gets
 the same `fallback` or `error` reading an empty cache gives, and the retention
-pass deletes the shared row.
+pass deletes the shared row (a worker's own cache drops it on its next store).
 
 <details>
 <summary><b>Platforms and payloads</b></summary>

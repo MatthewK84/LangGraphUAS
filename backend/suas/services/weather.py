@@ -143,19 +143,45 @@ class WeatherCache(Protocol):
         ...
 
 
-class MemoryWeatherCache:
-    """One process's cache: the default, and enough for a single worker."""
+def _utcnow() -> datetime:
+    """Return the current time, aware, for judging a reading's age."""
+    return datetime.now(UTC)
 
-    def __init__(self) -> None:
+
+def _age_s(fetched_at: datetime | None, now: datetime) -> float:
+    """Return how old a reading is, treating unknown as infinitely old."""
+    if fetched_at is None:
+        return math.inf
+    return (now - fetched_at).total_seconds()
+
+
+class MemoryWeatherCache:
+    """One process's cache: the default, and enough for a single worker.
+
+    Each store sweeps out readings past ``max_age_s``, which the service would
+    never serve, so memory holds only cells fetched within the max age.
+    """
+
+    def __init__(
+        self, max_age_s: float = math.inf, clock: Callable[[], datetime] = _utcnow
+    ) -> None:
         self._readings: dict[CacheKey, WeatherReading] = {}
+        self._max_age_s = max_age_s
+        self._clock = clock
 
     async def load(self, key: CacheKey) -> WeatherReading | None:
         """Return the last live reading for a cell, if any."""
         return self._readings.get(key)
 
     async def store(self, key: CacheKey, reading: WeatherReading) -> None:
-        """Keep a live reading for a cell."""
+        """Keep a live reading for a cell, dropping any past the max age."""
         self._readings[key] = reading
+        now = self._clock()
+        self._readings = {
+            cell: kept
+            for cell, kept in self._readings.items()
+            if _age_s(kept.fetched_at, now) <= self._max_age_s
+        }
 
 
 def _cell(key: CacheKey) -> str:
@@ -203,18 +229,6 @@ class DatabaseWeatherCache:
                 )
         except _CACHE_FAILURES as exc:
             logger.warning("Shared weather cache unwritable, reading not kept: %s", exc)
-
-
-def _utcnow() -> datetime:
-    """Return the current time, aware, for judging a reading's age."""
-    return datetime.now(UTC)
-
-
-def _age_s(fetched_at: datetime | None, now: datetime) -> float:
-    """Return how old a reading is, treating unknown as infinitely old."""
-    if fetched_at is None:
-        return math.inf
-    return (now - fetched_at).total_seconds()
 
 
 _MAX_CELLS_PER_PRUNE: Final[int] = 1000
@@ -304,7 +318,9 @@ class WeatherService:
         self._cache_ttl_s = cache_ttl_s
         self._stale_max_age_s = stale_max_age_s
         self._clock = clock
-        self._cache: WeatherCache = MemoryWeatherCache() if cache is None else cache
+        self._cache: WeatherCache = (
+            MemoryWeatherCache(stale_max_age_s, clock) if cache is None else cache
+        )
 
     async def fetch(self, latitude: float, longitude: float) -> WeatherReading:
         """Return current conditions, never raising and never overstating them.
@@ -416,7 +432,7 @@ def _build_cache(
 ) -> WeatherCache:
     """Return the shared cache when configured, else this process's own."""
     if not settings.weather_cache_shared:
-        return MemoryWeatherCache()
+        return MemoryWeatherCache(settings.weather_stale_max_age_s)
     if session_factory is None:
         raise ValueError("SUAS_WEATHER_CACHE_SHARED needs the database session factory")
     return DatabaseWeatherCache(session_factory)
