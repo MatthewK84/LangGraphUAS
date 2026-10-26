@@ -216,3 +216,16 @@ class RateLimitBucketRow(Base):
 
     bucket: Mapped[str] = mapped_column(String(64), primary_key=True)
     hits: Mapped[list[float]] = mapped_column(JSON, nullable=False)
+
+
+class ApiKeyLastSeenRow(Base):
+    """The client IP that last authenticated with an API key.
+
+    ``key_hash`` is the SHA-256 of the key, never the key. A rotated key in
+    ``SUAS_RETIRED_API_KEYS`` is honoured only from this address.
+    """
+
+    __tablename__ = "api_key_last_seen"
+
+    key_hash: Mapped[str] = mapped_column(String(64), primary_key=True)
+    client_ip: Mapped[str] = mapped_column(String(45), nullable=False)

@@ -36,7 +36,12 @@ fi
 
 alembic upgrade head
 
+# --no-proxy-headers: uvicorn otherwise believes X-Forwarded-For from 127.0.0.1
+# and overwrites the peer address with it. SUAS_TRUSTED_PROXIES is the one
+# place that decides whose forwarding header counts (rotation overlap).
+
 exec uvicorn suas.main:app \
     --host "${HOST}" \
     --port "${PORT:-8000}" \
-    --workers "${WEB_CONCURRENCY:-2}"
+    --workers "${WEB_CONCURRENCY:-2}" \
+    --no-proxy-headers

@@ -10,10 +10,13 @@ import hashlib
 import hmac
 import logging
 import re
+from datetime import UTC, datetime
 from typing import Annotated, Final
 
-from fastapi import Depends, Header, HTTPException, status
+from fastapi import Depends, Header, HTTPException, Request, status
 
+from suas.api.dependencies import get_session_factory
+from suas.api.key_overlap import client_ip, last_ip, record_key_use, unexpired_retired_key
 from suas.config import Settings, get_settings
 
 logger: Final[logging.Logger] = logging.getLogger(__name__)
@@ -60,7 +63,27 @@ def _operator_for(presented: str, operator_keys: dict[str, str]) -> str | None:
     return matched
 
 
+async def _direct_key_operator(presented: str, settings: Settings, request: Request) -> str | None:
+    """Return the operator a configured or still-overlapping retired key names.
+
+    A current key records the client IP it came from. A retired key counts only
+    inside its window and only from the IP its last successful use recorded.
+    """
+    ip = client_ip(request, settings.trusted_proxy_set)
+    session_factory = get_session_factory(request)
+    operator_id = _operator_for(presented, settings.operator_keys)
+    if operator_id is not None:
+        await record_key_use(session_factory, presented, ip)
+        return operator_id
+    retired = unexpired_retired_key(presented, settings.retired_keys, datetime.now(UTC))
+    if retired is None or ip is None or await last_ip(session_factory, presented) != ip:
+        return None
+    logger.info("Retired key for %s accepted inside its overlap window", retired.operator_id)
+    return retired.operator_id
+
+
 async def require_api_key(
+    request: Request,
     settings: Annotated[Settings, Depends(get_settings)],
     x_api_key: Annotated[str | None, Header(alias="X-API-Key")] = None,
 ) -> str | None:
@@ -71,10 +94,10 @@ async def require_api_key(
     if not settings.auth_enabled:
         return None
     presented = x_api_key or ""
-    operator_id = _session_operator(presented, settings.session_key_secret) or _operator_for(
-        presented, settings.operator_keys
-    )
-    if x_api_key is None or operator_id is None:
+    operator_id = _session_operator(presented, settings.session_key_secret)
+    if operator_id is None and x_api_key is not None:
+        operator_id = await _direct_key_operator(presented, settings, request)
+    if operator_id is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key")
     return operator_id
 
