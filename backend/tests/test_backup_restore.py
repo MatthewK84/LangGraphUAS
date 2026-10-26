@@ -29,10 +29,10 @@ import pytest
 from fastapi import FastAPI
 from langgraph.graph.state import CompiledStateGraph
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
-from suas.db.restore_check import verify_acknowledgements
 
 from suas.config import get_settings
 from suas.db.models import MissionThreadRow
+from suas.db.restore_check import verify_acknowledgements
 from suas.db.retention import record_acknowledgement, record_thread
 from tests.test_ack import _BODY
 
