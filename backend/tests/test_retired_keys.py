@@ -288,3 +288,29 @@ def test_ci_runs_the_postgres_upsert() -> None:
     ci = Path(__file__).resolve().parents[2] / ".github" / "workflows" / "ci.yml"
     steps = yaml.safe_load(ci.read_text(encoding="utf-8"))["jobs"]["postgres-integration"]["steps"]
     assert any("test_retired_keys.py" in step.get("run", "") for step in steps)
+
+
+async def test_a_peer_that_is_not_an_ip_records_nothing(
+    app_with_graph: FastAPI,
+    configure: Configure,
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    configure(Settings(api_keys=f"alpha:{_OLD}"))
+
+    response = await _get(app_with_graph, "testclient", "/api/plan/none", **{"X-API-Key": _OLD})
+
+    assert response.status_code == 200
+    assert await _seen(session_factory) == {}
+
+
+async def test_a_chain_of_only_trusted_proxies_is_the_peer(
+    app_with_graph: FastAPI,
+    configure: Configure,
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    configure(Settings(api_keys=f"alpha:{_OLD}", trusted_proxies=f"{_PROXY},10.0.0.3"))
+    forwarded = {"X-API-Key": _OLD, "X-Forwarded-For": "10.0.0.3"}
+
+    await _get(app_with_graph, _PROXY, "/api/plan/none", **forwarded)
+
+    assert list((await _seen(session_factory)).values()) == [_PROXY]
