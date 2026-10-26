@@ -25,8 +25,14 @@ from pathlib import Path
 import psycopg
 import pytest
 import yaml
+from sqlalchemy import inspect
 
+from suas.config import Settings
+from suas.db.engine import SchemaNotMigratedError, create_engine, prepare_schema
 from suas.db.migrations import EXPECTED_REVISION
+from suas.db.models import Base
+from suas.main import _build_resources
+from tests.conftest import stamp_revision
 
 _BACKEND = Path(__file__).resolve().parents[1]
 _ROOT = _BACKEND.parent
@@ -259,4 +265,61 @@ def test_replicas_upgrading_at_once_all_succeed(fresh_url: str) -> None:
         results = list(pool.map(lambda _: _alembic(fresh_url, "upgrade", "head"), range(4)))
 
     assert [r.returncode for r in results] == [0, 0, 0, 0], [r.stderr[-500:] for r in results]
+    assert _stamped(fresh_url) == EXPECTED_REVISION
+
+
+# --- who owns the schema ------------------------------------------------------------
+# The app's create_all used to run on every start. A backend that started before
+# the migrate step on a fresh database built the tables itself, with no
+# alembic_version row, and the migration that creates them then failed. Where
+# Postgres is required (the image), alembic alone owns the schema now.
+
+
+async def test_where_alembic_owns_the_schema_an_unmigrated_database_is_refused(
+    tmp_path: Path,
+) -> None:
+    engine = create_engine(f"sqlite+aiosqlite:///{tmp_path / 'fresh.db'}")
+    try:
+        with pytest.raises(SchemaNotMigratedError, match="alembic upgrade head"):
+            await prepare_schema(engine, alembic_owns_schema=True)
+        async with engine.connect() as connection:
+            tables = await connection.run_sync(lambda sync: inspect(sync).get_table_names())
+    finally:
+        await engine.dispose()
+    assert tables == []
+
+
+async def test_where_alembic_owns_the_schema_a_migrated_database_starts(tmp_path: Path) -> None:
+    engine = create_engine(f"sqlite+aiosqlite:///{tmp_path / 'migrated.db'}")
+    try:
+        async with engine.begin() as connection:
+            await connection.run_sync(Base.metadata.create_all)
+            await stamp_revision(connection, EXPECTED_REVISION)
+        await prepare_schema(engine, alembic_owns_schema=True)
+    finally:
+        await engine.dispose()
+
+
+async def test_local_development_still_builds_its_own_schema(tmp_path: Path) -> None:
+    engine = create_engine(f"sqlite+aiosqlite:///{tmp_path / 'dev.db'}")
+    try:
+        await prepare_schema(engine, alembic_owns_schema=False)
+        async with engine.connect() as connection:
+            tables = await connection.run_sync(lambda sync: inspect(sync).get_table_names())
+    finally:
+        await engine.dispose()
+    assert {"aircraft", "payloads", "mission_threads"} <= set(tables)
+
+
+@_needs_postgres
+async def test_a_backend_started_before_the_migrate_step_leaves_the_database_to_it(
+    fresh_url: str,
+) -> None:
+    # The test that would have failed before: create_all ran, then upgrade failed.
+    settings = Settings(require_postgres=True, database_url=_async(fresh_url))
+    with pytest.raises(SchemaNotMigratedError):
+        await _build_resources(settings)
+
+    upgraded = _alembic(fresh_url, "upgrade", "head")
+    assert upgraded.returncode == 0, upgraded.stderr[-800:]
     assert _stamped(fresh_url) == EXPECTED_REVISION
