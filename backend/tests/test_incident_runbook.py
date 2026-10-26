@@ -14,6 +14,8 @@ from pathlib import Path
 
 import pytest
 
+from suas.api.observability import MetricsRegistry
+
 _BACKEND = Path(__file__).resolve().parents[1]
 _ROOT = _BACKEND.parent
 _PLAYBOOKS = (
@@ -44,7 +46,15 @@ def _code() -> str:
 
 
 def _exporter() -> str:
-    return (_BACKEND / "suas/api/observability.py").read_text()
+    """Return /metrics as rendered after one event of every kind."""
+    metrics = MetricsRegistry()
+    metrics.record_request("GET", "/api/plan", 401, 0.01)
+    metrics.record_plan(is_viable=True, weather_live=False)
+    metrics.record_seal_violations(1)
+    metrics.record_brief_suppressed("contradiction")
+    metrics.record_hallucinated_citations(1)
+    metrics.set_quarantine_open(1)
+    return metrics.render()
 
 
 @pytest.mark.parametrize("title", _PLAYBOOKS)
@@ -62,7 +72,8 @@ def test_every_metric_a_playbook_names_is_exported_with_that_label(title: str) -
     for name, label in _METRIC.findall(_playbook(title)):
         assert f"# TYPE {name} " in exporter, name
         if label:
-            assert f"{name}{{{{{label}=" in exporter, f"{name} has no {label} label"
+            labelled = re.search(rf"^{name}\{{[^}}]*\b{label}=", exporter, re.MULTILINE)
+            assert labelled, f"{name} has no {label} label"
 
 
 @pytest.mark.parametrize("title", _PLAYBOOKS)
