@@ -137,6 +137,38 @@ async def _expired_thread_ids(session: AsyncSession, cutoff: datetime) -> list[s
     return list(result.scalars().all())
 
 
+def _thread_family(thread_id: str, replan_count: int) -> list[str]:
+    """Return a thread and the replan children it handed out (``<id>:1`` onward)."""
+    return [thread_id, *(f"{thread_id}:{n}" for n in range(1, replan_count + 1))]
+
+
+async def _purge_thread(
+    session_factory: async_sessionmaker[AsyncSession],
+    checkpointer: BaseCheckpointSaver[Any],
+    thread_id: str,
+) -> bool:
+    """Purge one thread and its replan children; return whether this call did.
+
+    Deleting the tracking row claims the thread: another worker's delete waits
+    on the row lock, then finds nothing and skips it, so each thread is purged
+    once however many workers run the pass. The row delete commits only after
+    every checkpoint delete succeeds; a failure rolls it back so the next pass
+    retries instead of orphaning a checkpoint.
+    """
+    async with session_factory() as session, session.begin():
+        claimed = await session.execute(
+            delete(MissionThreadRow)
+            .where(MissionThreadRow.thread_id == thread_id)
+            .returning(MissionThreadRow.replan_count)
+        )
+        replan_count: int | None = claimed.scalar_one_or_none()
+        if replan_count is None:
+            return False
+        for member in _thread_family(thread_id, replan_count):
+            await checkpointer.adelete_thread(member)
+    return True
+
+
 async def purge_expired_threads(
     session_factory: async_sessionmaker[AsyncSession],
     checkpointer: BaseCheckpointSaver[Any],
@@ -144,11 +176,9 @@ async def purge_expired_threads(
 ) -> int:
     """Delete checkpoints for threads older than the retention window.
 
-    Returns the number of threads purged. A non-positive ``retention_days``
-    disables retention and purges nothing.
-
-    A thread whose checkpoint delete fails keeps its tracking row, so the next
-    pass retries it rather than orphaning the checkpoint.
+    Returns the number of threads this call purged. A non-positive
+    ``retention_days`` disables retention and purges nothing. Safe to run in
+    several workers at once; see ``_purge_thread``.
     """
     if retention_days <= 0.0:
         return 0
@@ -158,20 +188,11 @@ async def purge_expired_threads(
     if not thread_ids:
         return 0
 
-    purged: list[str] = []
+    purged = 0
     for thread_id in thread_ids:
         try:
-            await checkpointer.adelete_thread(thread_id)
+            purged += await _purge_thread(session_factory, checkpointer, thread_id)
         except Exception as exc:  # Retention must never take the app down.
             logger.error("Failed to delete checkpoint for thread %s: %s", thread_id, exc)
-            continue
-        purged.append(thread_id)
-
-    if purged:
-        async with session_factory() as session:
-            await session.execute(
-                delete(MissionThreadRow).where(MissionThreadRow.thread_id.in_(purged))
-            )
-            await session.commit()
-    logger.info("Purged %d expired mission threads (cutoff %s)", len(purged), cutoff.isoformat())
-    return len(purged)
+    logger.info("Purged %d expired mission threads (cutoff %s)", purged, cutoff.isoformat())
+    return purged

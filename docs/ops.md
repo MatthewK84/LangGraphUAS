@@ -20,13 +20,28 @@ A new migration must also bump `EXPECTED_REVISION`; a test fails until it does. 
 
 LangGraph's Postgres saver has no TTL, so retention is ours.
 
-**Today** it runs at application startup through the checkpointer's own API,
-capped at 1000 threads per pass (`SUAS_CHECKPOINT_RETENTION_DAYS`). A process
-that never restarts never purges.
+Every worker runs a retention pass at startup and then every
+`SUAS_RETENTION_INTERVAL_S` (default 3600s), in-process, so a long-lived
+process purges without a restart (#86). No cron or scheduler is needed. A pass:
 
-**Planned (Phase 2, Week 7)** it moves to `backend/scripts/prune_threads.py` on a
-schedule, with the status-aware policy below. Until then the single retention
-window applies to every status.
+- **Purges threads older than `SUAS_CHECKPOINT_RETENTION_DAYS`** through the
+  checkpointer's own API, with each thread's replan children (`<id>:1` to
+  `<id>:<replan_count>`), capped at 1000 threads per pass. A thread is claimed
+  by deleting its tracking row, and that delete commits only after every
+  checkpoint delete succeeds, so two workers purge a thread once and a failed
+  delete is retried next pass. Another thread's replan child is untouched.
+- **Prunes idle `rate_limit_buckets` rows**: those with no hit left in
+  `SUAS_RATE_LIMIT_WINDOW_S`. An idle row admits exactly as a missing one, so
+  this changes no decision. Rows are read `FOR UPDATE SKIP LOCKED`, so a bucket
+  mid-admission is skipped rather than waited on.
+- **Leaves `weather_cache` alone.** A reading past its TTL is still the
+  `cached_stale` answer when the provider fails, so expiring rows would change
+  what a plan is told; there is one row per cell ever planned, and deleting
+  rows by hand only costs a refetch.
+
+Failures in a pass are logged and never stop the app. The single retention
+window applies to every status; a status-aware policy like the one below is
+not built:
 
 | Status | Keep |
 |---|---|

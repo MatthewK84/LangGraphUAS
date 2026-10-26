@@ -245,7 +245,7 @@ async def test_a_retention_pass_that_purges_logs_the_count(
     with caplog.at_level(logging.INFO, logger="suas.main"):
         await _purge_checkpoints(session_factory, InMemorySaver(), settings)
 
-    assert "Startup retention purged 1 expired threads" in caplog.text
+    assert "Retention purged 1 expired threads" in caplog.text
 
 
 async def test_a_retention_pass_that_purges_nothing_logs_nothing(
@@ -256,7 +256,7 @@ async def test_a_retention_pass_that_purges_nothing_logs_nothing(
     with caplog.at_level(logging.INFO, logger="suas.main"):
         await _purge_checkpoints(session_factory, InMemorySaver(), settings)
 
-    assert "Startup retention purged" not in caplog.text
+    assert "Retention purged" not in caplog.text
     assert "Checkpoint retention pass failed" not in caplog.text
 
 
