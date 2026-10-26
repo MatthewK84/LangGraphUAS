@@ -213,11 +213,41 @@ rotating a key strands nothing:
    id's missions.
 2. Restart every backend worker. Settings are read once per process, so a
    worker keeps the old key until it restarts. Once it has restarted the old
-   key gets 401 immediately. There is no overlap window: a script still
-   holding the old key fails rather than acting under a stale identity.
+   key gets 401 immediately, unless you open an overlap window (below): a
+   script still holding the old key fails rather than acting under a stale
+   identity.
 3. Open interrupts carry on. The operator reads the pending plan with the new
    key and signs it. The signature must still match the `inputs_hash` it was
    shown; a stale hash is 409 as before.
+
+**Overlap window (opt-in).** To give a script time to pick up its new key,
+list the old one in `SUAS_RETIRED_API_KEYS` as `id:old-key@expiry`, e.g.
+`alpha:key-a@2026-10-26T18:00:00Z`, alongside `alpha:new-key` in
+`SUAS_API_KEYS`. Until the expiry, the old key is accepted only from the
+same client IP that last authenticated with it successfully before rotation.
+From any other address, after the expiry, or if it was never used, it gets the
+same 401 as an unknown key. The new key works from anywhere.
+
+- The expiry is an ISO 8601 time with a zone. Startup refuses one more than
+  `SUAS_RETIRED_KEY_MAX_GRACE_S` ahead (default 3600, one hour; at most a
+  week). It also refuses an id that is not a configured operator, a retired key
+  that is still a current key, and a key listed twice. Remove the entry once it
+  has expired; leaving it does nothing.
+- The backend records each direct API key's last client IP in
+  `api_key_last_seen`, by SHA-256 of the key and never the key (migration
+  0013). Only uses after this release are recorded, so a key last used before
+  it has no IP and cannot overlap.
+- The client IP is the TCP peer. `X-Forwarded-For` counts only when the peer is
+  listed in `SUAS_TRUSTED_PROXIES` (comma-separated IPs, default empty, trust
+  none), and then the rightmost hop that is not a trusted proxy is the client.
+  The image runs uvicorn with `--no-proxy-headers`, so nothing else rewrites
+  the peer. Behind a load balancer, either list it or accept that every client
+  shares its address.
+- Clients behind one NAT share an IP, so the window is short on purpose.
+
+The IP rule is for direct API keys only. Browser session keys arrive through
+the Next server, whose IP says nothing about the browser, so they record no IP
+and the session secret has no overlap window. It rotates as before.
 
 The session secret rotates the same way. Set a new `SESSION_KEY_SECRET` (both
 `SUAS_SESSION_KEY_SECRET` and `BACKEND_SESSION_SECRET`) and restart the backend
@@ -230,6 +260,8 @@ missions.
 
 `tests/test_key_rotation.py` covers a named key, the `default` key and the
 session secret, each with a plan left waiting for a signature.
+`tests/test_retired_keys.py` covers the overlap window: same IP, another IP,
+expiry, a spoofed `X-Forwarded-For`, a trusted proxy and the new key.
 
 ## Incident response
 

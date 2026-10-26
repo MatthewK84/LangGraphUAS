@@ -676,6 +676,9 @@ Backend variables use the `SUAS_` prefix. Compose maps friendly names to them.
 | `SUAS_OPENAI_MODEL` | `gpt-4o-mini` | Chat model name. |
 | `SUAS_API_KEY` | empty | When set, planning endpoints require header `X-API-Key`. Known as operator `default`. |
 | `SUAS_API_KEYS` | empty | Per-operator keys, `id:key,id:key`. A mission is visible only to the key that planned it. |
+| `SUAS_RETIRED_API_KEYS` | empty | Rotation overlap, `id:old-key@expiry`: the old key keeps working until the expiry, only from the client IP that last used it. See docs/ops.md, Key rotation. |
+| `SUAS_RETIRED_KEY_MAX_GRACE_S` | `3600` | Latest allowed expiry for a retired key, in seconds from startup. |
+| `SUAS_TRUSTED_PROXIES` | empty | Peer IPs whose `X-Forwarded-For` is believed. Empty trusts none. |
 | `SUAS_SESSION_KEY_SECRET` | empty | Enables per-browser operators: verifies the proxy's signed session keys. 32+ characters. Compose defaults to a demo-only value. |
 | `SUAS_CORS_ORIGINS` | `http://localhost:3000` | Comma-separated allowed origins. Only needed for non-browser clients now that the UI proxies server-side. |
 | `SUAS_LOG_LEVEL` | `INFO` | Root log level. |
