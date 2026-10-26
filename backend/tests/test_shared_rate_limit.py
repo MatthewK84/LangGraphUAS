@@ -161,3 +161,22 @@ def test_ci_runs_the_postgres_race() -> None:
     runs = [s for s in steps if "test_shared_rate_limit.py" in s.get("run", "")]
     assert len(runs) == 1
     assert runs[0]["env"]["SUAS_TEST_POSTGRES_URL"].startswith("postgresql://")
+
+
+def test_compose_shares_the_ceiling_across_its_two_workers() -> None:
+    import yaml
+
+    root = Path(__file__).resolve().parents[2]
+    compose = yaml.safe_load((root / "docker-compose.yml").read_text(encoding="utf-8"))
+    backend = compose["services"]["backend"]["environment"]
+    assert backend["SUAS_RATE_LIMIT_SHARED"] == "${RATE_LIMIT_SHARED:-true}"
+    assert "RATE_LIMIT_SHARED=true" in (root / ".env.example").read_text(encoding="utf-8")
+
+
+def test_docs_no_longer_say_the_ceiling_multiplies() -> None:
+    root = Path(__file__).resolve().parents[2]
+    for path in ("README.md", "docs/ops.md"):
+        text = (root / path).read_text(encoding="utf-8")
+        assert "SUAS_RATE_LIMIT_SHARED" in text, path
+        assert "Rate limiting is per process" not in text, path
+        assert "belongs in Redis or the" not in text, path
