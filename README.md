@@ -440,6 +440,12 @@ valid value is still a `422`.
 `GET /api/plan/{thread_id}` returns the persisted state for a prior mission
 thread, or `found: false` when the thread is unknown.
 
+The shape of `/api/plan`, `/api/plan/{thread_id}/ack` and `/api/replan` is
+frozen in `backend/tests/fixtures/api_contract.json`. CI fails if a response
+field disappears or changes type, or a request gains a required field; adding
+an optional field does not. After a deliberate break, run
+`python scripts/api_contract.py --write` from `backend/` (#115).
+
 Every response carries an `X-Request-ID` header. Supply your own to correlate a
 client trace with server logs; one is generated when absent.
 
