@@ -7,6 +7,11 @@ key. A refusal looks exactly like a thread that does not exist, so a caller
 holding someone else's thread id learns nothing from asking.
 """
 
+import os
+import sqlite3
+import subprocess
+import sys
+from pathlib import Path
 from typing import Any
 
 import httpx
@@ -15,13 +20,15 @@ from fastapi import FastAPI
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from suas.config import Settings, get_settings
-from suas.db.retention import get_acknowledgement
+from suas.api.routes import _visible_to
+from suas.config import LEGACY_OPERATOR_ID, Settings, get_settings
+from suas.db.retention import get_acknowledgement, record_thread
 from tests.test_ack import _BODY
 from tests.test_replan import _snapshot
 
 _ALPHA = {"X-API-Key": "alpha-secret"}
 _BRAVO = {"X-API-Key": "bravo-secret"}
+_BACKEND = Path(__file__).resolve().parent.parent
 _NEVER_PLANNED = "00000000-0000-4000-8000-000000000000"
 
 
@@ -136,20 +143,21 @@ async def test_key_a_cannot_replan_key_bs_thread(keyed_app: FastAPI) -> None:
     assert own.status_code == 200
 
 
-async def test_a_replan_child_belongs_to_its_parents_operator(keyed_app: FastAPI) -> None:
-    async with _client(keyed_app) as client:
-        thread_id = await _plan(client, _ALPHA)
-        await client.post(
-            f"/api/plan/{thread_id}/ack",
-            json={"action": "confirm", "actor": "alpha"},
-            headers=_ALPHA,
-        )
-        child = (await client.post("/api/replan", json=_snapshot(thread_id), headers=_ALPHA)).json()
-        own = await client.get(f"/api/plan/{child['thread_id']}", headers=_ALPHA)
-        other = await client.get(f"/api/plan/{child['thread_id']}", headers=_BRAVO)
+async def test_a_replan_child_belongs_to_its_parents_operator(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    """A child thread has no mission row of its own; its parent's owner holds it.
 
-    assert own.json()["found"] is True
-    assert other.json()["found"] is False
+    Checked on the ownership rule rather than over HTTP: in the test app the
+    replan graph keeps its own saver, so a child's state is not readable there
+    even by its owner, while production shares one checkpointer.
+    """
+    async with session_factory() as session:
+        await record_thread(session, "parent-thread", "alpha")
+
+    assert await _visible_to(session_factory, "parent-thread:1", "alpha")
+    assert not await _visible_to(session_factory, "parent-thread:1", "bravo")
+    assert not await _visible_to(session_factory, "orphan:1", "alpha")
 
 
 async def test_key_a_cannot_plan_onto_key_bs_thread(keyed_app: FastAPI) -> None:
@@ -205,3 +213,41 @@ async def test_with_auth_off_every_caller_reads_every_thread(app_with_graph: Fas
         thread_id = (await client.post("/api/plan", json=_BODY)).json()["thread_id"]
         read = await client.get(f"/api/plan/{thread_id}")
     assert read.json()["found"] is True
+
+
+def test_missions_planned_under_the_shared_key_stay_the_default_operators(
+    tmp_path: Path,
+) -> None:
+    """Migration 0011 backfills existing missions, so the one-key deployment keeps them."""
+    database = tmp_path / "upgrade.db"
+    env = {**os.environ, "SUAS_DATABASE_URL": f"sqlite+aiosqlite:///{database}"}
+
+    def alembic(*args: str) -> None:
+        subprocess.run(
+            [sys.executable, "-m", "alembic", *args],
+            cwd=_BACKEND,
+            env=env,
+            check=True,
+            capture_output=True,
+        )
+
+    alembic("upgrade", "0010")
+    with sqlite3.connect(database) as connection:
+        connection.execute(
+            "INSERT INTO mission_threads (thread_id, created_at) VALUES ('old', '2026-10-01')"
+        )
+    alembic("upgrade", "head")
+    with sqlite3.connect(database) as connection:
+        owner = connection.execute(
+            "SELECT operator_key_id FROM mission_threads WHERE thread_id = 'old'"
+        ).fetchone()
+    assert owner == (LEGACY_OPERATOR_ID,)
+
+
+@pytest.mark.parametrize("headers", [{}, {"X-API-Key": "alpha-secre"}, {"X-API-Key": ""}])
+async def test_a_key_that_names_no_operator_is_refused(
+    keyed_app: FastAPI, headers: dict[str, str]
+) -> None:
+    async with _client(keyed_app) as client:
+        response = await client.post("/api/plan", json=_BODY, headers=headers)
+    assert response.status_code == 401

@@ -54,6 +54,37 @@ def normalise_database_url(url: str) -> str:
     return url
 
 
+# The operator id the single shared SUAS_API_KEY is known by. Missions planned
+# before per-operator keys (#81) were backfilled to it by migration 0011, so a
+# deployment that keeps its one key keeps its open interrupts.
+LEGACY_OPERATOR_ID: Final[str] = "default"
+
+
+def _parse_key_entry(entry: str) -> tuple[str, str]:
+    """Return ``(operator_id, key)`` from one ``id:key`` entry, refusing blanks."""
+    operator_id, separator, key = (part.strip() for part in entry.partition(":"))
+    if not (separator and operator_id and key):
+        raise ValueError("Each SUAS_API_KEYS entry must be operator_id:key, both non-empty")
+    return operator_id, key
+
+
+def parse_operator_keys(api_keys: str, api_key: str) -> dict[str, str]:
+    """Return operator id -> key from ``SUAS_API_KEYS`` plus the legacy single key.
+
+    Ambiguity is refused rather than resolved: two operators sharing a key, or
+    one id named twice, would make a mission's owner a matter of list order.
+    """
+    pairs = [_parse_key_entry(entry) for entry in api_keys.split(",") if entry.strip()]
+    if api_key:
+        pairs.append((LEGACY_OPERATOR_ID, api_key))
+    keys = dict(pairs)
+    if len(keys) != len(pairs) or len(set(keys.values())) != len(pairs):
+        raise ValueError(
+            "SUAS_API_KEYS (with SUAS_API_KEY as 'default') must not repeat an id or key"
+        )
+    return keys
+
+
 class Settings(BaseSettings):
     """Strongly typed application settings loaded from the environment."""
 
@@ -112,6 +143,9 @@ class Settings(BaseSettings):
     demo_mode: bool = Field(default=False)
     openai_model: str = Field(default="gpt-4o-mini")
     api_key: str = Field(default="")
+    # Per-operator keys (#81): "alpha:key-a,bravo:key-b". Each mission belongs to
+    # the operator whose key planned it, and only that key can read it.
+    api_keys: str = Field(default="")
     cors_origins: str = Field(default="http://localhost:3000")
     weather_base_url: str = Field(default=DEFAULT_WEATHER_URL)
     # Per-request. Small, because a planning request is waiting on it.
@@ -161,10 +195,21 @@ class Settings(BaseSettings):
         """Return whether the configured database is PostgreSQL."""
         return self.database_url.startswith("postgresql")
 
+    @model_validator(mode="after")
+    def _refuse_ambiguous_keys(self) -> "Settings":
+        """Fail at startup on a key list that cannot name each mission's owner."""
+        parse_operator_keys(self.api_keys, self.api_key)
+        return self
+
+    @property
+    def operator_keys(self) -> dict[str, str]:
+        """Return operator id -> API key for every configured operator."""
+        return parse_operator_keys(self.api_keys, self.api_key)
+
     @property
     def auth_enabled(self) -> bool:
         """Return whether endpoint API-key authentication is enforced."""
-        return bool(self.api_key)
+        return bool(self.operator_keys)
 
 
 @lru_cache(maxsize=1)
