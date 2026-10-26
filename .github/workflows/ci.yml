@@ -117,6 +117,12 @@ jobs:
         env:
           SUAS_TEST_POSTGRES_URL: postgresql://suas:suas@localhost:5432/suas
         run: python -m pytest -q -p no:cacheprovider tests/test_startup_concurrency.py
+      # Two workers, one rate-limit ceiling (#84): the race needs Postgres row
+      # locks, which SQLite's single writer cannot exercise.
+      - name: Shared rate limit on Postgres
+        env:
+          SUAS_TEST_POSTGRES_URL: postgresql://suas:suas@localhost:5432/suas
+        run: python -m pytest -q -p no:cacheprovider tests/test_shared_rate_limit.py
 
   calculator-version:
     name: Calculator version bump

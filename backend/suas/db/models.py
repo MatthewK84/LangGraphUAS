@@ -202,3 +202,17 @@ class CorpusQuarantineRow(Base):
     quarantined_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     cleared_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     cleared_by: Mapped[str | None] = mapped_column(String, nullable=True)
+
+
+class RateLimitBucketRow(Base):
+    """One caller's recent request times, shared by every worker (#84).
+
+    ``bucket`` is the SHA-256 of the limiter's client key, so an API key used
+    as an identity is never stored. ``hits`` holds at most the configured
+    number of epoch-second timestamps inside the window.
+    """
+
+    __tablename__ = "rate_limit_buckets"
+
+    bucket: Mapped[str] = mapped_column(String(64), primary_key=True)
+    hits: Mapped[list[float]] = mapped_column(JSON, nullable=False)

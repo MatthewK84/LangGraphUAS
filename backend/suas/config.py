@@ -191,6 +191,9 @@ class Settings(BaseSettings):
     climb_efficiency: float = Field(default=0.6, gt=0.0, le=1.0)
     rate_limit_requests: int = Field(default=30, ge=1)
     rate_limit_window_s: float = Field(default=60.0, gt=0.0)
+    # One budget for every worker, kept in the database (#84). Off by default:
+    # a single local process needs no shared state.
+    rate_limit_shared: bool = Field(default=False)
     metrics_enabled: bool = Field(default=True)
     checkpoint_retention_days: float = Field(default=30.0, ge=0.0)
 
