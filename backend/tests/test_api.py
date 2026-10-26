@@ -249,7 +249,7 @@ async def test_plan_requires_api_key_when_enabled(app_with_graph: FastAPI) -> No
     assert authed.status_code == 200
 
 
-@pytest.mark.parametrize("limit", [2])
+@pytest.mark.parametrize("limit", [1, 2])
 async def test_rate_limit_returns_429_after_allowance(app_with_graph: FastAPI, limit: int) -> None:
     app_with_graph.dependency_overrides[get_settings] = lambda: Settings(
         rate_limit_requests=limit,

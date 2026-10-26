@@ -148,6 +148,8 @@ def test_the_prefixed_name_wins_over_the_conventional_one(
     assert Settings().database_url == "postgresql+psycopg://u:p@explicit/db"
 
 
-def test_a_limit_of_one_request_is_still_a_limit() -> None:
-    # The smallest allowed limit must enforce, not switch limiting off.
-    assert Settings(rate_limit_requests=1).rate_limit_enabled
+def test_rate_limiting_cannot_be_switched_off() -> None:
+    # Zero requests is refused at startup, so there is no "disabled" setting
+    # for the request path to check; the limit always applies.
+    with pytest.raises(ValidationError):
+        Settings(rate_limit_requests=0)
