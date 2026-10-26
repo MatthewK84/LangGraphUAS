@@ -34,7 +34,7 @@ from suas.graph.workflow import build_mission_graph
 from suas.logging_config import configure_logging
 from suas.rag.provider import build_embedder
 from suas.services.llm import ReportService
-from suas.services.weather import build_weather_service
+from suas.services.weather import build_weather_service, prune_stale_weather
 
 logger: Final[logging.Logger] = logging.getLogger(__name__)
 
@@ -112,6 +112,19 @@ async def _prune_rate_limit_buckets(
         logger.info("Pruned %d idle rate-limit buckets", pruned)
 
 
+async def _prune_weather_cache(
+    session_factory: async_sessionmaker[AsyncSession], settings: Settings
+) -> None:
+    """Drop shared weather readings past the stale max age. Never raises."""
+    try:
+        pruned: int = await prune_stale_weather(session_factory, settings.weather_stale_max_age_s)
+    except Exception as exc:  # Housekeeping, like retention.
+        logger.error("Weather cache pruning pass failed: %s", exc)
+        return
+    if pruned > 0:
+        logger.info("Pruned %d expired weather readings", pruned)
+
+
 async def _housekeep(
     session_factory: async_sessionmaker[AsyncSession],
     checkpointer: BaseCheckpointSaver[Any],
@@ -120,6 +133,7 @@ async def _housekeep(
     """Run one retention pass over everything that ages out."""
     await _purge_checkpoints(session_factory, checkpointer, settings)
     await _prune_rate_limit_buckets(session_factory, settings)
+    await _prune_weather_cache(session_factory, settings)
 
 
 async def _housekeep_forever(

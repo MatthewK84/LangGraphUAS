@@ -236,6 +236,11 @@ class Settings(BaseSettings):
     weather_deadline_s: float = Field(default=6.0, gt=0.0)
     # How long a reading stays good enough to fly on.
     weather_cache_ttl_s: float = Field(default=600.0, ge=0.0)
+    # How old a cached reading may be and still answer an outage as
+    # cached_stale. Past it an outage answers as an empty cache would, and the
+    # retention pass deletes the shared row. Three hours: past that a surface
+    # observation describes another weather system as often as not.
+    weather_stale_max_age_s: float = Field(default=10800.0, gt=0.0)
     # Keep the cache in the database so every worker shares it (#85). Off by
     # default: one local process needs no shared state. Compose turns it on.
     weather_cache_shared: bool = Field(default=False)
@@ -276,6 +281,15 @@ class Settings(BaseSettings):
     def uses_postgres(self) -> bool:
         """Return whether the configured database is PostgreSQL."""
         return self.database_url.startswith("postgresql")
+
+    @model_validator(mode="after")
+    def _refuse_a_max_age_under_the_ttl(self) -> "Settings":
+        """Fail at startup rather than prune readings still fresh enough to fly on."""
+        if self.weather_stale_max_age_s < self.weather_cache_ttl_s:
+            raise ValueError(
+                "SUAS_WEATHER_STALE_MAX_AGE_S must be at least SUAS_WEATHER_CACHE_TTL_S"
+            )
+        return self
 
     @model_validator(mode="after")
     def _refuse_ambiguous_keys(self) -> "Settings":

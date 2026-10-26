@@ -352,7 +352,9 @@ async def test_the_retention_pass_prunes_expired_weather_and_says_so(
 ) -> None:
     from langgraph.checkpoint.memory import InMemorySaver
 
-    await _rows(factory, fresh=1.0, gone=30 * 86400.0)
+    # The pass runs on the real clock, so these ages are from now, not _NOW.
+    real_age = (datetime.now(UTC) - _NOW).total_seconds()
+    await _rows(factory, fresh=1.0 - real_age, gone=30 * 86400.0 - real_age)
     with caplog.at_level(logging.INFO, logger="suas.main"):
         await _housekeep(factory, InMemorySaver(), Settings())
         await _housekeep(factory, InMemorySaver(), Settings())
