@@ -32,8 +32,11 @@ process purges without a restart (#86). No cron or scheduler is needed. A pass:
   delete is retried next pass. Another thread's replan child is untouched.
 - **Prunes idle `rate_limit_buckets` rows**: those with no hit left in
   `SUAS_RATE_LIMIT_WINDOW_S`. An idle row admits exactly as a missing one, so
-  this changes no decision. Rows are read `FOR UPDATE SKIP LOCKED`, so a bucket
-  mid-admission is skipped rather than waited on.
+  this changes no decision. Buckets are paged in key order, 1000 per
+  transaction, so idle rows behind many live ones are reached. Rows are read
+  `FOR UPDATE SKIP LOCKED`, so a bucket mid-admission is skipped rather than
+  waited on, and the delete matches the hits it judged, so a request admitted
+  meanwhile keeps its bucket, on SQLite too.
 - **Prunes `weather_cache` rows past `SUAS_WEATHER_STALE_MAX_AGE_S`**
   (default 10800s), judged from each reading's own `fetched_at`; a row with
   none counts as infinitely old. Such a reading is never served: when the
@@ -42,7 +45,8 @@ process purges without a restart (#86). No cron or scheduler is needed. A pass:
   `error` reading an empty cache gives. Pruning therefore changes no answer.
   Rows are paged in key order (1000 per transaction) and read `FOR UPDATE SKIP
   LOCKED`, and the delete matches the `fetched_at` it judged, so a reading
-  another worker stored meanwhile is kept, on SQLite too.
+  another worker stored meanwhile is kept, on SQLite too. A worker's own
+  in-memory cache (sharing off) drops readings past the max age on each store.
 
 Failures in a pass are logged and never stop the app. The single retention
 window applies to every status; a status-aware policy like the one below is
