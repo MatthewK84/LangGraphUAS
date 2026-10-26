@@ -232,7 +232,7 @@ describe("where the secret can be read", () => {
   it("reads backend secrets only in src/lib/server", () => {
     const readers = sources(SRC)
       .filter((path) =>
-        /process\.env\.BACKEND_/.test(readFileSync(path, "utf8")),
+        readFileSync(path, "utf8").includes("process.env.BACKEND_"),
       )
       .map((path) => relative(SRC, path));
     expect(readers.every((path) => path.startsWith("lib/server/"))).toBe(true);

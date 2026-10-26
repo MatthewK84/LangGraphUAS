@@ -1,4 +1,5 @@
-import { PLAN_TIMEOUT_MS, forwardToBackend } from "@/lib/server/backend";
+import { PLAN_TIMEOUT_MS } from "@/lib/server/backend";
+import { forwardForBrowser } from "@/lib/server/session";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +22,7 @@ export async function POST(
   }
   // Encoded so a crafted thread id cannot escape the intended backend path.
   const threadId: string = encodeURIComponent(context.params.thread_id);
-  return forwardToBackend({
+  return forwardForBrowser(request, {
     path: `/api/plan/${threadId}/ack`,
     method: "POST",
     timeoutMs: PLAN_TIMEOUT_MS,
