@@ -693,6 +693,7 @@ Backend variables use the `SUAS_` prefix. Compose maps friendly names to them.
 | `SUAS_OPENAI_API_KEY` | empty | Enables the model-generated report. |
 | `SUAS_DEMO_MODE` | `false` | Fixture weather instead of the live provider; every plan advisory. Compose: `DEMO_MODE`. |
 | `SUAS_OPENAI_MODEL` | `gpt-4o-mini` | Chat model name. |
+| `SUAS_LANGSMITH_TRACING` | `false` | Opt-in LangSmith tracing; needs `SUAS_LANGSMITH_API_KEY`. Coordinates and all text are redacted unless `SUAS_LANGSMITH_REDACT=false` (local only). See `docs/ops.md#tracing`. |
 | `SUAS_API_KEY` | empty | When set, planning endpoints require header `X-API-Key`. Known as operator `default`. |
 | `SUAS_API_KEYS` | empty | Per-operator keys, `id:key,id:key`. A mission is visible only to the key that planned it. |
 | `SUAS_RETIRED_API_KEYS` | empty | Rotation overlap, `id:old-key@expiry`: the old key keeps working until the expiry, only from the client IP that last used it. See docs/ops.md, Key rotation. |

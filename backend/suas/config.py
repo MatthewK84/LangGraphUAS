@@ -203,6 +203,14 @@ class Settings(BaseSettings):
         return self
 
     openai_api_key: str = Field(default="")
+    # LangSmith tracing (#109): off unless opted in. Inputs and outputs are
+    # redacted (coordinates and all text) unless langsmith_redact is turned off,
+    # which is for a local machine only. See suas/tracing.py.
+    langsmith_tracing: bool = Field(default=False)
+    langsmith_api_key: str = Field(default="")
+    langsmith_endpoint: str = Field(default="https://api.smith.langchain.com")
+    langsmith_project: str = Field(default="suas-mission-planner")
+    langsmith_redact: bool = Field(default=True)
     # Demo mode (#97): fixture weather instead of the live provider, so
     # `docker compose up` needs no network weather and no keys. Fixture weather
     # is never operational grade, so every plan is advisory.
@@ -289,6 +297,12 @@ class Settings(BaseSettings):
             raise ValueError(
                 "SUAS_WEATHER_STALE_MAX_AGE_S must be at least SUAS_WEATHER_CACHE_TTL_S"
             )
+        return self
+
+    @model_validator(mode="after")
+    def _refuse_tracing_without_a_key(self) -> "Settings":
+        if self.langsmith_tracing and not self.langsmith_api_key:
+            raise ValueError("SUAS_LANGSMITH_TRACING=true needs SUAS_LANGSMITH_API_KEY")
         return self
 
     @model_validator(mode="after")

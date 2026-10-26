@@ -16,6 +16,7 @@ path is added. A new node without a STRIDE row does not merge.
         +-- LangGraph + checkpointer   trusted cursor, untrusted state contents
         +-- weather HTTP               untrusted
         +-- LLM HTTP                   untrusted output
+        +-- LangSmith HTTP (opt-in)    third-party processor, redacted
         +-- rag.chunks                 untrusted text, trusted filters
 [corpus ingest (CI or workstation)]    trusted only via manifest + sha256
 [Blue List HTTP]                       untrusted until snapshotted and hashed
@@ -82,6 +83,7 @@ There are no debug endpoints that skip the ack.
 | Corpus exfiltration via the brief | Top-4 spans, `field_path` filtered | A brief cannot quote another airframe |
 | Open metrics endpoint | Bound to the internal network | Compose test |
 | Provider keys in the browser bundle | Server-only proxy; `BACKEND_*` read only under `lib/server/`, imported only by API route handlers. The session secret and derived keys stay on the Next server; the browser holds only its own session id | `session.test.ts`: source checks, and no response carries the secret or MAC; `test_session_keys.py`: no backend response echoes the secret or MAC |
+| Mission coordinates and raw briefs sent to LangSmith in a trace (#109) | Tracing is off unless `SUAS_LANGSMITH_TRACING=true`, which needs `SUAS_LANGSMITH_API_KEY`; no key is committed. Every run's inputs and outputs pass through `suas.tracing.redact` before they leave the process: `latitude` and `longitude` and every string (briefs, prompts, messages) become `[redacted]`, numbers and flags stay. Only `SUAS_LANGSMITH_REDACT=false`, for a local machine, turns this off. LangChain's own `LANGSMITH_TRACING` / `LANGCHAIN_TRACING_V2` switch, whose default client redacts nothing, is refused at startup. Residual: run names, timings, error messages and metadata (thread id) are sent unredacted | `tests/test_langsmith_tracing.py`: the real `langsmith.Client` over a recording fake session sends no coordinate or brief text by default and does with redaction off; off by default builds no client; startup refuses the raw switch; both graphs carry the tracer and shutdown flushes it. CI never calls the service |
 
 ## Denial of service
 
