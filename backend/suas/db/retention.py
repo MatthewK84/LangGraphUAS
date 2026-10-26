@@ -104,6 +104,11 @@ async def record_acknowledgement(
     await session.commit()
 
 
+async def _has_own_row(session: AsyncSession, thread_id: str) -> bool:
+    """Return whether this id was planned as a thread, not handed out as a child."""
+    return await session.get(MissionThreadRow, thread_id) is not None
+
+
 async def next_replan_thread_id(session: AsyncSession, parent_thread_id: str) -> str:
     """Reserve and return the next child thread id for a replan.
 
@@ -118,6 +123,10 @@ async def next_replan_thread_id(session: AsyncSession, parent_thread_id: str) ->
     if row is None:
         raise KeyError(parent_thread_id)
     row.replan_count += 1
+    # Skip an id a client planned as a thread of its own before new ids were
+    # refused a ':'; a replan landing there would write into that thread.
+    while await _has_own_row(session, f"{parent_thread_id}:{row.replan_count}"):
+        row.replan_count += 1
     await session.commit()
     return f"{parent_thread_id}:{row.replan_count}"
 
@@ -165,7 +174,9 @@ async def _purge_thread(
         if replan_count is None:
             return False
         for member in _thread_family(thread_id, replan_count):
-            await checkpointer.adelete_thread(member)
+            # A child id with a row of its own is someone's thread, not a replan.
+            if member == thread_id or not await _has_own_row(session, member):
+                await checkpointer.adelete_thread(member)
     return True
 
 

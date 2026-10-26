@@ -17,6 +17,7 @@ from enum import StrEnum
 from pydantic import BaseModel, ConfigDict, Field
 
 from suas.schemas.flight_log import FlightPhase
+from suas.schemas.thread_ids import MAX_THREAD_ID_LENGTH
 
 
 class TelemetrySource(StrEnum):
@@ -32,7 +33,7 @@ class TelemetrySnapshot(BaseModel):
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
-    thread_id: str = Field(min_length=1, max_length=255)
+    thread_id: str = Field(min_length=1, max_length=MAX_THREAD_ID_LENGTH)
     ts: datetime
     latitude: float = Field(ge=-90.0, le=90.0)
     longitude: float = Field(ge=-180.0, le=180.0)
