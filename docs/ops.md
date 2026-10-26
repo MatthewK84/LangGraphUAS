@@ -10,11 +10,38 @@
 | `migrations` | `alembic_version` holds `EXPECTED_REVISION` (`suas/db/migrations.py`) | `pending`: an older revision, or no version table on Postgres (tables from `create_all` alone); `unknown` when the database is down |
 | `checkpointer` | the plan checkpoint store answers a read | `unavailable`: the read raised |
 
-`not_tracked` is ready. It is local SQLite with no version table, the default development path, where `create_all` builds the schema. Deployed containers run `alembic upgrade head` in `docker-entrypoint.sh` before uvicorn, so `pending` there means the upgrade failed or ran against another database.
+`not_tracked` is ready. It is local SQLite with no version table, the default development path, where `create_all` builds the schema. Deployed containers do not migrate on start (see [Migrations](#migrations)), so `pending` there means the deploy's migration step has not run, failed, or ran against another database.
 
 A missing model key does not affect readiness. Advisory briefs are a supported mode.
 
 A new migration must also bump `EXPECTED_REVISION`; a test fails until it does. CI proves both directions against Postgres. A migrated database must be ready, and a database alembic never touched must answer 503 with `pending` (`scripts/smoke_check.py --expect-unmigrated`).
+
+## Migrations
+
+Upgrading the schema is a deploy step, never a side effect of a restart (#87).
+The image's entrypoint serves without touching the schema unless told to:
+
+| Path | Migration step |
+|---|---|
+| Compose | the one-shot `migrate` service runs `docker-entrypoint.sh migrate` (`alembic upgrade head`) after `db` is healthy; `backend` starts only once it exits 0 |
+| Railway | `railway.json` sets `"preDeployCommand": ["alembic upgrade head"]`; a failure stops the deploy before the new image serves |
+| Anything else | run `docker-entrypoint.sh migrate` (or `alembic upgrade head` with `SUAS_DATABASE_URL` set) once per release, before the new image serves |
+| One local container | `MIGRATE_ON_START=true` upgrades before uvicorn starts, and a failed upgrade stops the start. Exactly `true`; anything else is off |
+
+Every upgrade holds the Postgres startup advisory lock for its transaction, so
+replicas or a stray second upgrade run one after another; the later ones find
+the database at head. The app's own startup writes take the same lock.
+
+**Rolling back** a release that added a migration: deploy the previous image,
+then `alembic downgrade <its EXPECTED_REVISION>` once (from either image; the
+newer one knows the downgrade). Because no container upgrades on start, the
+restarted old image keeps the downgraded schema, and `/ready` answers 200 again
+once the revision matches. Do not set `MIGRATE_ON_START=true` on an image you
+might roll back, since its next restart would re-upgrade.
+
+Start the new image only after its migration step: the app's `create_all`
+creates missing tables on any database, and a table it created first makes the
+migration that creates it fail. `/ready` answers 503 `pending` in that window.
 
 ## Retention
 

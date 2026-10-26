@@ -1,13 +1,20 @@
 #!/bin/sh
-# Container entrypoint: migrate, then serve.
+# Container entrypoint: serve; migrate only when told to (#87).
 #
-# This exists because the image's CMD is what actually runs in production. A
-# start command configured outside the image (railway.json, a dashboard field,
-# a compose override) is easy to believe in and easy to have silently not
-# applied -- and when it does not apply, migrations never run and the server
-# binds a port nothing is routing to. Both failures look like "502" and neither
-# names its cause. Putting both in the image means every path that starts this
-# container gets them.
+#   docker-entrypoint.sh            serve (no schema change)
+#   docker-entrypoint.sh migrate    alembic upgrade head, then exit
+#   docker-entrypoint.sh CMD ...    run CMD instead (one-off or pre-deploy)
+#   MIGRATE_ON_START=true           upgrade head, then serve (single replica)
+#
+# Migrating is a deploy step, not a side effect of a restart: an image that
+# upgraded on every start undid a rollback the next time it restarted, and N
+# replicas starting together ran N upgrades at once. Compose runs a one-shot
+# `migrate` service first; Railway runs a pre-deploy command.
+#
+# The server command lives in the image because the image's CMD is what
+# actually runs in production. A start command configured outside the image (a
+# dashboard field, a compose override) is easy to believe in and easy to have
+# silently not applied, and the server then binds a port nothing routes to.
 #
 # PORT is supplied by the platform (Railway injects it); 8000 is the local
 # default. WEB_CONCURRENCY mirrors the name gunicorn and uvicorn already use.
@@ -34,7 +41,20 @@ if [ -z "${HOST:-}" ]; then
     fi
 fi
 
-alembic upgrade head
+case "${1:-}" in
+    migrate)
+        exec alembic upgrade head
+        ;;
+    "")
+        ;;
+    *)
+        exec "$@"
+        ;;
+esac
+
+if [ "${MIGRATE_ON_START:-false}" = "true" ]; then
+    alembic upgrade head
+fi
 
 # --no-proxy-headers: uvicorn otherwise believes X-Forwarded-For from 127.0.0.1
 # and overwrites the peer address with it. SUAS_TRUSTED_PROXIES is the one

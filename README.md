@@ -804,12 +804,16 @@ the air.
   `python3 backend/scripts/load_plan.py --requests 100 --concurrency 100`.
 - **Metrics are per process too.** Scrape every replica and aggregate in
   Prometheus rather than assuming one endpoint reports the whole fleet.
-- **The container migrates before it serves.** The image's entrypoint
-  (`backend/scripts/docker-entrypoint.sh`) runs `alembic upgrade head` before
-  starting uvicorn, so every path that starts the image migrates. Outside the
-  image, run `alembic upgrade head` as a deploy step; the app can create its
-  own schema for convenience, and `/ready` stays 503 until the schema is at the
-  code's revision.
+- **Migrations are a deploy step, not a restart side effect (#87).** The
+  image's entrypoint (`backend/scripts/docker-entrypoint.sh`) serves without
+  touching the schema. Compose runs a one-shot `migrate` service
+  (`docker-entrypoint.sh migrate`) before the backend, Railway runs
+  `preDeployCommand` from `railway.json`, and anywhere else runs
+  `docker-entrypoint.sh migrate` once per release. `MIGRATE_ON_START=true`
+  upgrades before serving, for a single local container only. Upgrades hold a
+  Postgres advisory lock, so concurrent ones serialise, and `/ready` stays 503
+  until the schema is at the code's revision. See
+  [ops: Migrations](docs/ops.md#migrations) for rollback.
 - **Reference power figures are estimates.** See Data provenance. Swap in
   measured values before relying on the energy budget operationally. Edit
   `backend/suas/data/*.json`; the change is applied on the next restart.
