@@ -32,7 +32,7 @@ text.
 
 | Threat | Mitigation | Test |
 |---|---|---|
-| Stolen key resumes another operator's thread | Keys scoped to `missions.operator_key_id`; mismatch returns 404 | Cross-key resume returns 404 |
+| Stolen key resumes another operator's thread | Keys scoped to `mission_threads.operator_key_id` (#81); a mismatch answers exactly as an unknown thread (404, or `found: false` on `GET`) | `tests/test_operator_keys.py`: cross-key read, ack, replan and plan-onto are refused as unknown |
 | Forged "live" weather | `source` is tagged by our client from transport outcome, never read from the response body | A fake body cannot set `source=live` when the request failed |
 | Demo mode left on in a deployment (#97) | `SUAS_DEMO_MODE` defaults off in Settings, Compose and `.env.example`. Demo weather is tagged `fixture`, never operational grade, so the gate blocks operational (`WEATHER_NOT_LIVE`) and every plan says advisory. The backend logs a `DEMO MODE` warning at startup | `tests/test_demo_mode.py`: an operational request on fixture weather comes back advisory; `scripts/compose_smoke.py` checks the same end to end when run locally |
 | Forged Blue List page | Snapshot plus `content_hash`; the gate reads the snapshot, never a request-path scrape | Tampered hash fails the gate |
@@ -69,7 +69,7 @@ There are no debug endpoints that skip the ack.
 
 | Threat | Mitigation | Test |
 |---|---|---|
-| Thread enumeration | UUIDs; no unauthenticated list endpoint | Sequential guess returns 404 |
+| Thread enumeration | UUIDs; no unauthenticated list endpoint; another operator's thread reads as unknown (#81) | `tests/test_operator_keys.py`: another key's thread and a never-planned id get the same answer |
 | Credential committed to the repository | gitleaks over the full history on every pull request | A planted AWS key pair fails `secrets-scan` (gitleaks exit 1) |
 | Coordinates in logs or checkpoints | Redacted at `info`; minimal state; encryption option | Log fixture carries no raw coordinates |
 | Corpus exfiltration via the brief | Top-4 spans, `field_path` filtered | A brief cannot quote another airframe |

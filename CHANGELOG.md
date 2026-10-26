@@ -9,6 +9,7 @@ the format.
 ## Week of 2026-10-26
 
 - Every W and Wh figure in a plan response now carries its own provenance (weakest source, lowest confidence, operational grade, inputs), and the dashboard shows it beside each number, so an estimate can no longer render as a measured watt; a test perturbs each reference field through the calculator to keep the figure-to-input table honest (#79).
+- Per-operator API keys: `SUAS_API_KEYS=id:key,...` (the single `SUAS_API_KEY` stays as operator `default`), each mission records the key that planned it (migration 0011 backfills existing ones to `default`), and another key's thread reads, acks and replans exactly as an unknown one (#81).
 
 ## Week of 2026-10-19
 

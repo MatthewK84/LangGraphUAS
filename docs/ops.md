@@ -142,6 +142,26 @@ The losing requests get 409. Holding the locks across the resume is deliberate:
 they cover a single mission's row, so they serialise only the duplicate that must
 be serialised, and the model client's own timeout bounds how long either is held.
 
+## Operator keys
+
+`SUAS_API_KEYS=alpha:key-a,bravo:key-b` names each key by operator, and
+`SUAS_API_KEY`, if set, joins the list as operator `default`. Startup refuses a
+list with a blank id or key, a repeated id, or one key under two ids.
+
+Each mission row records `operator_key_id`, the key that planned it. `GET
+/api/plan/{id}`, the ack and `/api/replan` answer another operator's thread
+exactly as they answer one that does not exist, and a plan onto another
+operator's thread id is refused as unknown. A replan child belongs to its
+parent's operator.
+
+Migration 0011 sets every existing mission to `default`, so a deployment that
+keeps its one `SUAS_API_KEY` keeps reading its threads, open interrupts
+included. Moving those missions to a named operator is an `UPDATE
+mission_threads SET operator_key_id = ...`; nothing else stores the owner.
+Missions planned with auth off record no operator, and once auth is on no key
+can read them. Revoking a key hides that operator's missions until a key with
+the same id is configured again; key rotation that keeps the id is #83.
+
 ## Incident response
 
 These counters sit at zero in production. Any non-zero value on a real mission
