@@ -203,11 +203,6 @@ class Settings(BaseSettings):
         return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
 
     @property
-    def rate_limit_enabled(self) -> bool:
-        """Return whether per-client rate limiting is active."""
-        return self.rate_limit_requests > 0
-
-    @property
     def uses_postgres(self) -> bool:
         """Return whether the configured database is PostgreSQL."""
         return self.database_url.startswith("postgresql")
