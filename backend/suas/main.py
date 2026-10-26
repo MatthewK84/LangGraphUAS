@@ -24,7 +24,12 @@ from suas.api.observability import MetricsRegistry, RequestContextMiddleware
 from suas.api.ratelimit import SlidingWindowLimiter, build_limiter, prune_idle_buckets
 from suas.api.routes import router
 from suas.config import DEMO_SESSION_KEY_SECRET, Settings, describe_database_url, get_settings
-from suas.db.engine import create_engine, create_schema, create_session_factory
+from suas.db.engine import (
+    SchemaNotMigratedError,
+    create_engine,
+    create_session_factory,
+    prepare_schema,
+)
 from suas.db.retention import purge_expired_threads
 from suas.db.seed import seed_reference_data
 from suas.graph.checkpointer import build_checkpointer
@@ -52,7 +57,11 @@ class _Resources:
 async def _build_resources(settings: Settings) -> _Resources:
     """Create the engine, schema, seed data, service clients, and dependencies."""
     engine = create_engine(settings.database_url)
-    await create_schema(engine)
+    try:
+        await prepare_schema(engine, alembic_owns_schema=settings.require_postgres)
+    except SchemaNotMigratedError:
+        await engine.dispose()
+        raise
     session_factory = create_session_factory(engine)
     async with session_factory() as session:
         await seed_reference_data(session)

@@ -39,9 +39,15 @@ restarted old image keeps the downgraded schema, and `/ready` answers 200 again
 once the revision matches. Do not set `MIGRATE_ON_START=true` on an image you
 might roll back, since its next restart would re-upgrade.
 
-Start the new image only after its migration step: the app's `create_all`
-creates missing tables on any database, and a table it created first makes the
-migration that creates it fail. `/ready` answers 503 `pending` in that window.
+Start the new image only after its migration step. With
+`SUAS_REQUIRE_POSTGRES=true` (the image's default) alembic alone owns the
+schema: the app never runs `create_all`, and a server started against a
+database with no `alembic_version` table exits at startup with `The database
+has no alembic_version table. Run the migrate step` rather than building tables
+the migration would then collide with. A database stamped at another revision
+still starts, and `/ready` answers 503 `pending` until the revisions match.
+Local SQLite (and Postgres without `SUAS_REQUIRE_POSTGRES`) still builds its
+schema with `create_all`.
 
 ## Backup and restore
 
