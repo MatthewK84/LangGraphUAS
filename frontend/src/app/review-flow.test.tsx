@@ -13,7 +13,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-const BRIEF = { name: "AI Safety Officer Report" };
+const BRIEF = { name: "Safety officer brief" };
 const CONFIRM = { name: "Acknowledge and generate brief" };
 
 async function reviewCard(): Promise<HTMLElement> {
