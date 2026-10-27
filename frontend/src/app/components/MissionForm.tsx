@@ -28,6 +28,9 @@ interface MissionFormProps {
   readonly onEdit: () => void;
 }
 
+/** Five places is about 1.1 m of latitude, near a phone GPS fix. */
+const COORDINATE_DECIMALS = 5;
+
 function toOptions(
   items: readonly { readonly id: string; readonly name: string }[],
 ): readonly SelectOption[] {
@@ -177,8 +180,8 @@ export function MissionForm(props: MissionFormProps): JSX.Element {
         setFormError(`Location acquisition failed: ${result.error}`);
         return;
       }
-      setLatitude(result.data.latitude.toFixed(4));
-      setLongitude(result.data.longitude.toFixed(4));
+      setLatitude(result.data.latitude.toFixed(COORDINATE_DECIMALS));
+      setLongitude(result.data.longitude.toFixed(COORDINATE_DECIMALS));
       onEdit();
     });
   }
