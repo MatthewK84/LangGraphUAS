@@ -61,17 +61,32 @@ export interface Calculations {
  * lowest confidence among the reference fields it was computed from.
  * `operational_grade` is the backend gate's own rule, so it is not repeated here.
  */
+export type FieldSource =
+  "datasheet" | "flight_log" | "secondary" | "derived" | "estimate" | "unknown";
+
+export type Confidence = "low" | "medium" | "high";
+
+/**
+ * One reference field a figure was computed from, as the catalog records it
+ * (#96). `value` and `unit` are null when the catalog keeps no record.
+ */
+export interface InputBasis {
+  readonly field: string;
+  readonly value: number | null;
+  readonly unit: string | null;
+  readonly source: FieldSource;
+  readonly confidence: Confidence;
+  readonly source_url: string | null;
+  readonly retrieved_at: string | null;
+  readonly notes: string;
+}
+
 export interface NumberProvenance {
-  readonly source:
-    | "datasheet"
-    | "flight_log"
-    | "secondary"
-    | "derived"
-    | "estimate"
-    | "unknown";
-  readonly confidence: "low" | "medium" | "high";
+  readonly source: FieldSource;
+  readonly confidence: Confidence;
   readonly operational_grade: boolean;
   readonly inputs: readonly string[];
+  readonly basis: readonly InputBasis[];
 }
 
 /** Keyed by the figure's dotted path in `Calculations`. */

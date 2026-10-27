@@ -10,16 +10,19 @@ import { useState } from "react";
 import type { JSX } from "react";
 
 import { advisoryNotice } from "@/lib/advisory";
+import { InspectContext } from "@/lib/inspect";
 import { acknowledgePlan, planMission } from "@/lib/api";
 import { planFailure } from "@/lib/failure";
 import type { PlanFailure } from "@/lib/failure";
 import { briefsPayload } from "@/lib/replan";
 import type { AckAction, MissionRequest, PlanResult } from "@/lib/types";
 import { useCatalog } from "@/lib/useCatalog";
+import { useInspector } from "@/lib/useInspector";
 import { useReplan } from "@/lib/useReplan";
 
 import { AdvisoryBanner } from "./components/AdvisoryBanner";
 import { MissionForm } from "./components/MissionForm";
+import { ProvenanceDrawer } from "./components/ProvenanceDrawer";
 import { ReplanPanel } from "./components/ReplanPanel";
 import { ResultsPanel } from "./components/ResultsPanel";
 import { ReviewPanel } from "./components/ReviewPanel";
@@ -48,6 +51,7 @@ export default function MissionPlanner(): JSX.Element {
   const [sentPlan, setSentPlan] = useState<MissionRequest | null>(null);
   const catalog = useCatalog();
   const replan = useReplan();
+  const inspector = useInspector();
 
   async function analyze(request: MissionRequest): Promise<void> {
     setLoading(true);
@@ -56,6 +60,7 @@ export default function MissionPlanner(): JSX.Element {
     setInputsEdited(false);
     setSentPlan(request);
     replan.reset();
+    inspector.reset();
     const outcome = await planMission({ ...request, thread_id: threadId });
     if (!outcome.ok) {
       setError(planFailure("plan", outcome.error));
@@ -120,8 +125,17 @@ export default function MissionPlanner(): JSX.Element {
                 replan={replan.latest.result}
               />
             )}
-            <ResultsPanel loading={loading} error={error} result={result} />
+            <InspectContext.Provider value={inspector.open}>
+              <ResultsPanel loading={loading} error={error} result={result} />
+            </InspectContext.Provider>
           </div>
+          {result !== null && inspector.figure !== null && (
+            <ProvenanceDrawer
+              figure={inspector.figure}
+              provenance={result.provenance}
+              onClose={inspector.close}
+            />
+          )}
         </main>
         <ReviewPanel
           result={result}
