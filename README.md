@@ -563,7 +563,10 @@ Close shuts it and puts focus back on the figure.
 The acknowledgement can be done without a mouse. Tab reaches the advisory
 checkbox (Space ticks it), then Acknowledge and Abort (Enter activates them).
 Once a decision is recorded, focus moves to the note saying what happened, not
-to the page body. In Vitest, axe-core checks the page while an assessment
+to the page body. Once there is an assessment, the next Tab after Analyze is a
+"Skip to sign-off" link, hidden until focused, in the assessment header: Enter
+moves focus to the review panel, so the advisory checkbox and Acknowledge are the
+next two stops instead of every figure's provenance button. In Vitest, axe-core checks the page while an assessment
 awaits its signature, after signing, and with the drawer open. jsdom cannot
 measure color, so the NO-GO treatment's WCAG AA contrast is computed from the
 tokens in both themes (`src/lib/contrast.test.ts`).

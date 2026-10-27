@@ -6,6 +6,7 @@ import type { AckAction, PlanResult } from "@/lib/types";
 
 import { ReplanForm } from "./ReplanForm";
 import { ReviewCard } from "./ReviewCard";
+import { SIGN_OFF_ID } from "./SkipToSignOff";
 
 interface ReviewPanelProps {
   readonly result: PlanResult | null;
@@ -75,7 +76,9 @@ export function ReviewPanel(props: ReviewPanelProps): JSX.Element {
       aria-label="Review and acknowledge"
     >
       <div className="panel-header">
-        <h2 className="section-label">Review and acknowledge</h2>
+        <h2 id={SIGN_OFF_ID} tabIndex={-1} className="section-label">
+          Review and acknowledge
+        </h2>
       </div>
       <div className="relative min-h-0 flex-1 overflow-y-auto">
         {pending === null && <Outcome result={result} />}
