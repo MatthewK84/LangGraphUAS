@@ -549,6 +549,15 @@ was computed from, `operational_grade` (true only when every one of them is
 estimate is labelled as one, and the dashboard shows the label beside the
 number. Weather's own provenance is `weather.source`.
 
+Each entry also carries `basis`: one record per input field, with the catalog's
+`value`, `unit`, `source`, `confidence`, `source_url`, `retrieved_at` and
+`notes` (`value` and `unit` are `null` when the catalog keeps no record, and the
+source is then `unknown`). In the dashboard, the basis label beside a figure
+opens a provenance drawer under the figures listing those fields: estimates are
+labelled "Estimate", unrecorded fields "Not recorded", a cited field links out to
+its document (http and https only), and retrieval times show in UTC. Escape or
+Close shuts it and puts focus back on the figure.
+
 </details>
 
 <details>
