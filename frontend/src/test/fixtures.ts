@@ -1,7 +1,12 @@
 // Plan responses as the backend sends them, for component tests and the local
 // screenshot loop. Figures are taken from a real demo-mode run, so they carry
 // the calculator's own precision rather than round placeholders.
-import type { FigureProvenance, PlanResult, ReplanResult } from "@/lib/types";
+import type {
+  FigureProvenance,
+  PlanResult,
+  ReplanResult,
+  TelemetrySnapshotRequest,
+} from "@/lib/types";
 
 const ESTIMATE = {
   source: "estimate",
@@ -126,31 +131,47 @@ export const OPERATIONAL_PLAN: PlanResult = {
   warnings: [],
 };
 
+/** What the operator sent for the replan below. */
+export const REPLAN_SNAPSHOT: TelemetrySnapshotRequest = {
+  thread_id: "msn-3d90e6a4",
+  ts: "2026-10-27T14:03:11.000Z",
+  latitude: 38.87114,
+  longitude: -77.05581,
+  alt_m: 120,
+  soc_fraction: 0.42,
+  remaining_leg_m: 1800,
+  remaining_hover_s: 60,
+  oat_c: 4,
+  wind_mps: 6.1,
+  payload_attached: true,
+};
+
 /** A replan whose only finding is a watch, which still withdraws clearance. */
 export const REPLAN: ReplanResult = {
-  thread_id: "rpl-5a17c0e2",
+  thread_id: "msn-3d90e6a4:1",
   parent_thread_id: "msn-3d90e6a4",
   severity: "watch",
-  recommended_action: "continue",
+  recommended_action: "advisory_only",
   operational_ok: false,
   live_energy: {
     available_wh: 96.42,
-    reserve_wh: 32.03,
+    reserve_wh: 26.4,
     required_wh: 51.88,
     residual_wh: 44.54,
     temperature_factor: 0.97,
   },
   briefed_margin_wh: 41.7,
-  snapshot_age_s: 4.2,
+  snapshot_age_s: 47.3,
   alerts: [
     {
       severity: "watch",
-      code: "ENERGY_NEAR_RESERVE",
-      message: "Residual 44.5 Wh is within 1.5x of the 32.0 Wh reserve",
-      briefed: { margin_wh: 41.7 },
-      live: { residual_wh: 44.54 },
-      delta: { margin_wh: -29.19 },
-      recommended_action: "continue",
+      code: "SOC_STALE",
+      message:
+        "Snapshot is 47.3 s old, beyond the 30.0 s limit for operational use.",
+      briefed: {},
+      live: { age_s: 47.3, ts: "2026-10-27T14:03:11+00:00" },
+      delta: {},
+      recommended_action: "advisory_only",
     },
   ],
 };

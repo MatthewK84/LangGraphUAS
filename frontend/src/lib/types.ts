@@ -166,6 +166,26 @@ export interface ReplanResult {
   readonly alerts: readonly ReplanAlert[];
 }
 
+/**
+ * One live report sent for a replan. State of charge travels as a fraction,
+ * as the backend takes it; the form converts from the percent typed.
+ */
+export interface TelemetrySnapshotRequest {
+  readonly thread_id: string;
+  /** ISO 8601, UTC. */
+  readonly ts: string;
+  readonly latitude: number;
+  readonly longitude: number;
+  readonly alt_m: number;
+  readonly soc_fraction: number;
+  readonly remaining_leg_m: number;
+  readonly remaining_hover_s: number;
+  readonly oat_c: number;
+  /** Null when the aircraft reports none; the backend then raises a watch. */
+  readonly wind_mps: number | null;
+  readonly payload_attached: boolean;
+}
+
 export interface MissionParams {
   readonly distance_m: number;
   readonly hover_time_s: number;

@@ -1,11 +1,16 @@
 // Drive the whole planner page in jsdom: a stubbed backend and the operator's
 // steps to an assessment. Used where a behaviour lives in how the page wires
 // its panels together, not in any one component.
-import { screen } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
 import type { UserEvent } from "@testing-library/user-event";
 import { vi } from "vitest";
 
-import type { AircraftSummary, PayloadSummary, PlanResult } from "@/lib/types";
+import type {
+  AircraftSummary,
+  PayloadSummary,
+  PlanResult,
+  ReplanResult,
+} from "@/lib/types";
 
 const AIRCRAFT: readonly AircraftSummary[] = [
   {
@@ -34,8 +39,15 @@ function json(body: unknown): Response {
   });
 }
 
-/** Answer the catalog, plan calls with `plan` and ack calls with `acked`. */
-export function stubBackend(plan: PlanResult, acked: PlanResult = plan): void {
+/**
+ * Answer the catalog, plan calls with `plan`, ack calls with `acked` and
+ * replan calls with `replan`.
+ */
+export function stubBackend(
+  plan: PlanResult,
+  acked: PlanResult = plan,
+  replan: ReplanResult | null = null,
+): void {
   vi.stubGlobal(
     "fetch",
     vi.fn((input: RequestInfo | URL) => {
@@ -45,6 +57,9 @@ export function stubBackend(plan: PlanResult, acked: PlanResult = plan): void {
       }
       if (url.endsWith("/api/payloads")) {
         return Promise.resolve(json(PAYLOADS));
+      }
+      if (url.endsWith("/api/replan")) {
+        return Promise.resolve(json(replan));
       }
       return Promise.resolve(json(url.endsWith("/ack") ? acked : plan));
     }),
@@ -58,5 +73,19 @@ export async function analyzeMission(user: UserEvent): Promise<void> {
   await user.type(screen.getByLabelText(/Longitude/), "-77.05581");
   await user.click(
     screen.getByRole("button", { name: "Analyze flight feasibility" }),
+  );
+}
+
+/** Report live telemetry for the signed plan and ask for a replan. */
+export async function replanMission(user: UserEvent): Promise<void> {
+  const form = await screen.findByRole("form", { name: "Live telemetry" });
+  const field = (label: RegExp): HTMLElement =>
+    within(form).getByLabelText(label);
+  await user.type(field(/State of charge/), "42");
+  await user.type(field(/Remaining leg/), "1800");
+  await user.type(field(/Outside air/), "4");
+  await user.type(field(/Wind/), "6.1");
+  await user.click(
+    within(form).getByRole("button", { name: "Replan against telemetry" }),
   );
 }
