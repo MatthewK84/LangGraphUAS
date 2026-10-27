@@ -1,7 +1,7 @@
 // Plan responses as the backend sends them, for component tests and the local
 // screenshot loop. Figures are taken from a real demo-mode run, so they carry
 // the calculator's own precision rather than round placeholders.
-import type { FigureProvenance, PlanResult } from "@/lib/types";
+import type { FigureProvenance, PlanResult, ReplanResult } from "@/lib/types";
 
 const ESTIMATE = {
   source: "estimate",
@@ -89,4 +89,68 @@ export const ADVISORY_PLAN: PlanResult = {
   thread_id: "msn-7f2c41b9",
   degraded: true,
   warnings: ["Weather provider unreachable; using fallback defaults"],
+};
+
+const DATASHEET = {
+  source: "datasheet",
+  confidence: "high",
+  operational_grade: true,
+  inputs: ["battery_wh"],
+} as const;
+
+export const OPERATIONAL_PLAN: PlanResult = {
+  ...ADVISORY_PLAN,
+  assessment: {
+    decision: "go",
+    reasons: ["Energy margin 41.7 Wh above the 20% reserve"],
+    mode: "operational",
+    blockers: [],
+    inputs_hash:
+      "4b1e8d7c2a9f03e6d5c8b7a1f4e2d9c6b3a0f8e7d1c4b2a9e6f3d0c8b5a7e2f1",
+    calculator_version: "2.4.1",
+  },
+  weather: {
+    temperature_c: 16.8,
+    wind_speed_mps: 3.9,
+    wind_gust_mps: 6.1,
+    wind_direction: 230,
+    humidity_percent: 58,
+    conditions: "Clear",
+    source: "live",
+  },
+  provenance: Object.fromEntries(
+    Object.keys(PROVENANCE).map((path) => [path, DATASHEET]),
+  ),
+  thread_id: "msn-3d90e6a4",
+  degraded: false,
+  warnings: [],
+};
+
+/** A replan whose only finding is a watch, which still withdraws clearance. */
+export const REPLAN: ReplanResult = {
+  thread_id: "rpl-5a17c0e2",
+  parent_thread_id: "msn-3d90e6a4",
+  severity: "watch",
+  recommended_action: "continue",
+  operational_ok: false,
+  live_energy: {
+    available_wh: 96.42,
+    reserve_wh: 32.03,
+    required_wh: 51.88,
+    residual_wh: 44.54,
+    temperature_factor: 0.97,
+  },
+  briefed_margin_wh: 41.7,
+  snapshot_age_s: 4.2,
+  alerts: [
+    {
+      severity: "watch",
+      code: "ENERGY_NEAR_RESERVE",
+      message: "Residual 44.5 Wh is within 1.5x of the 32.0 Wh reserve",
+      briefed: { margin_wh: 41.7 },
+      live: { residual_wh: 44.54 },
+      delta: { margin_wh: -29.19 },
+      recommended_action: "continue",
+    },
+  ],
 };
