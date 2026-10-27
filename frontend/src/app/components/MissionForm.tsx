@@ -134,9 +134,7 @@ function FormFooter({
         disabled={disabled}
         className="btn btn-primary w-full"
       >
-        {loading
-          ? "Processing environment and metrics..."
-          : "Analyze flight feasibility"}
+        {loading ? "Computing the assessment..." : "Analyze flight feasibility"}
       </button>
     </>
   );

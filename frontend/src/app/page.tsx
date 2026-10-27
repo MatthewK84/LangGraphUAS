@@ -11,9 +11,11 @@ import type { JSX } from "react";
 
 import { advisoryNotice } from "@/lib/advisory";
 import { acknowledgePlan, planMission } from "@/lib/api";
+import { planFailure } from "@/lib/failure";
+import type { PlanFailure } from "@/lib/failure";
+import { briefsPayload } from "@/lib/replan";
 import type { AckAction, MissionRequest, PlanResult } from "@/lib/types";
 import { useCatalog } from "@/lib/useCatalog";
-import { briefsPayload } from "@/lib/replan";
 import { useReplan } from "@/lib/useReplan";
 
 import { AdvisoryBanner } from "./components/AdvisoryBanner";
@@ -40,7 +42,7 @@ function TopBar(): JSX.Element {
 export default function MissionPlanner(): JSX.Element {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<PlanResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<PlanFailure | null>(null);
   const [threadId, setThreadId] = useState<string | null>(null);
   const [inputsEdited, setInputsEdited] = useState(false);
   const [sentPlan, setSentPlan] = useState<MissionRequest | null>(null);
@@ -56,9 +58,7 @@ export default function MissionPlanner(): JSX.Element {
     replan.reset();
     const outcome = await planMission({ ...request, thread_id: threadId });
     if (!outcome.ok) {
-      setError(
-        `Unable to reach the mission orchestration core: ${outcome.error}`,
-      );
+      setError(planFailure("plan", outcome.error));
       setLoading(false);
       return;
     }
@@ -80,7 +80,7 @@ export default function MissionPlanner(): JSX.Element {
       inputs_hash: assessment.inputs_hash,
     });
     if (!outcome.ok) {
-      setError(`Unable to record the acknowledgement: ${outcome.error}`);
+      setError(planFailure("ack", outcome.error));
       setLoading(false);
       return;
     }
