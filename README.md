@@ -455,6 +455,15 @@ and the panels reads "Advisory, not a clearance" with the mode and the weather
 source. It sits outside every scrolling panel, so scrolling the figures never
 takes it off screen, and a clean replan never removes it from an advisory plan.
 
+Once a plan is signed, the review panel offers a live telemetry form (state of
+charge, remaining leg and hover, outside air, optional wind, payload attached;
+the payload box starts from what was briefed). Replanning puts a panel at the
+top of the assessment with each briefed figure beside its live one and the
+change between them: margin after mission, energy available, required and
+reserve, wind, and state of charge against the full pack the brief assumed. Its
+findings list each alert by code, label and message, and its verdict is
+advisory whenever the replan raised anything, whatever the plan was.
+
 `GET /api/plan/{thread_id}` returns the persisted state for a prior mission
 thread, or `found: false` when the thread is unknown.
 
