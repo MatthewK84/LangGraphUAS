@@ -39,12 +39,14 @@ export default function MissionPlanner(): JSX.Element {
   const [result, setResult] = useState<PlanResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [threadId, setThreadId] = useState<string | null>(null);
+  const [inputsEdited, setInputsEdited] = useState(false);
   const catalog = useCatalog();
 
   async function analyze(request: MissionRequest): Promise<void> {
     setLoading(true);
     setError(null);
     setResult(null);
+    setInputsEdited(false);
     const outcome = await planMission({ ...request, thread_id: threadId });
     if (!outcome.ok) {
       setError(
@@ -91,6 +93,9 @@ export default function MissionPlanner(): JSX.Element {
           payloads={catalog.payloads}
           catalogLoading={catalog.loading}
           catalogError={catalog.error}
+          onEdit={() => {
+            setInputsEdited(true);
+          }}
           onAnalyze={(request) => {
             void analyze(request);
           }}
@@ -106,6 +111,7 @@ export default function MissionPlanner(): JSX.Element {
         <ReviewPanel
           result={result}
           busy={loading}
+          inputsEdited={inputsEdited}
           onDecide={(action) => {
             void decide(action);
           }}
