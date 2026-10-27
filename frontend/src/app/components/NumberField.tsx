@@ -8,16 +8,11 @@ interface NumberFieldProps {
   readonly onChange: (value: string) => void;
 }
 
-const FIELD_CLASS =
-  "w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-blue-500";
-const LABEL_CLASS =
-  "block text-xs font-medium uppercase tracking-wider text-slate-400 mb-1";
-
 export function NumberField(props: NumberFieldProps): JSX.Element {
   const { id, label, value, placeholder, onChange } = props;
   return (
     <div>
-      <label htmlFor={id} className={LABEL_CLASS}>
+      <label htmlFor={id} className="mb-1 block text-sm text-fg-secondary">
         {label}
       </label>
       <input
@@ -30,7 +25,7 @@ export function NumberField(props: NumberFieldProps): JSX.Element {
         onChange={(event) => {
           onChange(event.target.value);
         }}
-        className={FIELD_CLASS}
+        className="field text-right tabular"
         required
       />
     </div>

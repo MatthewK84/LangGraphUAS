@@ -28,7 +28,7 @@ export function MissionParamFields(
   } = props;
   return (
     <>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-2">
         <NumberField
           id="distance"
           label="Distance (m)"
@@ -37,21 +37,21 @@ export function MissionParamFields(
         />
         <NumberField
           id="hover"
-          label="Hover Time (s)"
+          label="Hover time (s)"
           value={hoverTimeS}
           onChange={onHoverTimeChange}
         />
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-2">
         <NumberField
           id="altitude"
-          label="Target Alt (m)"
+          label="Target alt (m AGL)"
           value={targetAltitudeM}
           onChange={onTargetAltitudeChange}
         />
         <NumberField
           id="elevation"
-          label="Elevation (m)"
+          label="Elevation (m MSL)"
           value={elevationM}
           onChange={onElevationChange}
         />

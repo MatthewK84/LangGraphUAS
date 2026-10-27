@@ -1,5 +1,11 @@
 "use client";
 
+// Operator: a sUAS mission planner or safety officer preflighting one mission
+// on a 14-inch 1080p laptop in a field vehicle or ops trailer, reading about
+// 25 computed figures and a sealed assessment, deciding go or no-go and signing
+// within two minutes. Tier 2 (analyst) density, dark theme. See
+// docs/ui-standard.md.
+
 import { useState } from "react";
 import type { JSX } from "react";
 
@@ -9,7 +15,22 @@ import { useCatalog } from "@/lib/useCatalog";
 
 import { MissionForm } from "./components/MissionForm";
 import { ResultsPanel } from "./components/ResultsPanel";
-import { ReviewCard } from "./components/ReviewCard";
+import { ReviewPanel } from "./components/ReviewPanel";
+import { UtcClock } from "./components/UtcClock";
+
+function TopBar(): JSX.Element {
+  return (
+    <header className="flex h-topbar shrink-0 items-center justify-between border-b border-line bg-panel px-3">
+      <div className="flex items-baseline gap-3">
+        <h1 className="text-lg font-semibold text-fg">sUAS Mission Planner</h1>
+        <span className="text-sm text-fg-muted">
+          Deterministic calculator, operator-signed
+        </span>
+      </div>
+      <UtcClock />
+    </header>
+  );
+}
 
 export default function MissionPlanner(): JSX.Element {
   const [loading, setLoading] = useState(false);
@@ -57,46 +78,35 @@ export default function MissionPlanner(): JSX.Element {
   }
 
   return (
-    <main className="min-h-screen bg-slate-900 text-slate-100 p-8 font-sans">
-      <div className="max-w-6xl mx-auto space-y-8">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-white">
-            sUAS Intelligent Mission Planner
-          </h1>
-          <p className="text-slate-400 mt-1">
-            Deterministic physics engines coupled with LangGraph orchestration.
-          </p>
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <MissionForm
-            loading={loading}
-            aircraft={catalog.aircraft}
-            payloads={catalog.payloads}
-            catalogLoading={catalog.loading}
-            catalogError={catalog.error}
-            onAnalyze={(request) => {
-              void analyze(request);
-            }}
-          />
-          <div className="lg:col-span-2 space-y-6">
-            {result !== null &&
-              result.awaiting_ack &&
-              result.assessment !== null && (
-                <ReviewCard
-                  assessment={result.assessment}
-                  busy={loading}
-                  onConfirm={() => {
-                    void decide("confirm");
-                  }}
-                  onAbort={() => {
-                    void decide("abort");
-                  }}
-                />
-              )}
+    <div className="flex h-screen min-w-shell flex-col overflow-hidden bg-app text-fg">
+      <TopBar />
+      <div className="flex min-h-0 flex-1">
+        <MissionForm
+          loading={loading}
+          aircraft={catalog.aircraft}
+          payloads={catalog.payloads}
+          catalogLoading={catalog.loading}
+          catalogError={catalog.error}
+          onAnalyze={(request) => {
+            void analyze(request);
+          }}
+        />
+        <main className="flex min-w-0 flex-1 flex-col border-r border-line bg-app">
+          <div className="panel-header">
+            <h2 className="section-label">Assessment</h2>
+          </div>
+          <div className="min-h-0 flex-1 overflow-y-auto">
             <ResultsPanel loading={loading} error={error} result={result} />
           </div>
-        </div>
+        </main>
+        <ReviewPanel
+          result={result}
+          busy={loading}
+          onDecide={(action) => {
+            void decide(action);
+          }}
+        />
       </div>
-    </main>
+    </div>
   );
 }

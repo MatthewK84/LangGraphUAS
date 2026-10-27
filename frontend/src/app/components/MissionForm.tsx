@@ -108,6 +108,38 @@ function buildMissionRequest(
   };
 }
 
+function FormFooter({
+  error,
+  loading,
+  disabled,
+}: {
+  readonly error: string | null;
+  readonly loading: boolean;
+  readonly disabled: boolean;
+}): JSX.Element {
+  return (
+    <>
+      {error !== null && (
+        <p
+          className="border-l-2 border-critical bg-critical-tint px-2 py-1 text-sm text-fg"
+          role="alert"
+        >
+          {error}
+        </p>
+      )}
+      <button
+        type="submit"
+        disabled={disabled}
+        className="btn btn-primary w-full"
+      >
+        {loading
+          ? "Processing environment and metrics..."
+          : "Analyze flight feasibility"}
+      </button>
+    </>
+  );
+}
+
 export function MissionForm(props: MissionFormProps): JSX.Element {
   const {
     loading,
@@ -167,28 +199,33 @@ export function MissionForm(props: MissionFormProps): JSX.Element {
   }
 
   return (
-    <div className="lg:col-span-1 bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-xl h-fit">
-      <h2 className="text-xl font-semibold mb-4 text-white">
-        Mission Configuration
-      </h2>
-      <CatalogStatus loading={catalogLoading} error={catalogError} />
+    <section
+      className="flex w-form shrink-0 flex-col border-r border-line bg-panel"
+      aria-labelledby="mission-heading"
+    >
+      <div className="panel-header">
+        <h2 id="mission-heading" className="section-label">
+          Mission configuration
+        </h2>
+      </div>
       <form
-        className="space-y-4"
+        className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3"
         onSubmit={(event) => {
           event.preventDefault();
           submit();
         }}
       >
+        <CatalogStatus loading={catalogLoading} error={catalogError} />
         <SelectField
           id="aircraft"
-          label="Aircraft Platform"
+          label="Aircraft platform"
           value={aircraftId}
           options={toOptions(aircraft)}
           onChange={setAircraftId}
         />
         <SelectField
           id="payload"
-          label="Payload System"
+          label="Payload system"
           value={payloadId}
           options={toOptions(payloads)}
           onChange={setPayloadId}
@@ -210,21 +247,12 @@ export function MissionForm(props: MissionFormProps): JSX.Element {
           onLongitudeChange={setLongitude}
           onLocate={locate}
         />
-        {formError !== null && (
-          <p className="text-rose-400 text-xs" role="alert">
-            {formError}
-          </p>
-        )}
-        <button
-          type="submit"
+        <FormFooter
+          error={formError}
+          loading={loading}
           disabled={loading || catalogLoading || aircraft.length === 0}
-          className="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 text-white font-semibold py-3 rounded-lg text-sm mt-4 transition-colors shadow-lg"
-        >
-          {loading
-            ? "Processing environment and metrics..."
-            : "Analyze flight feasibility"}
-        </button>
+        />
       </form>
-    </div>
+    </section>
   );
 }

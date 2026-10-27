@@ -35,18 +35,15 @@ export function ReviewCard({
   const canConfirm = !busy && (!advisory || understood);
 
   return (
-    <section
-      className="p-4 rounded-xl border bg-slate-800 border-amber-700 space-y-4"
-      aria-label="Assessment review"
-    >
-      <div>
-        <span className="text-xs font-semibold text-amber-300 uppercase tracking-wider">
+    <section className="space-y-3 p-3" aria-label="Assessment review">
+      <div className="border-l-2 border-caution bg-caution-tint px-3 py-2">
+        <span className="section-label text-caution">
           Awaiting acknowledgement
         </span>
-        <p className="mt-1 text-lg font-bold text-slate-100">
+        <p className="mt-1 text-xl font-semibold text-fg">
           {verdictLabel(assessment)} &middot; {assessment.mode}
         </p>
-        <p className="text-xs text-slate-400 font-mono mt-1">
+        <p className="mt-1 font-mono text-xs text-fg-secondary">
           calculator {assessment.calculator_version} &middot; inputs{" "}
           {assessment.inputs_hash.slice(0, 12)}
         </p>
@@ -54,10 +51,8 @@ export function ReviewCard({
 
       {assessment.reasons.length > 0 && (
         <div>
-          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-            Limiting factors
-          </span>
-          <ul className="mt-1 space-y-1 text-sm list-disc list-inside text-slate-300">
+          <span className="section-label">Limiting factors</span>
+          <ul className="mt-1 list-inside list-disc space-y-1 text-md text-fg-secondary">
             {assessment.reasons.map((reason) => (
               <li key={reason}>{reason}</li>
             ))}
@@ -66,10 +61,10 @@ export function ReviewCard({
       )}
 
       {advisory && (
-        <label className="flex items-start gap-2 text-sm text-amber-200">
+        <label className="flex items-start gap-2 text-md text-fg">
           <input
             type="checkbox"
-            className="mt-1"
+            className="mt-1 accent-accent"
             checked={understood}
             onChange={(event) => {
               setUnderstood(event.target.checked);
@@ -82,12 +77,12 @@ export function ReviewCard({
         </label>
       )}
 
-      <div className="flex gap-3">
+      <div className="flex gap-2">
         <button
           type="button"
           disabled={!canConfirm}
           onClick={onConfirm}
-          className="px-4 py-2 rounded-lg bg-emerald-700 text-white text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed"
+          className="btn btn-primary flex-1"
         >
           {busy ? "Working..." : "Acknowledge and generate brief"}
         </button>
@@ -95,7 +90,7 @@ export function ReviewCard({
           type="button"
           disabled={busy}
           onClick={onAbort}
-          className="px-4 py-2 rounded-lg border border-rose-700 text-rose-300 text-sm font-semibold disabled:opacity-40"
+          className="btn text-critical"
         >
           Abort
         </button>
