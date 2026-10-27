@@ -9,10 +9,12 @@
 import { useState } from "react";
 import type { JSX } from "react";
 
+import { advisoryNotice } from "@/lib/advisory";
 import { acknowledgePlan, planMission } from "@/lib/api";
 import type { AckAction, MissionRequest, PlanResult } from "@/lib/types";
 import { useCatalog } from "@/lib/useCatalog";
 
+import { AdvisoryBanner } from "./components/AdvisoryBanner";
 import { MissionForm } from "./components/MissionForm";
 import { ResultsPanel } from "./components/ResultsPanel";
 import { ReviewPanel } from "./components/ReviewPanel";
@@ -80,6 +82,8 @@ export default function MissionPlanner(): JSX.Element {
   return (
     <div className="flex h-screen min-w-shell flex-col overflow-hidden bg-app text-fg">
       <TopBar />
+      {/* No replan view yet (#94); it will pass its latest result here. */}
+      <AdvisoryBanner notice={advisoryNotice(result, null)} />
       <div className="flex min-h-0 flex-1">
         <MissionForm
           loading={loading}
