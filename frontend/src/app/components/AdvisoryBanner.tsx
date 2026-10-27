@@ -1,6 +1,7 @@
 import type { JSX } from "react";
 
 import type { AdvisoryNotice } from "@/lib/advisory";
+import { SOURCE_TREATMENT } from "@/lib/weather";
 
 function Fact({
   label,
@@ -44,7 +45,14 @@ export function AdvisoryBanner({
           Advisory, not a clearance
         </span>
         <Fact label="Mode" value={notice.mode} />
-        <Fact label="Weather" value={notice.weatherSource ?? "none"} />
+        <Fact
+          label="Weather"
+          value={
+            notice.weatherSource === null
+              ? "none"
+              : SOURCE_TREATMENT[notice.weatherSource].label
+          }
+        />
         {replanAlerts > 0 && (
           <Fact label="Replan" value={alertCount(replanAlerts)} />
         )}

@@ -12,7 +12,9 @@ export interface SafetyFlags {
   readonly cruise_achievable: boolean;
 }
 
-export type WeatherSource = "live" | "fallback";
+/** Mirrors the backend `WeatherSource`; only live and cached_fresh can be operational. */
+export type WeatherSource =
+  "live" | "cached_fresh" | "cached_stale" | "fallback" | "error" | "fixture";
 
 export interface WeatherReading {
   readonly temperature_c: number;
