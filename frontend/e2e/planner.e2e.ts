@@ -46,16 +46,30 @@ test("catalog load, plan and ack run through both containers", async ({
   const review = page.getByRole("region", { name: "Assessment review" });
   await expect(review).toBeVisible();
   await expect(review).toContainText("advisory");
+  // Compute, review, then ack (#92): the brief does not exist before the
+  // signature, and an edit after the assessment withdraws the confirm.
+  const brief = page.getByRole("heading", { name: "AI Safety Officer Report" });
+  await expect(brief).toHaveCount(0);
+  const confirm = review.getByRole("button", {
+    name: "Acknowledge and generate brief",
+  });
+  await review.getByRole("checkbox").check();
+  await expect(confirm).toBeEnabled();
+  await page.getByLabel("Distance").fill("5001");
+  await expect(confirm).toBeDisabled();
+  await page
+    .getByRole("button", { name: "Analyze flight feasibility" })
+    .click();
+  await expect(review).toBeVisible();
+  await expect(brief).toHaveCount(0);
 
   await review.getByRole("checkbox").check();
-  await review
-    .getByRole("button", { name: "Acknowledge and generate brief" })
-    .click();
+  await confirm.click();
 
   await expect(review).toHaveCount(0);
-  const report = page.locator("h3", { hasText: "AI Safety Officer Report" });
-  await expect(report.locator("xpath=..")).not.toContainText(
+  await expect(brief).toHaveCount(1);
+  await expect(brief.locator("xpath=..")).not.toContainText(
     "Unable to record the acknowledgement",
   );
-  await expect(report.locator("xpath=following-sibling::div")).not.toBeEmpty();
+  await expect(brief.locator("xpath=following-sibling::div")).not.toBeEmpty();
 });

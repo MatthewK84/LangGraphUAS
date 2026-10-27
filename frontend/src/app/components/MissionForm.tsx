@@ -24,6 +24,8 @@ interface MissionFormProps {
   readonly catalogLoading: boolean;
   readonly catalogError: string | null;
   readonly onAnalyze: (request: MissionRequest) => void;
+  /** Any input changed, by typing, selection or the location button. */
+  readonly onEdit: () => void;
 }
 
 function toOptions(
@@ -148,6 +150,7 @@ export function MissionForm(props: MissionFormProps): JSX.Element {
     catalogLoading,
     catalogError,
     onAnalyze,
+    onEdit,
   } = props;
   const [aircraftId, setAircraftId] = useState("");
   const [payloadId, setPayloadId] = useState("");
@@ -178,6 +181,7 @@ export function MissionForm(props: MissionFormProps): JSX.Element {
       }
       setLatitude(result.data.latitude.toFixed(4));
       setLongitude(result.data.longitude.toFixed(4));
+      onEdit();
     });
   }
 
@@ -210,6 +214,7 @@ export function MissionForm(props: MissionFormProps): JSX.Element {
       </div>
       <form
         className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3"
+        onChange={onEdit}
         onSubmit={(event) => {
           event.preventDefault();
           submit();

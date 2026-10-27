@@ -34,8 +34,8 @@ function json(body: unknown): Response {
   });
 }
 
-/** Answer the catalog and every plan or ack call with the given plan. */
-export function stubBackend(plan: PlanResult): void {
+/** Answer the catalog, plan calls with `plan` and ack calls with `acked`. */
+export function stubBackend(plan: PlanResult, acked: PlanResult = plan): void {
   vi.stubGlobal(
     "fetch",
     vi.fn((input: RequestInfo | URL) => {
@@ -46,7 +46,7 @@ export function stubBackend(plan: PlanResult): void {
       if (url.endsWith("/api/payloads")) {
         return Promise.resolve(json(PAYLOADS));
       }
-      return Promise.resolve(json(plan));
+      return Promise.resolve(json(url.endsWith("/ack") ? acked : plan));
     }),
   );
 }

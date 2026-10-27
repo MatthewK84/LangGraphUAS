@@ -208,6 +208,29 @@ function Skeleton(): JSX.Element {
   );
 }
 
+/**
+ * The brief is written after the signature (ADR-004), so before it there is
+ * nothing to show: what the operator signs is the calculator's alone. Even a
+ * report that arrives early is withheld until the plan is no longer awaiting.
+ */
+function Brief({ result }: { readonly result: PlanResult }): JSX.Element {
+  if (result.awaiting_ack) {
+    return (
+      <p className="px-3 py-3 text-sm text-fg-muted">
+        No brief yet. It is written after the assessment is signed.
+      </p>
+    );
+  }
+  return (
+    <section className="px-3 py-3">
+      <h3 className="section-label mb-2">AI Safety Officer Report</h3>
+      <div className="max-w-prose whitespace-pre-wrap text-md leading-normal text-fg-secondary">
+        {result.report}
+      </div>
+    </section>
+  );
+}
+
 export function ResultsPanel(props: ResultsPanelProps): JSX.Element {
   const { loading, error, result } = props;
   if (error !== null) {
@@ -245,12 +268,7 @@ export function ResultsPanel(props: ResultsPanelProps): JSX.Element {
         />
       )}
       <Figures result={result} />
-      <section className="px-3 py-3">
-        <h3 className="section-label mb-2">AI Safety Officer Report</h3>
-        <div className="max-w-prose whitespace-pre-wrap text-md leading-normal text-fg-secondary">
-          {result.report}
-        </div>
-      </section>
+      <Brief result={result} />
     </div>
   );
 }
