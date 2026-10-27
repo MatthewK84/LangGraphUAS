@@ -210,3 +210,42 @@ def test_every_figure_the_dashboard_labels_is_one_the_backend_reports() -> None:
     paths = set(re.findall(r'"([a-z_]+(?:\.[a-z_]+)?_wh?)"', panel))
     assert len(paths) == 8
     assert paths <= set(WATT_FIGURE_INPUTS)
+
+
+def test_each_figure_carries_the_record_of_every_input_it_rests_on() -> None:
+    """The drawer (#96) links a datasheet figure to its cited URL.
+
+    The summary says how weak a figure's basis is; the basis itself says which
+    field, from where and when, so a reviewer can trace a watt to its source.
+    """
+    cited = FieldProvenance(
+        value=4260.0,
+        unit="W",
+        source=FieldSource.DATASHEET,
+        source_url="https://example.test/spec",
+        retrieved_at="2026-01-05",
+        confidence=Confidence.HIGH,
+        notes="Manufacturer spec sheet.",
+    )
+    aircraft = Aircraft.model_validate(_with_provenance(_AIRCRAFT, {"hover_power_w": cited}))
+    payload = Payload.model_validate(_with_provenance(_PAYLOAD, {}))
+    hover = number_provenance(aircraft, payload)["effective_hover_power_w"]
+    assert [entry.field for entry in hover.basis] == hover.inputs
+    first = next(entry for entry in hover.basis if entry.field == "aircraft.hover_power_w")
+    assert (first.source_url, first.retrieved_at, first.notes) == (
+        "https://example.test/spec",
+        "2026-01-05",
+        "Manufacturer spec sheet.",
+    )
+    assert (first.value, first.unit, first.source, first.confidence) == (
+        4260.0,
+        "W",
+        FieldSource.DATASHEET,
+        Confidence.HIGH,
+    )
+    unrecorded = next(entry for entry in hover.basis if entry.field == "payload.weight_kg")
+    assert (unrecorded.source, unrecorded.source_url, unrecorded.value) == (
+        FieldSource.UNKNOWN,
+        None,
+        None,
+    )
