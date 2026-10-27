@@ -8,11 +8,45 @@ import type {
   TelemetrySnapshotRequest,
 } from "@/lib/types";
 
+/** A catalog record cited to the manufacturer, as the drawer (#96) links it. */
+export const CITED_BATTERY = {
+  field: "aircraft.battery_wh",
+  value: 1420,
+  unit: "Wh",
+  source: "datasheet",
+  confidence: "high",
+  source_url: "https://freeflysystems.com/alta-x/specs",
+  retrieved_at: "2026-01-05",
+  notes: "Manufacturer spec page, battery pair.",
+} as const;
+
 const ESTIMATE = {
   source: "estimate",
   confidence: "low",
   operational_grade: false,
-  inputs: ["hover_power_w", "cruise_power_w"],
+  inputs: ["aircraft.hover_power_w", "payload.weight_kg"],
+  basis: [
+    {
+      field: "aircraft.hover_power_w",
+      value: 4260,
+      unit: "W",
+      source: "estimate",
+      confidence: "low",
+      source_url: null,
+      retrieved_at: null,
+      notes: "Scaled from all-up mass; no measured hover draw.",
+    },
+    {
+      field: "payload.weight_kg",
+      value: null,
+      unit: null,
+      source: "unknown",
+      confidence: "low",
+      source_url: null,
+      retrieved_at: null,
+      notes: "",
+    },
+  ],
 } as const;
 
 export const PROVENANCE: FigureProvenance = {
@@ -26,7 +60,8 @@ export const PROVENANCE: FigureProvenance = {
     source: "datasheet",
     confidence: "high",
     operational_grade: true,
-    inputs: ["battery_wh"],
+    inputs: ["aircraft.battery_wh"],
+    basis: [CITED_BATTERY],
   },
   "battery_check.margin_wh": ESTIMATE,
 };
@@ -100,7 +135,8 @@ const DATASHEET = {
   source: "datasheet",
   confidence: "high",
   operational_grade: true,
-  inputs: ["battery_wh"],
+  inputs: ["aircraft.battery_wh"],
+  basis: [CITED_BATTERY],
 } as const;
 
 export const OPERATIONAL_PLAN: PlanResult = {
