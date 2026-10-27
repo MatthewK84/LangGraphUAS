@@ -27,13 +27,27 @@ function palette(theme: string): Map<string, string> {
 }
 
 describe("contrastRatio", () => {
-  it("is 21 for black on white and 1 for a color on itself", () => {
-    expect(contrastRatio("#000000", "#ffffff")).toBeCloseTo(21, 5);
-    expect(contrastRatio("#4c90f0", "#4c90f0")).toBeCloseTo(1, 5);
+  const dark = palette('[data-theme="dark"]');
+  const critical = dark.get("status-critical") ?? "";
+  const panel = dark.get("bg-panel") ?? "";
+
+  it("is 1 for a color on itself and symmetric", () => {
+    expect(contrastRatio(critical, critical)).toBeCloseTo(1, 5);
+    expect(contrastRatio(panel, critical)).toBe(contrastRatio(critical, panel));
   });
 
-  it("composites a translucent tint over its backdrop", () => {
-    expect(over("#ffffff", "#000000", 0.5)).toBe("#808080");
+  it("matches the WCAG formula worked by hand for the dark tokens", () => {
+    // Relative luminances 0.2870 and 0.0078, by the WCAG 2.x definition.
+    expect(contrastRatio(critical, panel)).toBeCloseTo(5.83, 2);
+  });
+
+  it("composites a tint over its backdrop", () => {
+    expect(over(critical, panel, 1)).toBe(critical);
+    expect(over(critical, panel, 0)).toBe(panel);
+    expect(contrastRatio(critical, over(critical, panel, TINT))).toBeCloseTo(
+      4.89,
+      2,
+    );
   });
 });
 

@@ -14,7 +14,7 @@ import MissionPlanner from "./page";
 // does not render; set them as layout.tsx does so axe checks the real page.
 beforeEach(() => {
   document.documentElement.lang = "en";
-  document.title = String(metadata.title);
+  document.title = typeof metadata.title === "string" ? metadata.title : "";
 });
 
 afterEach(() => {

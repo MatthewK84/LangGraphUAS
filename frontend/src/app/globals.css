@@ -24,6 +24,11 @@
     outline: 2px solid var(--focus-ring);
     outline-offset: 1px;
   }
+  /* Programmatic focus targets (status notes) sit flush inside scrolling
+     panels that clip; draw their ring inside the box so it stays whole. */
+  [tabindex="-1"]:focus-visible {
+    outline-offset: -2px;
+  }
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
