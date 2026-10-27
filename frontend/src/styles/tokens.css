@@ -1,0 +1,107 @@
+/*
+ * Design tokens: the only file allowed to hold a literal color or size.
+ * Tier 2 (analyst) density, dark theme by default; see docs/ui-standard.md.
+ * Fonts are the system stack plus locally installed faces: nothing is fetched.
+ */
+:root {
+  /* Spacing: 4px grid */
+  --space-0-5: 2px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* Type */
+  --font-ui: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono:
+    "JetBrains Mono", "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  --text-xs: 11px; /* section labels, metadata */
+  --text-sm: 12px; /* dense tables, secondary text */
+  --text-md: 13px; /* base UI text (Tier 2) */
+  --text-lg: 14px; /* panel titles */
+  --text-xl: 16px; /* view title, verdict */
+  --text-2xl: 20px; /* metric values; the Tier 2 maximum */
+  --leading-tight: 1.25;
+  --leading-normal: 1.4;
+  --tracking-label: 0.04em;
+
+  /* Shape and sizing */
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --border-width: 1px;
+  --row-h-dense: 24px;
+  --row-h: 28px;
+  --row-h-relaxed: 32px;
+  --control-h: 28px;
+  --topbar-h: 36px;
+  --panel-header-h: 32px;
+  --strip-h: 48px;
+  --form-w: 320px;
+  --inspector-w: 360px;
+  --shell-min-w: 1280px;
+
+  /* Motion */
+  --duration-fast: 100ms;
+  --duration-base: 150ms;
+  --ease-out: cubic-bezier(0.2, 0, 0, 1);
+
+  /* Floating layers only (menus, popovers, dialogs) */
+  --shadow-popover: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+/* Dark theme: default for Tier 1-2 */
+:root,
+[data-theme="dark"] {
+  --bg-app: #0b0e12;
+  --bg-panel: #11161c;
+  --bg-raised: #171d25;
+  --bg-hover: #1e2530;
+  --bg-selected: #1b2a3d;
+  --border-subtle: #222a35;
+  --border: #2d3643;
+  --border-strong: #3d4757;
+
+  --text-primary: #e3e7ed;
+  --text-secondary: #a1aab8;
+  --text-muted: #8992a0;
+  --text-disabled: #4a5260;
+
+  --accent: #4c90f0;
+  --accent-hover: #6aa4f5;
+  --accent-text: #0b0e12;
+  --focus-ring: #8abbff;
+
+  --status-ok: #32a467;
+  --status-caution: #e3a008;
+  --status-critical: #ea696d;
+  --status-stale: #8992a0;
+}
+
+/* Light theme: daylight work and print */
+[data-theme="light"] {
+  --bg-app: #f2f4f7;
+  --bg-panel: #ffffff;
+  --bg-raised: #eef1f4;
+  --bg-hover: #e6eaef;
+  --bg-selected: #dce8f8;
+  --border-subtle: #e1e5ea;
+  --border: #d3d8de;
+  --border-strong: #b8c0ca;
+
+  --text-primary: #1c2127;
+  --text-secondary: #4a5361;
+  --text-muted: #5b6775;
+  --text-disabled: #a7b0bb;
+
+  --accent: #2865bb;
+  --accent-hover: #1f5299;
+  --accent-text: #ffffff;
+  --focus-ring: #4c90f0;
+
+  --status-ok: #1b7547;
+  --status-caution: #8b5d00;
+  --status-critical: #be2e34;
+  --status-stale: #5b6775;
+}
