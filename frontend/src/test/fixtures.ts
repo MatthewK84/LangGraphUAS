@@ -126,6 +126,7 @@ export const ADVISORY_PLAN: PlanResult = {
   },
   provenance: PROVENANCE,
   report: "",
+  report_source: "deterministic",
   thread_id: "msn-7f2c41b9",
   degraded: true,
   warnings: ["Weather provider unreachable; using fallback defaults"],

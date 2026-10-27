@@ -18,11 +18,28 @@ describe("results panel states (#95)", () => {
   });
 
   it("marks a model-written brief as one to check against the figures", () => {
-    const written = { ...BRIEFED_PLAN, report: "Winds are light; proceed." };
+    const written = {
+      ...BRIEFED_PLAN,
+      report: "Winds are light; proceed.",
+      report_source: "model" as const,
+    };
     render(<ResultsPanel loading={false} error={null} result={written} />);
     screen.getByText(
       "Written by a language model from the sealed figures. Check it against them.",
     );
+  });
+
+  it("labels the brief from report_source, not its wording", () => {
+    // A failed model call's fallback lacks the no-key sentence; the backend
+    // still knows no model wrote it.
+    const fallback = {
+      ...BRIEFED_PLAN,
+      report: "Mission status: GO. Narrative unavailable.",
+      report_source: "deterministic" as const,
+    };
+    render(<ResultsPanel loading={false} error={null} result={fallback} />);
+    screen.getByText("Deterministic: no language model wrote this brief.");
+    expect(screen.queryByText(/language model from the sealed/)).toBeNull();
   });
 
   it("fakes no model at work while computing", () => {
