@@ -224,19 +224,6 @@ const BRIEF_SOURCE = {
 } as const;
 
 /**
- * The backend's fallback brief, written when no model key is set or the model
- * fails, is the only text it writes itself; anything else came from a model.
- * The response carries no report-source field, so its wording is the signal.
- */
-function briefSource(report: string | null): keyof typeof BRIEF_SOURCE {
-  return report?.endsWith(
-    "Deterministic assessment only; model narrative unavailable.",
-  ) === true
-    ? "deterministic"
-    : "model";
-}
-
-/**
  * The brief is written after the signature (ADR-004), so before it there is
  * nothing to show: what the operator signs is the calculator's alone. Even a
  * report that arrives early is withheld until the plan is no longer awaiting.
@@ -249,7 +236,8 @@ function Brief({ result }: { readonly result: PlanResult }): JSX.Element {
       </p>
     );
   }
-  const source = briefSource(result.report);
+  // The backend knows which briefs no model wrote; the wording is not a signal.
+  const source = result.report_source;
   return (
     <section className="px-3 py-3">
       <h3 className="section-label">Safety officer brief</h3>

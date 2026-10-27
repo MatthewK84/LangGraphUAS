@@ -8,7 +8,7 @@ from suas.db.models import AircraftRow
 from suas.db.repository import count_aircraft, get_aircraft, get_payload, list_aircraft
 from suas.db.seed import seed_reference_data
 from suas.schemas.responses import WeatherReading, WeatherSource
-from suas.services.llm import ReportService, _build_prompt, _fallback_report
+from suas.services.llm import ReportService, _build_prompt, fallback_report
 
 from .conftest import CALM_WEATHER
 
@@ -54,8 +54,8 @@ def _calculations() -> object:
 
 
 def test_fallback_report_states_decision() -> None:
-    assert "GO" in _fallback_report(True)
-    assert "NO-GO" in _fallback_report(False)
+    assert "GO" in fallback_report(True)
+    assert "NO-GO" in fallback_report(False)
 
 
 def test_build_prompt_includes_key_metrics() -> None:

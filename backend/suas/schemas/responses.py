@@ -6,12 +6,17 @@ calculation layer (Principle 8).
 
 from datetime import datetime
 from enum import StrEnum
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
 from suas.schemas.alerts import Alert, RecommendedAction, Severity
 from suas.schemas.assessment import DeterministicAssessment
 from suas.schemas.provenance import Confidence, FieldSource
+
+# Who wrote the brief: deterministic code (no key, a failed call, a brief the
+# seal withheld, an abort, nothing written yet) or the language model.
+ReportSource = Literal["deterministic", "model"]
 
 
 class WeatherSource(StrEnum):
@@ -180,6 +185,7 @@ class PlanResponse(BaseModel):
     provenance: dict[str, NumberProvenance] = Field(default_factory=dict)
     weather: WeatherReading | None
     report: str
+    report_source: ReportSource = "deterministic"
     thread_id: str
     degraded: bool = False
     warnings: list[str] = Field(default_factory=list)

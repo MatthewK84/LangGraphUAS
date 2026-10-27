@@ -467,9 +467,11 @@ advisory whenever the replan raised anything, whatever the plan was.
 The planner needs no model key. Without one (or when the model fails) the
 backend writes a short deterministic brief, and the dashboard's "Safety officer
 brief" says so: "Deterministic: no language model wrote this brief." A brief a
-model did write is marked as one to check against the figures. The response has
-no field naming the brief's source, so the dashboard reads the fallback's fixed
-wording. While a plan is computing nothing claims a model is at work, a plan or
+model did write is marked as one to check against the figures. The label comes
+from the response's `report_source`: `model` only for prose the model wrote and
+the seal kept, and `deterministic` for every brief written by code (no key, a
+failed model call, a brief the seal withheld for contradicting the assessment or
+stating an unsupported number, an abort, or no brief yet). While a plan is computing nothing claims a model is at work, a plan or
 acknowledgement that fails says what was not done (nothing computed, or the
 signature not recorded) with the raw reason beneath, and a plan with no figures
 says so instead of showing empty tables.
