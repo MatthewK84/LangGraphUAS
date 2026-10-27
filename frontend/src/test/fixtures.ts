@@ -154,3 +154,11 @@ export const REPLAN: ReplanResult = {
     },
   ],
 };
+
+/** The same plan after the operator signed it: the brief now exists. */
+export const BRIEFED_PLAN: PlanResult = {
+  ...ADVISORY_PLAN,
+  awaiting_ack: false,
+  report:
+    "Mission status: GO. Deterministic assessment only; model narrative unavailable.",
+};
