@@ -13,9 +13,12 @@ import { advisoryNotice } from "@/lib/advisory";
 import { acknowledgePlan, planMission } from "@/lib/api";
 import type { AckAction, MissionRequest, PlanResult } from "@/lib/types";
 import { useCatalog } from "@/lib/useCatalog";
+import { briefsPayload } from "@/lib/replan";
+import { useReplan } from "@/lib/useReplan";
 
 import { AdvisoryBanner } from "./components/AdvisoryBanner";
 import { MissionForm } from "./components/MissionForm";
+import { ReplanPanel } from "./components/ReplanPanel";
 import { ResultsPanel } from "./components/ResultsPanel";
 import { ReviewPanel } from "./components/ReviewPanel";
 import { UtcClock } from "./components/UtcClock";
@@ -40,13 +43,17 @@ export default function MissionPlanner(): JSX.Element {
   const [error, setError] = useState<string | null>(null);
   const [threadId, setThreadId] = useState<string | null>(null);
   const [inputsEdited, setInputsEdited] = useState(false);
+  const [sentPlan, setSentPlan] = useState<MissionRequest | null>(null);
   const catalog = useCatalog();
+  const replan = useReplan();
 
   async function analyze(request: MissionRequest): Promise<void> {
     setLoading(true);
     setError(null);
     setResult(null);
     setInputsEdited(false);
+    setSentPlan(request);
+    replan.reset();
     const outcome = await planMission({ ...request, thread_id: threadId });
     if (!outcome.ok) {
       setError(
@@ -84,8 +91,9 @@ export default function MissionPlanner(): JSX.Element {
   return (
     <div className="flex h-screen min-w-shell flex-col overflow-hidden bg-app text-fg">
       <TopBar />
-      {/* No replan view yet (#94); it will pass its latest result here. */}
-      <AdvisoryBanner notice={advisoryNotice(result, null)} />
+      <AdvisoryBanner
+        notice={advisoryNotice(result, replan.latest?.result ?? null)}
+      />
       <div className="flex min-h-0 flex-1">
         <MissionForm
           loading={loading}
@@ -105,6 +113,13 @@ export default function MissionPlanner(): JSX.Element {
             <h2 className="section-label">Assessment</h2>
           </div>
           <div className="relative min-h-0 flex-1 overflow-y-auto">
+            {result !== null && replan.latest !== null && (
+              <ReplanPanel
+                plan={result}
+                sent={replan.latest.sent}
+                replan={replan.latest.result}
+              />
+            )}
             <ResultsPanel loading={loading} error={error} result={result} />
           </div>
         </main>
@@ -114,6 +129,17 @@ export default function MissionPlanner(): JSX.Element {
           inputsEdited={inputsEdited}
           onDecide={(action) => {
             void decide(action);
+          }}
+          replanBusy={replan.busy}
+          payloadBriefed={briefsPayload(
+            catalog.payloads,
+            sentPlan?.payload_id ?? "",
+          )}
+          replanError={replan.error}
+          onReplan={(input) => {
+            if (result !== null && sentPlan !== null) {
+              void replan.run(result.thread_id, sentPlan.mission_params, input);
+            }
           }}
         />
       </div>

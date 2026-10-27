@@ -5,11 +5,13 @@ interface NumberFieldProps {
   readonly label: string;
   readonly value: string;
   readonly placeholder?: string;
+  /** Leave blank to send nothing, e.g. a sensor the aircraft lacks. */
+  readonly optional?: boolean;
   readonly onChange: (value: string) => void;
 }
 
 export function NumberField(props: NumberFieldProps): JSX.Element {
-  const { id, label, value, placeholder, onChange } = props;
+  const { id, label, value, placeholder, optional, onChange } = props;
   return (
     <div>
       <label htmlFor={id} className="mb-1 block text-sm text-fg-secondary">
@@ -26,7 +28,7 @@ export function NumberField(props: NumberFieldProps): JSX.Element {
           onChange(event.target.value);
         }}
         className="field text-right tabular"
-        required
+        required={optional !== true}
       />
     </div>
   );
