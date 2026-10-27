@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import type { JSX } from "react";
 
 import type { TelemetryInput } from "@/lib/replan";
@@ -33,6 +34,33 @@ function idleText(result: PlanResult | null): string {
   return "No assessment awaiting a signature. Analyze a mission to compute one.";
 }
 
+/**
+ * What became of the assessment just signed or aborted. The card that held
+ * keyboard focus is gone, so focus moves here rather than falling to the body.
+ */
+function Decided({ text }: { readonly text: string }): JSX.Element {
+  const note = useRef<HTMLParagraphElement>(null);
+  useEffect(() => {
+    note.current?.focus();
+  }, []);
+  return (
+    <p ref={note} tabIndex={-1} className="p-3 text-sm text-fg-muted">
+      {text}
+    </p>
+  );
+}
+
+function Outcome({
+  result,
+}: {
+  readonly result: PlanResult | null;
+}): JSX.Element {
+  if (result?.assessment != null) {
+    return <Decided text={idleText(result)} />;
+  }
+  return <p className="p-3 text-sm text-fg-muted">{idleText(result)}</p>;
+}
+
 /** The inspector column: where a sealed assessment is signed or aborted. */
 export function ReviewPanel(props: ReviewPanelProps): JSX.Element {
   const { result, busy, inputsEdited, onDecide } = props;
@@ -50,9 +78,8 @@ export function ReviewPanel(props: ReviewPanelProps): JSX.Element {
         <h2 className="section-label">Review and acknowledge</h2>
       </div>
       <div className="relative min-h-0 flex-1 overflow-y-auto">
-        {pending === null ? (
-          <p className="p-3 text-sm text-fg-muted">{idleText(result)}</p>
-        ) : (
+        {pending === null && <Outcome result={result} />}
+        {pending !== null && (
           <ReviewCard
             assessment={pending}
             busy={busy}
