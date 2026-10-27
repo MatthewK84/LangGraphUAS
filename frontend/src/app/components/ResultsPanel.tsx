@@ -1,6 +1,5 @@
 import type { JSX } from "react";
 
-import { Figure } from "@/app/components/Figure";
 import type {
   Assessment,
   Calculations,
@@ -9,57 +8,48 @@ import type {
   WeatherReading,
 } from "@/lib/types";
 
+import { FigureTable } from "./FigureTable";
+import type { FigureRow } from "./FigureTable";
+import { StatusBanner } from "./StatusBanner";
+
 interface ResultsPanelProps {
   readonly loading: boolean;
   readonly error: string | null;
   readonly result: PlanResult | null;
 }
 
-/**
- * Green is reserved for an operational GO. An advisory plan is planning
- * support, so it renders amber however good the numbers look: the one thing
- * this banner must never do is read as clearance it did not grant.
- */
-function bannerTone(result: PlanResult): string {
-  if (!result.is_viable) {
-    return "bg-rose-950/40 border-rose-800 text-rose-400";
-  }
-  if (result.assessment?.mode === "operational") {
-    return "bg-emerald-950/40 border-emerald-800 text-emerald-400";
-  }
-  return "bg-amber-950/40 border-amber-700 text-amber-300";
-}
-
-function bannerLabel(result: PlanResult): string {
-  if (result.assessment?.decision === "insufficient_data") {
-    return "INSUFFICIENT DATA (NOT ASSESSED)";
-  }
-  if (!result.is_viable) {
-    return "MISSION DENIED (NO-GO)";
-  }
-  if (result.assessment?.mode === "operational") {
-    return "CLEAR TO LAUNCH (GO)";
-  }
-  return "ADVISORY GO - NOT FOR OPERATIONAL USE";
-}
-
-function StatusBanner({
-  result,
+function Notice({
+  title,
+  items,
+  tone,
+  mono = false,
 }: {
-  readonly result: PlanResult;
+  readonly title: string;
+  readonly items: readonly string[];
+  readonly tone: "caution" | "neutral";
+  readonly mono?: boolean;
 }): JSX.Element {
+  const border =
+    tone === "caution"
+      ? "border-l-caution bg-caution-tint"
+      : "border-l-line-strong";
   return (
     <div
-      className={`p-4 rounded-xl border flex items-center justify-between shadow-md ${bannerTone(result)}`}
+      className={`border-b border-l-2 border-b-line px-3 py-2 ${border}`}
+      role={tone === "caution" ? "alert" : "note"}
     >
-      <div>
-        <span className="font-bold text-lg tracking-wide">
-          FLIGHT DISPATCH STATUS: {bannerLabel(result)}
-        </span>
-        <p className="text-xs mt-1 opacity-75 font-mono">
-          Memory Thread ID: {result.thread_id}
-        </p>
-      </div>
+      <span
+        className={`section-label ${tone === "caution" ? "text-caution" : ""}`}
+      >
+        {title}
+      </span>
+      <ul
+        className={`mt-1 list-inside list-disc space-y-0.5 text-md text-fg-secondary ${mono ? "font-mono text-sm" : ""}`}
+      >
+        {items.map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -73,256 +63,146 @@ function BlockerList({
     return null;
   }
   return (
-    <div
-      className="p-4 rounded-xl border bg-slate-800 border-slate-700"
-      role="note"
-    >
-      <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-        Why this plan is advisory
-      </span>
-      <ul className="mt-2 space-y-1 text-sm list-disc list-inside text-slate-300 font-mono">
-        {assessment.blockers.map((blocker) => (
-          <li key={blocker}>{blocker}</li>
-        ))}
-      </ul>
-    </div>
+    <Notice
+      title="Why this plan is advisory"
+      items={assessment.blockers}
+      tone="neutral"
+      mono
+    />
   );
 }
 
-function WarningBanner({
-  warnings,
-}: {
-  readonly warnings: readonly string[];
-}): JSX.Element {
-  return (
-    <div
-      className="p-4 rounded-xl border bg-amber-950/40 border-amber-700 text-amber-300"
-      role="alert"
-    >
-      <span className="font-semibold text-sm uppercase tracking-wider">
-        Degraded inputs
-      </span>
-      <ul className="mt-2 space-y-1 text-sm list-disc list-inside">
-        {warnings.map((warning) => (
-          <li key={warning}>{warning}</li>
-        ))}
-      </ul>
-    </div>
-  );
+function weatherRows(weather: WeatherReading): readonly FigureRow[] {
+  return [
+    {
+      label: "Source",
+      value: weather.source === "live" ? "Live feed" : "Fallback defaults",
+      unit: "",
+    },
+    { label: "Conditions", value: weather.conditions, unit: "" },
+    { label: "Air temperature", value: weather.temperature_c, unit: "°C" },
+    { label: "Wind", value: weather.wind_speed_mps, unit: "m/s" },
+    { label: "Gust", value: weather.wind_gust_mps, unit: "m/s" },
+  ];
 }
 
-function TelemetryCard({
-  weather,
-}: {
-  readonly weather: WeatherReading;
-}): JSX.Element {
-  return (
-    <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 shadow-sm">
-      <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-        Live Environmental Telemetry
-      </span>
-      <div className="mt-2 space-y-1 text-sm">
-        <p>
-          Source:{" "}
-          <span
-            className={
-              weather.source === "live" ? "text-emerald-400" : "text-amber-400"
-            }
-          >
-            {weather.source === "live" ? "Live feed" : "Fallback defaults"}
-          </span>
-        </p>
-        <p>
-          Conditions:{" "}
-          <span className="text-white font-medium">{weather.conditions}</span>
-        </p>
-        <p>
-          Air Temperature:{" "}
-          <span className="text-white font-medium">
-            {weather.temperature_c}&deg;C
-          </span>
-        </p>
-        <p>
-          Wind Velocity:{" "}
-          <span className="text-white font-medium">
-            {weather.wind_speed_mps} m/s
-          </span>
-        </p>
-        <p>
-          Gusting:{" "}
-          <span className="text-white font-medium">
-            {weather.wind_gust_mps} m/s
-          </span>
-        </p>
-      </div>
-    </div>
-  );
+function performanceRows(calc: Calculations): readonly FigureRow[] {
+  return [
+    {
+      label: "Density altitude",
+      value: calc.density_altitude_m,
+      unit: "m MSL",
+    },
+    {
+      label: "Air density",
+      value: Math.round(calc.air_density_ratio * 100),
+      unit: "%",
+      note: "of sea level",
+    },
+    { label: "All-up mass", value: calc.all_up_mass_kg, unit: "kg" },
+    {
+      label: "Hover power (corrected)",
+      value: calc.effective_hover_power_w,
+      unit: "W",
+      path: "effective_hover_power_w",
+    },
+    {
+      label: "Ground speed (worst headwind)",
+      value: calc.ground_speed_mps,
+      unit: "m/s",
+    },
+    { label: "Payload margin", value: calc.payload_margin_kg, unit: "kg" },
+  ];
 }
 
-function PerformanceCard({
-  calculations,
-  provenance,
-}: {
-  readonly calculations: Calculations;
-  readonly provenance: FigureProvenance;
-}): JSX.Element {
-  return (
-    <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 shadow-sm">
-      <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-        Aero-Engineering Performance
-      </span>
-      <div className="mt-2 space-y-1 text-sm">
-        <p>
-          Density Altitude:{" "}
-          <span className="text-white font-medium">
-            {calculations.density_altitude_m} m
-          </span>
-        </p>
-        <p>
-          Air Density:{" "}
-          <span className="text-white font-medium">
-            {Math.round(calculations.air_density_ratio * 100)}% of sea level
-          </span>
-        </p>
-        <p>
-          All-Up Mass:{" "}
-          <span className="text-white font-medium">
-            {calculations.all_up_mass_kg} kg
-          </span>
-        </p>
-        <p>
-          Hover Power (corrected):{" "}
-          <span className="text-white font-medium">
-            <Figure
-              value={calculations.effective_hover_power_w}
-              unit="W"
-              path="effective_hover_power_w"
-              provenance={provenance}
-            />
-          </span>
-        </p>
-        <p>
-          Ground Speed (worst-case headwind):{" "}
-          <span className="text-white font-medium">
-            {calculations.ground_speed_mps} m/s
-          </span>
-        </p>
-        <p>
-          Energy Budget:{" "}
-          <span className="text-white font-medium">
-            <Figure
-              value={calculations.energy_required_wh}
-              unit="Wh"
-              path="energy_required_wh"
-              provenance={provenance}
-            />
-          </span>
-        </p>
-        <p>
-          Payload Margin:{" "}
-          <span className="text-white font-medium">
-            {calculations.payload_margin_kg} kg
-          </span>
-        </p>
-      </div>
-    </div>
-  );
-}
-
-function EnergyCard({
-  calculations,
-  provenance,
-}: {
-  readonly calculations: Calculations;
-  readonly provenance: FigureProvenance;
-}): JSX.Element {
-  const parts = calculations.energy_breakdown;
-  const battery = calculations.battery_check;
+function energyRows(calc: Calculations): readonly FigureRow[] {
+  const parts = calc.energy_breakdown;
+  const battery = calc.battery_check;
   const derated = battery.temperature_factor < 1;
+  const wh = (label: string, value: number, path: string): FigureRow => ({
+    label,
+    value,
+    unit: "Wh",
+    path,
+  });
+  return [
+    wh("Climb", parts.climb_wh, "energy_breakdown.climb_wh"),
+    wh("Cruise", parts.cruise_wh, "energy_breakdown.cruise_wh"),
+    wh("Hover", parts.hover_wh, "energy_breakdown.hover_wh"),
+    wh("Descent", parts.descent_wh, "energy_breakdown.descent_wh"),
+    wh("Energy required", calc.energy_required_wh, "energy_required_wh"),
+    {
+      ...wh(
+        "Usable capacity",
+        battery.usable_capacity_wh,
+        "battery_check.usable_capacity_wh",
+      ),
+      ...(derated
+        ? {
+            label: `Usable capacity (cold-derated to ${String(Math.round(battery.temperature_factor * 100))}%)`,
+          }
+        : {}),
+    },
+    {
+      ...wh("Margin", battery.margin_wh, "battery_check.margin_wh"),
+      tone: battery.margin_wh >= 0 ? "ok" : "critical",
+    },
+  ];
+}
+
+function Figures({ result }: { readonly result: PlanResult }): JSX.Element {
+  const provenance: FigureProvenance = result.provenance;
+  const calc = result.calculations;
   return (
-    <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 shadow-sm">
-      <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-        Energy Budget by Phase
-      </span>
-      <div className="mt-2 space-y-1 text-sm">
-        <p>
-          Climb:{" "}
-          <span className="text-white font-medium">
-            <Figure
-              value={parts.climb_wh}
-              unit="Wh"
-              path="energy_breakdown.climb_wh"
-              provenance={provenance}
-            />
-          </span>
-        </p>
-        <p>
-          Cruise:{" "}
-          <span className="text-white font-medium">
-            <Figure
-              value={parts.cruise_wh}
-              unit="Wh"
-              path="energy_breakdown.cruise_wh"
-              provenance={provenance}
-            />
-          </span>
-        </p>
-        <p>
-          Hover:{" "}
-          <span className="text-white font-medium">
-            <Figure
-              value={parts.hover_wh}
-              unit="Wh"
-              path="energy_breakdown.hover_wh"
-              provenance={provenance}
-            />
-          </span>
-        </p>
-        <p>
-          Descent:{" "}
-          <span className="text-white font-medium">
-            <Figure
-              value={parts.descent_wh}
-              unit="Wh"
-              path="energy_breakdown.descent_wh"
-              provenance={provenance}
-            />
-          </span>
-        </p>
-        <p className="pt-1 border-t border-slate-700">
-          Usable Capacity:{" "}
-          <span className="text-white font-medium">
-            <Figure
-              value={battery.usable_capacity_wh}
-              unit="Wh"
-              path="battery_check.usable_capacity_wh"
-              provenance={provenance}
-            />
-          </span>
-          {derated && (
-            <span className="text-amber-400">
-              {" "}
-              (cold-derated to {Math.round(battery.temperature_factor * 100)}%)
-            </span>
-          )}
-        </p>
-        <p>
-          Margin:{" "}
-          <span
-            className={
-              battery.margin_wh >= 0
-                ? "text-emerald-400 font-medium"
-                : "text-rose-400 font-medium"
-            }
-          >
-            <Figure
-              value={battery.margin_wh}
-              unit="Wh"
-              path="battery_check.margin_wh"
-              provenance={provenance}
-            />
-          </span>
-        </p>
+    <div className="grid grid-cols-1 border-b border-line wide:grid-cols-2">
+      <div className="border-line wide:border-r">
+        {result.weather !== null && (
+          <FigureTable
+            title="Weather"
+            rows={weatherRows(result.weather)}
+            provenance={provenance}
+          />
+        )}
+        {calc !== null && (
+          <FigureTable
+            title="Performance"
+            rows={performanceRows(calc)}
+            provenance={provenance}
+          />
+        )}
+      </div>
+      <div>
+        {calc !== null && (
+          <FigureTable
+            title="Energy budget"
+            rows={energyRows(calc)}
+            provenance={provenance}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+function Skeleton(): JSX.Element {
+  const bars = ["w-2/5", "w-1/3", "w-1/2", "w-1/4", "w-2/5", "w-1/3"];
+  return (
+    <div aria-busy="true">
+      <div className="h-strip border-b border-line bg-raised" />
+      <p className="px-3 py-2 text-sm text-fg-muted">
+        Running physics simulations and prompting the AI copilot...
+      </p>
+      <div className="grid grid-cols-2">
+        {[0, 1].map((column) => (
+          <div key={column} className="space-y-2 px-3 py-2">
+            {bars.map((width, index) => (
+              <div
+                key={String(index)}
+                className={`h-3 rounded-sm bg-raised ${width}`}
+              />
+            ))}
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -333,7 +213,7 @@ export function ResultsPanel(props: ResultsPanelProps): JSX.Element {
   if (error !== null) {
     return (
       <div
-        className="bg-rose-950/40 border border-rose-800 rounded-xl p-8 text-rose-300"
+        className="m-3 border-l-2 border-critical bg-critical-tint px-3 py-2 text-md text-fg"
         role="alert"
       >
         {error}
@@ -341,52 +221,36 @@ export function ResultsPanel(props: ResultsPanelProps): JSX.Element {
     );
   }
   if (loading) {
-    return (
-      <div className="bg-slate-800 border border-slate-700 rounded-xl p-12 text-center text-slate-400 animate-pulse">
-        Running physics simulations and prompting the AI copilot...
-      </div>
-    );
+    return <Skeleton />;
   }
   if (result === null) {
     return (
-      <div className="bg-slate-800 border border-dashed border-slate-700 rounded-xl p-12 text-center text-slate-500">
-        Configure mission objectives and location metrics to view dispatch
-        parameters.
+      <div className="flex h-full items-center justify-center p-8 text-center text-md text-fg-muted">
+        No plan yet. Set the aircraft, payload, profile and location, then
+        analyze flight feasibility.
       </div>
     );
   }
   return (
-    <div className="space-y-6">
+    <div>
       <StatusBanner result={result} />
       {result.assessment !== null && (
         <BlockerList assessment={result.assessment} />
       )}
       {result.warnings.length > 0 && (
-        <WarningBanner warnings={result.warnings} />
+        <Notice
+          title="Degraded inputs"
+          items={result.warnings}
+          tone="caution"
+        />
       )}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {result.weather !== null && <TelemetryCard weather={result.weather} />}
-        {result.calculations !== null && (
-          <PerformanceCard
-            calculations={result.calculations}
-            provenance={result.provenance}
-          />
-        )}
-        {result.calculations !== null && (
-          <EnergyCard
-            calculations={result.calculations}
-            provenance={result.provenance}
-          />
-        )}
-      </div>
-      <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-xl">
-        <h3 className="text-lg font-semibold border-b border-slate-700 pb-2 text-white mb-4">
-          AI Safety Officer Report
-        </h3>
-        <div className="max-w-none text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">
+      <Figures result={result} />
+      <section className="px-3 py-3">
+        <h3 className="section-label mb-2">AI Safety Officer Report</h3>
+        <div className="max-w-prose whitespace-pre-wrap text-md leading-normal text-fg-secondary">
           {result.report}
         </div>
-      </div>
+      </section>
     </div>
   );
 }

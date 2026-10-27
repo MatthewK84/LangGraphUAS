@@ -206,6 +206,7 @@ def test_every_figure_the_dashboard_labels_is_one_the_backend_reports() -> None:
     panel = (
         Path(__file__).resolve().parents[2] / "frontend/src/app/components/ResultsPanel.tsx"
     ).read_text(encoding="utf-8")
-    paths = re.findall(r'<Figure[^>]*path="([^"]+)"', panel, re.DOTALL)
+    # Every W and Wh row names its figure by dotted path, a quoted string ending _w or _wh.
+    paths = set(re.findall(r'"([a-z_]+(?:\.[a-z_]+)?_wh?)"', panel))
     assert len(paths) == 8
-    assert set(paths) <= set(WATT_FIGURE_INPUTS)
+    assert paths <= set(WATT_FIGURE_INPUTS)

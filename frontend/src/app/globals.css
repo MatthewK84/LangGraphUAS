@@ -1,3 +1,69 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  html,
+  body {
+    height: 100%;
+  }
+  body {
+    background: var(--bg-app);
+    color: var(--text-primary);
+    font-family: var(--font-ui);
+    font-size: var(--text-md);
+    line-height: var(--leading-normal);
+  }
+  /* Numbers that change or align never shift width. */
+  table,
+  output,
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+  :focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 1px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      transition-duration: 0ms !important;
+      animation-duration: 0ms !important;
+    }
+  }
+}
+
+@layer components {
+  /* 11px uppercase muted panel and section label */
+  .section-label {
+    @apply text-xs font-semibold uppercase tracking-label text-fg-muted;
+  }
+  .panel-header {
+    @apply flex h-header shrink-0 items-center justify-between border-b border-line bg-raised px-3;
+  }
+  .field {
+    @apply h-control w-full rounded-sm border border-line bg-app px-2 text-md text-fg;
+  }
+  .field:focus {
+    @apply border-accent outline-none;
+  }
+  .btn {
+    @apply inline-flex h-control items-center justify-center rounded-sm border border-line-strong px-3 text-md font-medium text-fg transition-colors;
+  }
+  .btn:hover:not(:disabled) {
+    @apply bg-hover;
+  }
+  .btn:disabled {
+    @apply cursor-not-allowed text-fg-disabled;
+  }
+  .btn-primary {
+    @apply border-accent bg-accent text-accent-text;
+  }
+  .btn-primary:hover:not(:disabled) {
+    @apply border-accent-hover bg-accent-hover;
+  }
+  .btn-primary:disabled {
+    @apply border-line bg-raised text-fg-disabled;
+  }
+}

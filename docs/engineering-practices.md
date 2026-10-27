@@ -47,6 +47,7 @@ each pull request; `calculator-version` runs on pull requests only.
 | CRAP and duplication | `ub-mode` ("ub-mode (crapper, dryer)") | "Gate on CRAP < 10 and unlisted duplication < 0.8" | see [ub-mode](#ub-mode-crapper-and-dryer) below |
 | Frontend types | `frontend` ("Frontend (tsc, eslint, build)") | "Typecheck" | `tsc` finds no error |
 | Frontend complexity | `frontend` | "Lint" | ESLint `complexity: ["error", 10]` on `src/`, the half of CRAP the frontend can hold until it measures coverage; `src/lib/lint-rules.test.ts` proves 11 fails and 10 passes |
+| Frontend UI standard | `frontend` | "UI standard scan" | `npm run lint:ui` (`src/lib/ui-scan.test.ts`) finds no gradient, blur, radius above 4px, static shadow, purple accent, text above 20px, bounce or pulse, Tailwind palette color, arbitrary pixel value, literal color outside `src/styles/tokens.css`, emoji, or suppression under `src/`; each rule is proven on a probe. See `docs/ui-standard.md` |
 | Frontend format | `frontend` | "Format check" | Prettier finds nothing to change |
 | Frontend tests | `frontend` | "Test" | Vitest passes, including the server-side proxy |
 | Frontend build | `frontend` | "Build" | `next build` succeeds |

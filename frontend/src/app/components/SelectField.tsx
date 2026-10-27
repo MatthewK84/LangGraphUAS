@@ -13,16 +13,11 @@ interface SelectFieldProps {
   readonly onChange: (value: string) => void;
 }
 
-const SELECT_CLASS =
-  "w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-blue-500";
-const LABEL_CLASS =
-  "block text-xs font-medium uppercase tracking-wider text-slate-400 mb-1";
-
 export function SelectField(props: SelectFieldProps): JSX.Element {
   const { id, label, value, options, onChange } = props;
   return (
     <div>
-      <label htmlFor={id} className={LABEL_CLASS}>
+      <label htmlFor={id} className="mb-1 block text-sm text-fg-secondary">
         {label}
       </label>
       <select
@@ -32,7 +27,7 @@ export function SelectField(props: SelectFieldProps): JSX.Element {
         onChange={(event) => {
           onChange(event.target.value);
         }}
-        className={SELECT_CLASS}
+        className="field"
       >
         {options.map((option) => (
           <option key={option.value} value={option.value}>

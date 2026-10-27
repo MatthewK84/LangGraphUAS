@@ -376,6 +376,9 @@ jobs:
         run: npm run typecheck
       - name: Lint
         run: npm run lint
+      - name: UI standard scan
+        # Banned template patterns and literal colors (docs/ui-standard.md).
+        run: npm run lint:ui
       - name: Format check
         run: npm run format
       - name: Test
