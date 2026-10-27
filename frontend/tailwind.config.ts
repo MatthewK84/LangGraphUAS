@@ -74,6 +74,7 @@ const config: Config = {
       strip: token("strip-h"),
       form: token("form-w"),
       inspector: token("inspector-w"),
+      drawer: token("drawer-h"),
     },
     minWidth: { 0: "0", shell: token("shell-min-w") },
     fontFamily: { sans: token("font-ui"), mono: token("font-mono") },

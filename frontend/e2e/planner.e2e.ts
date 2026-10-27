@@ -73,6 +73,19 @@ test("catalog load, plan and ack run through both containers", async ({
   );
   await expect(brief.locator("xpath=following-sibling::div")).not.toBeEmpty();
 
+  // Provenance drawer (#96): a figure's basis opens the record of every
+  // field it rests on, and Escape hands focus back to the figure.
+  const basis = page.getByRole("button", {
+    name: /show the provenance of Hover power/,
+  });
+  await basis.click();
+  const drawer = page.getByRole("region", { name: /^Provenance: Hover power/ });
+  await expect(drawer).toBeVisible();
+  await expect(drawer.getByRole("row").nth(1)).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(drawer).toHaveCount(0);
+  await expect(basis).toBeFocused();
+
   // Replan against telemetry after the signature (#94): the briefed figure
   // stays beside the live one, and the advisory strip names the alerts.
   const telemetry = page.getByRole("form", { name: "Live telemetry" });

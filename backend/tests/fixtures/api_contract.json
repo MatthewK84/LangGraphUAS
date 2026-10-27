@@ -184,6 +184,40 @@
       "provenance{}": [
         "object"
       ],
+      "provenance{}.basis": [
+        "array"
+      ],
+      "provenance{}.basis[]": [
+        "object"
+      ],
+      "provenance{}.basis[].confidence": [
+        "string"
+      ],
+      "provenance{}.basis[].field": [
+        "string"
+      ],
+      "provenance{}.basis[].notes": [
+        "string"
+      ],
+      "provenance{}.basis[].retrieved_at": [
+        "null",
+        "string"
+      ],
+      "provenance{}.basis[].source": [
+        "string"
+      ],
+      "provenance{}.basis[].source_url": [
+        "null",
+        "string"
+      ],
+      "provenance{}.basis[].unit": [
+        "null",
+        "string"
+      ],
+      "provenance{}.basis[].value": [
+        "null",
+        "number"
+      ],
       "provenance{}.confidence": [
         "string"
       ],
@@ -411,6 +445,40 @@
       ],
       "provenance{}": [
         "object"
+      ],
+      "provenance{}.basis": [
+        "array"
+      ],
+      "provenance{}.basis[]": [
+        "object"
+      ],
+      "provenance{}.basis[].confidence": [
+        "string"
+      ],
+      "provenance{}.basis[].field": [
+        "string"
+      ],
+      "provenance{}.basis[].notes": [
+        "string"
+      ],
+      "provenance{}.basis[].retrieved_at": [
+        "null",
+        "string"
+      ],
+      "provenance{}.basis[].source": [
+        "string"
+      ],
+      "provenance{}.basis[].source_url": [
+        "null",
+        "string"
+      ],
+      "provenance{}.basis[].unit": [
+        "null",
+        "string"
+      ],
+      "provenance{}.basis[].value": [
+        "null",
+        "number"
       ],
       "provenance{}.confidence": [
         "string"

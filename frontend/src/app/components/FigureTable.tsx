@@ -27,6 +27,30 @@ const TONE: Readonly<Record<"ok" | "critical", string>> = {
   critical: "text-critical",
 };
 
+/** The Basis cell: a figure's provenance, or the row's note. */
+function Basis({
+  row,
+  provenance,
+}: {
+  readonly row: FigureRow;
+  readonly provenance: FigureProvenance;
+}): JSX.Element {
+  if (row.path === undefined) {
+    return <span className="text-fg-muted">{row.note ?? ""}</span>;
+  }
+  return (
+    <Figure
+      figure={{
+        path: row.path,
+        label: row.label,
+        value: typeof row.value === "number" ? row.value : null,
+        unit: row.unit,
+      }}
+      provenance={provenance}
+    />
+  );
+}
+
 function Row({
   row,
   provenance,
@@ -59,11 +83,7 @@ function Row({
         <>
           <td className="px-2 text-left text-fg-muted">{row.unit}</td>
           <td className="truncate px-3 text-left text-sm">
-            {row.path === undefined ? (
-              <span className="text-fg-muted">{row.note ?? ""}</span>
-            ) : (
-              <Figure path={row.path} provenance={provenance} />
-            )}
+            <Basis row={row} provenance={provenance} />
           </td>
         </>
       )}

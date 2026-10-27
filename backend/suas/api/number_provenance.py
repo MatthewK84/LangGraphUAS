@@ -16,7 +16,7 @@ from typing import Final
 
 from suas.schemas.domain import Aircraft, Payload
 from suas.schemas.provenance import Confidence, FieldProvenance, FieldSource
-from suas.schemas.responses import NumberProvenance
+from suas.schemas.responses import InputBasis, NumberProvenance
 
 _HOVER: Final = ("aircraft.hover_power_w", "aircraft.weight_kg", "payload.weight_kg")
 _PHASE: Final = (*_HOVER, "payload.power_draw_w")
@@ -64,24 +64,50 @@ _CONFIDENCE_RANK: Final[tuple[Confidence, ...]] = (
 _UNRECORDED: Final = FieldProvenance(value=0.0, unit="-", source=FieldSource.UNKNOWN)
 
 
-def _record(aircraft: Aircraft, payload: Payload, path: str) -> FieldProvenance:
+def _lookup(aircraft: Aircraft, payload: Payload, path: str) -> FieldProvenance | None:
     owner, field = path.split(".", 1)
     records = aircraft.provenance if owner == "aircraft" else payload.provenance
-    return records.get(field, _UNRECORDED)
+    return records.get(field)
 
 
-def _summarise(records: list[FieldProvenance], inputs: tuple[str, ...]) -> NumberProvenance:
+def _basis(path: str, record: FieldProvenance | None) -> InputBasis:
+    if record is None:
+        return InputBasis(
+            field=path,
+            value=None,
+            unit=None,
+            source=_UNRECORDED.source,
+            confidence=_UNRECORDED.confidence,
+        )
+    return InputBasis(
+        field=path,
+        value=record.value,
+        unit=record.unit,
+        source=record.source,
+        confidence=record.confidence,
+        source_url=record.source_url,
+        retrieved_at=record.retrieved_at,
+        notes=record.notes,
+    )
+
+
+def _summarise(
+    found: dict[str, FieldProvenance | None], inputs: tuple[str, ...]
+) -> NumberProvenance:
+    records = [found[path] or _UNRECORDED for path in inputs]
+    paths = sorted(set(inputs))
     return NumberProvenance(
         source=min((r.source for r in records), key=_SOURCE_RANK.index),
         confidence=min((r.confidence for r in records), key=_CONFIDENCE_RANK.index),
         operational_grade=all(r.is_operational_grade for r in records),
-        inputs=sorted(set(inputs)),
+        inputs=paths,
+        basis=[_basis(path, found[path]) for path in paths],
     )
 
 
 def number_provenance(aircraft: Aircraft, payload: Payload) -> dict[str, NumberProvenance]:
     """Return the provenance of each W and Wh figure, keyed by its path in ``Calculations``."""
     return {
-        figure: _summarise([_record(aircraft, payload, path) for path in inputs], inputs)
+        figure: _summarise({path: _lookup(aircraft, payload, path) for path in inputs}, inputs)
         for figure, inputs in WATT_FIGURE_INPUTS.items()
     }

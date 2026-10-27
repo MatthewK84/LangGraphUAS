@@ -127,6 +127,23 @@ class Calculations(BaseModel):
     safety_flags: SafetyFlags
 
 
+class InputBasis(BaseModel):
+    """One reference field a W or Wh figure was computed from, as recorded (#96).
+
+    ``value`` and ``unit`` are ``None`` when the catalog keeps no record for the
+    field; ``source`` is then ``unknown``, the same reading the summary gives it.
+    """
+
+    field: str
+    value: float | None
+    unit: str | None
+    source: FieldSource
+    confidence: Confidence
+    source_url: str | None = None
+    retrieved_at: str | None = None
+    notes: str = ""
+
+
 class NumberProvenance(BaseModel):
     """What one W or Wh figure in ``Calculations`` rests on (#79).
 
@@ -140,6 +157,7 @@ class NumberProvenance(BaseModel):
     confidence: Confidence
     operational_grade: bool
     inputs: list[str]
+    basis: list[InputBasis] = Field(default_factory=list)
 
 
 class PlanResponse(BaseModel):
