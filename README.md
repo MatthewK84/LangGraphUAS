@@ -199,7 +199,7 @@ list required status checks. Rules and rationale for each gate are in
 | `postgres-integration` | Blocks | Real Postgres: migrations apply, the app boots end to end, `/ready` refuses an unmigrated database, and concurrent startup seeds all succeed |
 | `calculator-version` | Blocks (pull requests only) | A change to `backend/suas/calculations/` must bump `CALCULATOR_VERSION` |
 | `ub-mode` | Blocks | CRAP below 10 for every function in `backend/suas`, and no unlisted duplicate pair at 0.8 or above |
-| `frontend` | Blocks | `tsc`, ESLint (cyclomatic complexity 10 or less), Prettier, Vitest, production build |
+| `frontend` | Blocks | `tsc`, ESLint (cyclomatic complexity 10 or less), the UI standard scan ([docs/ui-standard.md](docs/ui-standard.md)), Prettier, Vitest, production build |
 | `docker` | Blocks on the build | Both images build. Its trivy scan of HIGH and CRITICAL findings is **report-only** (job summary) |
 | `workflow-lint` | Blocks | actionlint and zizmor over `.github/`: actions pinned to commits, no template injection, least-privilege tokens |
 | `secrets-scan` | Blocks | gitleaks, a checksum-verified pinned release, over the full history |
@@ -231,6 +231,7 @@ Frontend:
 cd frontend
 npm run typecheck
 npm run lint
+npm run lint:ui                       # UI standard scan (docs/ui-standard.md)
 npm run format                        # prettier --check
 npm test                              # vitest, covers the server-side proxy
 npm run build
