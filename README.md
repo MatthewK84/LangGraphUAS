@@ -357,7 +357,7 @@ live roster, cross-check `bluelist.dcma.mil`.
 
 ### Degraded inputs
 
-Weather has five explicit states, because "we could not reach the provider",
+Weather has six explicit states, because "we could not reach the provider",
 "the provider answered with nonsense", and "this is a reading from forty minutes
 ago" are different situations an operator would act on differently.
 
@@ -368,11 +368,14 @@ ago" are different situations an operator would act on differently.
 | `cached_stale` | Past its window, used because the live fetch failed | no |
 | `fallback` | Defaults; the provider could not be reached | no |
 | `error` | Defaults; the provider answered and the answer was unusable | no |
+| `fixture` | A fixed demo-mode reading, never fetched (#97) | no |
 
 The rule the service exists to keep is narrow and absolute: **a degraded reading
 must never be indistinguishable from a live one.** Anything short of the top two
 sets `degraded: true`, names the state in `warnings`, and blocks operational
-mode. The dashboard renders an amber banner.
+mode. The dashboard shows the state as a chip in the weather table, each state
+in a treatment no other shares (green only for the two operational states,
+dashed for any reading not fetched now), and an amber banner.
 
 Parsing is strict. A missing, non-numeric, NaN or infinite field makes the whole
 payload unusable rather than being quietly replaced with a default — substituting
