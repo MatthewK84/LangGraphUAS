@@ -1,5 +1,6 @@
 import type { JSX } from "react";
 
+import type { PlanFailure } from "@/lib/failure";
 import type {
   Assessment,
   Calculations,
@@ -15,7 +16,7 @@ import { WeatherSourceChip } from "./WeatherSourceChip";
 
 interface ResultsPanelProps {
   readonly loading: boolean;
-  readonly error: string | null;
+  readonly error: PlanFailure | null;
   readonly result: PlanResult | null;
 }
 
@@ -154,6 +155,13 @@ function energyRows(calc: Calculations): readonly FigureRow[] {
 function Figures({ result }: { readonly result: PlanResult }): JSX.Element {
   const provenance: FigureProvenance = result.provenance;
   const calc = result.calculations;
+  if (calc === null && result.weather === null) {
+    return (
+      <p className="border-b border-line px-3 py-3 text-md text-fg-secondary">
+        The planner returned no figures for this mission.
+      </p>
+    );
+  }
   return (
     <div className="grid grid-cols-1 border-b border-line wide:grid-cols-2">
       <div className="border-line wide:border-r">
@@ -191,7 +199,7 @@ function Skeleton(): JSX.Element {
     <div aria-busy="true">
       <div className="h-strip border-b border-line bg-raised" />
       <p className="px-3 py-2 text-sm text-fg-muted">
-        Running physics simulations and prompting the AI copilot...
+        Computing the assessment.
       </p>
       <div className="grid grid-cols-2">
         {[0, 1].map((column) => (
@@ -209,6 +217,25 @@ function Skeleton(): JSX.Element {
   );
 }
 
+const BRIEF_SOURCE = {
+  deterministic: "Deterministic: no language model wrote this brief.",
+  model:
+    "Written by a language model from the sealed figures. Check it against them.",
+} as const;
+
+/**
+ * The backend's fallback brief, written when no model key is set or the model
+ * fails, is the only text it writes itself; anything else came from a model.
+ * The response carries no report-source field, so its wording is the signal.
+ */
+function briefSource(report: string | null): keyof typeof BRIEF_SOURCE {
+  return report?.endsWith(
+    "Deterministic assessment only; model narrative unavailable.",
+  ) === true
+    ? "deterministic"
+    : "model";
+}
+
 /**
  * The brief is written after the signature (ADR-004), so before it there is
  * nothing to show: what the operator signs is the calculator's alone. Even a
@@ -222,9 +249,15 @@ function Brief({ result }: { readonly result: PlanResult }): JSX.Element {
       </p>
     );
   }
+  const source = briefSource(result.report);
   return (
     <section className="px-3 py-3">
-      <h3 className="section-label mb-2">AI Safety Officer Report</h3>
+      <h3 className="section-label">Safety officer brief</h3>
+      <p
+        className={`mb-2 mt-1 text-sm ${source === "model" ? "text-caution" : "text-fg-muted"}`}
+      >
+        {BRIEF_SOURCE[source]}
+      </p>
       <div className="max-w-prose whitespace-pre-wrap text-md leading-normal text-fg-secondary">
         {result.report}
       </div>
@@ -237,10 +270,12 @@ export function ResultsPanel(props: ResultsPanelProps): JSX.Element {
   if (error !== null) {
     return (
       <div
-        className="m-3 border-l-2 border-critical bg-critical-tint px-3 py-2 text-md text-fg"
+        className="m-3 border-l-2 border-critical bg-critical-tint px-3 py-2"
         role="alert"
       >
-        {error}
+        <p className="text-md font-semibold text-critical">{error.title}</p>
+        <p className="mt-1 text-md text-fg">{error.detail}</p>
+        <p className="mt-1 font-mono text-sm text-fg-muted">{error.raw}</p>
       </div>
     );
   }

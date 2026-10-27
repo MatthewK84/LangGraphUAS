@@ -30,7 +30,7 @@ describe("replan on the planner page (#94)", () => {
         name: "Acknowledge and generate brief",
       }),
     );
-    await screen.findByRole("heading", { name: "AI Safety Officer Report" });
+    await screen.findByRole("heading", { name: "Safety officer brief" });
     expect(screen.queryByRole("region", BANNER)).toBeNull();
 
     await replanMission(user);

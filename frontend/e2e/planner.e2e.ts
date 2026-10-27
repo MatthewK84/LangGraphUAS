@@ -48,7 +48,7 @@ test("catalog load, plan and ack run through both containers", async ({
   await expect(review).toContainText("advisory");
   // Compute, review, then ack (#92): the brief does not exist before the
   // signature, and an edit after the assessment withdraws the confirm.
-  const brief = page.getByRole("heading", { name: "AI Safety Officer Report" });
+  const brief = page.getByRole("heading", { name: "Safety officer brief" });
   await expect(brief).toHaveCount(0);
   const confirm = review.getByRole("button", {
     name: "Acknowledge and generate brief",
