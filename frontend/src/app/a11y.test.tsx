@@ -53,6 +53,17 @@ describe("axe on the planner page (#98)", () => {
     expect(await violations()).toEqual([]);
   });
 
+  it("finds nothing with the skip link focused", async () => {
+    stubBackend(ADVISORY_PLAN);
+    const user = userEvent.setup();
+    render(<MissionPlanner />);
+    await analyzeMission(user);
+    await screen.findByRole("region", { name: "Assessment review" });
+    await user.tab();
+    expect(document.activeElement?.textContent).toBe("Skip to sign-off");
+    expect(await violations()).toEqual([]);
+  });
+
   it("finds nothing once signed, with the provenance drawer open", async () => {
     stubBackend(ADVISORY_PLAN, BRIEFED_PLAN);
     const user = userEvent.setup();

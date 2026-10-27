@@ -26,6 +26,7 @@ import { ProvenanceDrawer } from "./components/ProvenanceDrawer";
 import { ReplanPanel } from "./components/ReplanPanel";
 import { ResultsPanel } from "./components/ResultsPanel";
 import { ReviewPanel } from "./components/ReviewPanel";
+import { SkipToSignOff } from "./components/SkipToSignOff";
 import { UtcClock } from "./components/UtcClock";
 
 function TopBar(): JSX.Element {
@@ -116,6 +117,7 @@ export default function MissionPlanner(): JSX.Element {
         <main className="flex min-w-0 flex-1 flex-col border-r border-line bg-app">
           <div className="panel-header">
             <h2 className="section-label">Assessment</h2>
+            {result !== null && <SkipToSignOff />}
           </div>
           <div className="relative min-h-0 flex-1 overflow-y-auto">
             {result !== null && replan.latest !== null && (
