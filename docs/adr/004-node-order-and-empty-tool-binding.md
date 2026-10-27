@@ -53,5 +53,8 @@ incident response: **a suppressed brief does not invalidate an ack.**
   on the compiled graph.
 - `backend/tests/test_injection.py::test_report_node_has_no_tools` asserts the
   bound-tool list is empty.
+- In the dashboard, `frontend/src/app/review-flow.test.tsx` and the local
+  Playwright suite (`frontend/e2e/planner.e2e.ts`) assert that no brief is
+  rendered before the ack and that an input edit disables a pending confirm.
 - Both tests fail if the invariant is removed, which is the point: the refactor
   that would break this is the one that looks reasonable in review.

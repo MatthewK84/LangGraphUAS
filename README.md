@@ -124,6 +124,12 @@ produces can change what was signed. See
 no tools bound, for the same reason. Both are pinned by tests that fail if the
 invariant is removed.
 
+The dashboard holds the same line. While a plan awaits its signature there is no
+brief on screen, even if a response carried one; the review card shows only the
+sealed verdict, mode, limiting factors, calculator version and the full inputs
+hash it will sign. Editing any mission input after the assessment disables the
+confirm until the mission is analyzed again (`frontend/src/lib/review.ts`).
+
 <details>
 <summary><b>State and checkpoints</b></summary>
 
