@@ -464,6 +464,16 @@ reserve, wind, and state of charge against the full pack the brief assumed. Its
 findings list each alert by code, label and message, and its verdict is
 advisory whenever the replan raised anything, whatever the plan was.
 
+The planner needs no model key. Without one (or when the model fails) the
+backend writes a short deterministic brief, and the dashboard's "Safety officer
+brief" says so: "Deterministic: no language model wrote this brief." A brief a
+model did write is marked as one to check against the figures. The response has
+no field naming the brief's source, so the dashboard reads the fallback's fixed
+wording. While a plan is computing nothing claims a model is at work, a plan or
+acknowledgement that fails says what was not done (nothing computed, or the
+signature not recorded) with the raw reason beneath, and a plan with no figures
+says so instead of showing empty tables.
+
 `GET /api/plan/{thread_id}` returns the persisted state for a prior mission
 thread, or `found: false` when the thread is unknown.
 
