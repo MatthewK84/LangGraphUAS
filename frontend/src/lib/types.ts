@@ -92,6 +92,9 @@ export interface NumberProvenance {
 /** Keyed by the figure's dotted path in `Calculations`. */
 export type FigureProvenance = Readonly<Record<string, NumberProvenance>>;
 
+/** No key, a failed call, a brief the seal withheld or an abort is deterministic. */
+export type ReportSource = "deterministic" | "model";
+
 export type Decision = "go" | "no_go" | "insufficient_data";
 
 export type AssessmentMode = "advisory" | "operational";
@@ -128,6 +131,8 @@ export interface PlanResult {
   readonly calculations: Calculations | null;
   readonly provenance: FigureProvenance;
   readonly report: string;
+  /** Who wrote `report`: deterministic code or the language model. */
+  readonly report_source: ReportSource;
   readonly thread_id: string;
   readonly degraded: boolean;
   readonly warnings: readonly string[];
