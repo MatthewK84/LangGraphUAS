@@ -236,6 +236,9 @@
       "report": [
         "string"
       ],
+      "report_source": [
+        "string"
+      ],
       "thread_id": [
         "string"
       ],
@@ -496,6 +499,9 @@
         "string"
       ],
       "report": [
+        "string"
+      ],
+      "report_source": [
         "string"
       ],
       "thread_id": [

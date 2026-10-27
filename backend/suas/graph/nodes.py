@@ -36,7 +36,20 @@ logger: Final[logging.Logger] = logging.getLogger(__name__)
 NodeFn = Callable[[MissionState], Awaitable[MissionState]]
 
 _NO_PAYLOAD_ID: Final[str] = "None"
-_INVALID_AIRCRAFT_REPORT: Final[str] = "FATAL: Invalid aircraft selected."
+# Brief texts written by code, not the model. Public so the API can say which
+# briefs no language model wrote (suas/api/report_source.py).
+INVALID_AIRCRAFT_REPORT: Final[str] = "FATAL: Invalid aircraft selected."
+ABORTED_REPORT: Final[str] = "Mission aborted by the operator before any brief was generated."
+
+
+def narrative_unavailable_report(is_viable: bool) -> str:
+    """Return the brief written when the report service raised."""
+    return f"Mission status: {'GO' if is_viable else 'NO-GO'}. Narrative unavailable."
+
+
+def validation_failed_report(is_viable: bool) -> str:
+    """Return the brief written when there is nothing to assess."""
+    return f"Mission validation failed. Viable: {is_viable}."
 
 
 def make_validate_node(deps: GraphDependencies) -> NodeFn:
@@ -59,7 +72,7 @@ def make_validate_node(deps: GraphDependencies) -> NodeFn:
                     "assessment": assessment.model_dump(mode="json"),
                     "is_viable": False,
                     "error": "invalid_aircraft",
-                    "report": _INVALID_AIRCRAFT_REPORT,
+                    "report": INVALID_AIRCRAFT_REPORT,
                 }
             payload: Payload | None = await get_payload(session, state["payload_id"])
             if payload is None:
@@ -142,7 +155,7 @@ def make_report_node(deps: GraphDependencies) -> NodeFn:
         calc_dump = state.get("calculations")
         aircraft_dump = state.get("aircraft")
         if calc_dump is None or aircraft_dump is None:
-            return {"report": f"Mission validation failed. Viable: {is_viable}."}
+            return {"report": validation_failed_report(is_viable)}
         try:
             report: str = await deps.report.generate(
                 is_viable=is_viable,
@@ -153,7 +166,7 @@ def make_report_node(deps: GraphDependencies) -> NodeFn:
             )
         except ReportGenerationError:
             logger.warning("Falling back to deterministic report text")
-            report = f"Mission status: {'GO' if is_viable else 'NO-GO'}. Narrative unavailable."
+            report = narrative_unavailable_report(is_viable)
         report, violations = _vet_prose(report, state)
         return {"report": report, "seal_violations": violations}
 
@@ -251,7 +264,7 @@ def make_human_ack_node() -> NodeFn:
         }
         if action == "abort":
             updates["aborted"] = True
-            updates["report"] = "Mission aborted by the operator before any brief was generated."
+            updates["report"] = ABORTED_REPORT
             return updates
         if action == "edit":
             updates.update(_apply_edits(state, response.get("edits") or {}))

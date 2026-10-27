@@ -52,7 +52,7 @@ def _fence(citations: list[dict[str, Any]], nonce: str) -> str:
     return "\n".join(lines)
 
 
-def _fallback_report(is_viable: bool) -> str:
+def fallback_report(is_viable: bool) -> str:
     """Return a deterministic brief when the model is unavailable."""
     decision: str = "GO" if is_viable else "NO-GO"
     return (
@@ -112,7 +112,7 @@ class ReportService:
         """Return a natural-language safety brief for the mission."""
         model = self._build_model()
         if model is None:
-            return _fallback_report(is_viable)
+            return fallback_report(is_viable)
         prompt: str = _build_prompt(
             is_viable=is_viable,
             aircraft_name=aircraft_name,

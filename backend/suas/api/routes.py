@@ -15,6 +15,7 @@ from suas.api.dependencies import GraphDep, MetricsDep, ReplanGraphDep, SessionF
 from suas.api.number_provenance import number_provenance
 from suas.api.observability import MetricsRegistry
 from suas.api.rate_limit_dep import enforce_rate_limit
+from suas.api.report_source import report_source
 from suas.api.security import OperatorDep, require_api_key
 from suas.api.thread_locks import contended_waits, thread_lock
 from suas.db.corpus import open_quarantine_configs
@@ -174,6 +175,7 @@ def _build_plan_response(final_state: dict[str, Any], thread_id: str) -> PlanRes
         provenance=_figure_provenance(final_state),
         weather=weather,
         report=str(final_state.get("report", "")),
+        report_source=report_source(final_state),
         thread_id=thread_id,
         degraded=bool(warnings),
         warnings=warnings,
