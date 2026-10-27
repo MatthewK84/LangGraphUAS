@@ -8,8 +8,10 @@ export default defineConfig({
       "@": fileURLToPath(new URL("./src", import.meta.url)),
     },
   },
+  // tsconfig keeps JSX for Next to compile; tests compile it themselves.
+  esbuild: { jsx: "automatic" },
   test: {
     environment: "node",
-    include: ["src/**/*.test.ts"],
+    include: ["src/**/*.test.{ts,tsx}"],
   },
 });

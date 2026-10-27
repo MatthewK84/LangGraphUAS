@@ -6,9 +6,6 @@
  * label is shown as unverified, never as nothing.
  */
 
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
-
 import { describe, expect, it } from "vitest";
 
 import { figureTag } from "@/lib/provenance";
@@ -52,17 +49,5 @@ describe("figureTag", () => {
       label: "unverified",
       operationalGrade: false,
     });
-  });
-});
-
-describe("results panel", () => {
-  it("renders no W or Wh figure except through Figure", () => {
-    const panel = readFileSync(
-      join(process.cwd(), "src", "app", "components", "ResultsPanel.tsx"),
-      "utf8",
-    );
-
-    expect(panel.match(/\}\s*Wh?\s*</g) ?? []).toEqual([]);
-    expect(panel.match(/<Figure\b/g)?.length).toBe(8);
   });
 });
