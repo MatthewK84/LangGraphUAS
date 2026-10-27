@@ -116,6 +116,54 @@ export interface PlanResult {
   readonly warnings: readonly string[];
 }
 
+export type AlertSeverity = "info" | "watch" | "warning" | "abort";
+
+export type RecommendedAction =
+  "continue" | "land_soon" | "land_now" | "advisory_only";
+
+export type AlertCode =
+  | "ENERGY_BELOW_RESERVE"
+  | "ENERGY_NEAR_RESERVE"
+  | "WIND_EXCEEDS_LIMIT"
+  | "SOC_STALE"
+  | "WEATHER_DEGRADED"
+  | "PAYLOAD_MISMATCH";
+
+/** One finding from comparing the briefed plan against live telemetry. */
+export interface ReplanAlert {
+  readonly severity: AlertSeverity;
+  readonly code: AlertCode;
+  readonly message: string;
+  readonly briefed: Readonly<Record<string, unknown>>;
+  readonly live: Readonly<Record<string, unknown>>;
+  readonly delta: Readonly<Record<string, unknown>>;
+  readonly recommended_action: RecommendedAction;
+}
+
+export interface LiveEnergy {
+  readonly available_wh: number;
+  readonly reserve_wh: number;
+  readonly required_wh: number;
+  readonly residual_wh: number;
+  readonly temperature_factor: number;
+}
+
+/**
+ * A replan against live telemetry. `operational_ok` is false whenever any
+ * alert fired, including a watch: an unconfirmed replan is advice.
+ */
+export interface ReplanResult {
+  readonly thread_id: string;
+  readonly parent_thread_id: string;
+  readonly severity: AlertSeverity;
+  readonly recommended_action: RecommendedAction;
+  readonly operational_ok: boolean;
+  readonly live_energy: LiveEnergy | null;
+  readonly briefed_margin_wh: number | null;
+  readonly snapshot_age_s: number;
+  readonly alerts: readonly ReplanAlert[];
+}
+
 export interface MissionParams {
   readonly distance_m: number;
   readonly hover_time_s: number;

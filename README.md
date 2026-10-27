@@ -440,6 +440,12 @@ ungrantable mode is a downgrade with reasons attached, not a `409`; see
 [ADR-005](docs/adr/005-mode-downgrade-is-not-an-error.md). A mode that is not a
 valid value is still a `422`.
 
+The dashboard says so where it cannot be missed: whenever the sealed mode is
+advisory, or a replan since has raised any alert, a strip between the top bar
+and the panels reads "Advisory, not a clearance" with the mode and the weather
+source. It sits outside every scrolling panel, so scrolling the figures never
+takes it off screen, and a clean replan never removes it from an advisory plan.
+
 `GET /api/plan/{thread_id}` returns the persisted state for a prior mission
 thread, or `found: false` when the thread is unknown.
 
