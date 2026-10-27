@@ -11,6 +11,7 @@ import type {
 import { FigureTable } from "./FigureTable";
 import type { FigureRow } from "./FigureTable";
 import { StatusBanner } from "./StatusBanner";
+import { WeatherSourceChip } from "./WeatherSourceChip";
 
 interface ResultsPanelProps {
   readonly loading: boolean;
@@ -76,7 +77,7 @@ function weatherRows(weather: WeatherReading): readonly FigureRow[] {
   return [
     {
       label: "Source",
-      value: weather.source === "live" ? "Live feed" : "Fallback defaults",
+      value: <WeatherSourceChip source={weather.source} />,
       unit: "",
     },
     { label: "Conditions", value: weather.conditions, unit: "" },

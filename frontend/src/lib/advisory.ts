@@ -1,11 +1,16 @@
 // When the screen must say "not a clearance", and what it says beside it.
 
-import type { AssessmentMode, PlanResult, ReplanResult } from "./types";
+import type {
+  AssessmentMode,
+  PlanResult,
+  ReplanResult,
+  WeatherSource,
+} from "./types";
 
 export interface AdvisoryNotice {
   readonly mode: AssessmentMode;
   /** The briefed plan's weather source, or null if it had no reading. */
-  readonly weatherSource: string | null;
+  readonly weatherSource: WeatherSource | null;
   /** How many alerts the latest replan raised, or null if none ran. */
   readonly replanAlerts: number | null;
 }
