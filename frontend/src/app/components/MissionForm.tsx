@@ -213,7 +213,7 @@ export function MissionForm(props: MissionFormProps): JSX.Element {
         </h2>
       </div>
       <form
-        className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3"
+        className="relative min-h-0 flex-1 space-y-3 overflow-y-auto p-3"
         onChange={onEdit}
         onSubmit={(event) => {
           event.preventDefault();

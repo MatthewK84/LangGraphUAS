@@ -104,7 +104,7 @@ export default function MissionPlanner(): JSX.Element {
           <div className="panel-header">
             <h2 className="section-label">Assessment</h2>
           </div>
-          <div className="min-h-0 flex-1 overflow-y-auto">
+          <div className="relative min-h-0 flex-1 overflow-y-auto">
             <ResultsPanel loading={loading} error={error} result={result} />
           </div>
         </main>

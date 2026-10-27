@@ -47,3 +47,22 @@ describe("planner page advisory banner (#91)", () => {
     ).toBeNull();
   });
 });
+
+describe("planner page shell", () => {
+  // Screen-reader-only table headers are absolutely positioned. Inside a
+  // scrolling panel that is not a containing block they escape its clip and
+  // grow the document, so the fixed shell scrolls as a whole on short screens.
+  it("makes every scrolling panel contain its absolutely positioned content", async () => {
+    stubBackend(OPERATIONAL_PLAN);
+    const { container } = render(<MissionPlanner />);
+    await analyzeMission(userEvent.setup());
+    await screen.findByText("CLEAR TO LAUNCH (GO)");
+    const panels = [...container.querySelectorAll<HTMLElement>("*")].filter(
+      (node) => SCROLLS.test(node.className),
+    );
+    expect(panels.length).toBeGreaterThanOrEqual(3);
+    for (const panel of panels) {
+      expect(panel.className).toMatch(/\brelative\b/);
+    }
+  });
+});

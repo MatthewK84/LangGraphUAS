@@ -37,7 +37,7 @@ export function ReviewPanel(props: ReviewPanelProps): JSX.Element {
       <div className="panel-header">
         <h2 className="section-label">Review and acknowledge</h2>
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="relative min-h-0 flex-1 overflow-y-auto">
         {pending === null ? (
           <p className="p-3 text-sm text-fg-muted">{idleText(result)}</p>
         ) : (
