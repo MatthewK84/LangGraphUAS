@@ -11,6 +11,8 @@ import type {
   MissionRequest,
   PayloadSummary,
   PlanResult,
+  ReplanResult,
+  TelemetrySnapshotRequest,
 } from "./types";
 
 const API_BASE_URL = "";
@@ -74,6 +76,16 @@ export async function acknowledgePlan(
 ): Promise<ApiResult<PlanResult>> {
   return request<PlanResult>(
     `/api/plan/${encodeURIComponent(threadId)}/ack`,
+    { method: "POST", body: JSON.stringify(body) },
+    REQUEST_TIMEOUT_MS,
+  );
+}
+
+export async function requestReplan(
+  body: TelemetrySnapshotRequest,
+): Promise<ApiResult<ReplanResult>> {
+  return request<ReplanResult>(
+    "/api/replan",
     { method: "POST", body: JSON.stringify(body) },
     REQUEST_TIMEOUT_MS,
   );

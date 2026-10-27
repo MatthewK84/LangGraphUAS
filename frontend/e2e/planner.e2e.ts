@@ -72,4 +72,24 @@ test("catalog load, plan and ack run through both containers", async ({
     "Unable to record the acknowledgement",
   );
   await expect(brief.locator("xpath=following-sibling::div")).not.toBeEmpty();
+
+  // Replan against telemetry after the signature (#94): the briefed figure
+  // stays beside the live one, and the advisory strip names the alerts.
+  const telemetry = page.getByRole("form", { name: "Live telemetry" });
+  await telemetry.getByLabel("State of charge").fill("42");
+  await telemetry.getByLabel("Remaining leg").fill("1800");
+  await telemetry.getByLabel("Outside air").fill("4");
+  await telemetry
+    .getByRole("button", { name: "Replan against telemetry" })
+    .click();
+  const replan = page.getByRole("region", {
+    name: "Replan against live telemetry",
+  });
+  await expect(replan).toBeVisible();
+  await expect(
+    replan.getByRole("row", { name: /Margin after mission/ }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("region", { name: "Advisory: not a clearance" }),
+  ).toBeVisible();
 });
