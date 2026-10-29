@@ -298,14 +298,14 @@ fails if it drifts from the data.
 | `estimate` | An engineering estimate | no |
 | `unknown` | Provenance not recorded. Nobody vouched for this number | no |
 
-As of this writing: **76 fields, none of them operational-grade.** 36 are
-`secondary`, 15 `derived` (the two power fields, by
+As of this writing: **85 numeric fields across 8 airframes and 6 payloads; 48
+are `datasheet` (good enough to fly on).** The rest stay non-operational: 15
+`derived` (the two power fields, by
 `hover_power_w = battery_wh / no_payload_endurance_hours` and
-`cruise_power_w = 0.90 * hover_power_w`), 14 `estimate` (nominal cruise speed at
-roughly 0.6 to 0.7 of published maximum, and every payload power figure), and 11
-`unknown` (pack energy, payload mass). That is why the operational gate refuses
-every plan today, and it will keep refusing until a figure is read out of a
-manufacturer document or measured from a flight log.
+`cruise_power_w = 0.90 * hover_power_w`), 10 `estimate`, 6 `secondary`, and 6
+`unknown`. The operational gate still refuses most plans because hover and cruise
+power remain `derived`, and Blue-list snapshot checks still apply — see
+`backend/suas/data/CITATIONS.md`.
 
 `secondary` is not a hedge. The figures below were gathered from published
 specification summaries rather than retrieved from the manufacturers' own
