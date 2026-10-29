@@ -1,7 +1,8 @@
-"""The four documented datasheet conflicts, and the pack procedure limit.
+"""Datasheet constants after the manufacturer promotion (#74 / #75).
 
-Each patched constant gets a test, so a future edit that reintroduces a
-permissive value fails rather than merely differing from a changelog entry.
+Each promoted constant gets a test so a future edit that reintroduces a
+permissive or conflated value fails rather than merely differing from a
+changelog entry.
 """
 
 import pytest
@@ -9,6 +10,7 @@ import pytest
 from suas.calculations.assessment import assess_mission, is_mission_viable
 from suas.reference_data import AIRCRAFT_FILE, load_entries
 from suas.schemas.domain import Aircraft, Payload
+from suas.schemas.provenance import FieldSource
 from suas.schemas.requests import MissionParams
 from suas.schemas.responses import WeatherReading
 
@@ -44,10 +46,10 @@ def _astro(pack_min_takeoff_c: float | None) -> Aircraft:
     return Aircraft(
         id="TEST_ASTRO",
         name="Astro-like",
-        weight_kg=5.1,
+        weight_kg=5.593,
         max_payload_kg=3.0,
         battery_wh=314.0,
-        max_wind_mps=12.0,
+        max_wind_mps=8.0,
         cruise_speed_mps=14.0,
         hover_power_w=483.1,
         cruise_power_w=434.8,
@@ -57,34 +59,35 @@ def _astro(pack_min_takeoff_c: float | None) -> Aircraft:
     )
 
 
-# --- the patched constants --------------------------------------------------
+# --- promoted constants -----------------------------------------------------
 
 
-def test_if1200a_max_temp_no_longer_exceeds_the_published_limit() -> None:
-    """50 C was permissive against a published 45 C. That direction is the danger."""
+def test_if1200a_max_temp_matches_manufacturer_sheet() -> None:
     record = _entry("Inspired_Flight_IF1200A").provenance["max_temp_c"]
-    assert record.value == 45.0
+    assert record.value == 40.0
+    assert record.source is FieldSource.DATASHEET
     assert record.source_url
 
 
-def test_anafi_max_temp_keeps_the_most_restrictive_candidate() -> None:
-    """Three figures circulate. Unresolved means conservative, and says so."""
+def test_anafi_max_temp_matches_manufacturer_sheet() -> None:
+    """Prior circulation of 43/49/50 C is resolved by the 2023-02 product sheet."""
     record = _entry("Parrot_ANAFI_USA").provenance["max_temp_c"]
-    assert record.value == 43.0
-    assert "unresolved" in record.notes.lower()
-    assert record.confidence.value == "low"
+    assert record.value == 50.0
+    assert record.source is FieldSource.DATASHEET
+    assert "50" in record.notes
 
 
-def test_if1200a_battery_records_its_arithmetic() -> None:
+def test_if1200a_battery_is_dual_pack_datasheet_system_energy() -> None:
     record = _entry("Inspired_Flight_IF1200A").provenance["battery_wh"]
-    assert record.source.value == "estimate"
-    assert "12S" in record.notes
-    assert "unverified" in record.notes
+    assert record.value == 1420.8
+    assert record.source is FieldSource.DATASHEET
+    assert "710.4" in record.notes
+    assert "two" in record.notes.lower() or "2 x" in record.notes.lower()
 
 
-def test_alta_x_battery_is_derived_rather_than_unknown() -> None:
+def test_alta_x_battery_remains_derived_until_ah_is_on_the_specs_page() -> None:
     record = _entry("Freefly_Alta_X").provenance["battery_wh"]
-    assert record.source.value == "derived"
+    assert record.source is FieldSource.DERIVED
     assert "1420.8" in record.notes
 
 
@@ -99,18 +102,21 @@ def test_alta_x_power_records_the_endurance_discrepancy() -> None:
     assert "conservative" in record.notes
 
 
-def test_every_resolved_field_cites_something() -> None:
+def test_every_promoted_field_cites_something() -> None:
     airframes = {entry.id: entry for entry in load_entries(AIRCRAFT_FILE)}
     resolved = [
         ("Inspired_Flight_IF1200A", "max_temp_c"),
         ("Inspired_Flight_IF1200A", "battery_wh"),
         ("Parrot_ANAFI_USA", "max_temp_c"),
         ("Parrot_ANAFI_USA", "min_temp_c"),
-        ("Freefly_Alta_X", "battery_wh"),
         ("Freefly_Astro_Max", "pack_min_takeoff_c"),
+        ("Freefly_Astro_Max", "max_wind_mps"),
+        ("Teal_Golden_Eagle", "max_payload_kg"),
+        ("Teal_2", "weight_kg"),
     ]
     for airframe_id, field in resolved:
         record = airframes[airframe_id].provenance[field]
+        assert record.source is FieldSource.DATASHEET, f"{airframe_id}.{field}"
         assert record.source_url, f"{airframe_id}.{field} has no URL"
         assert record.retrieved_at, f"{airframe_id}.{field} has no retrieval date"
 
@@ -122,6 +128,7 @@ def test_astro_carries_the_pack_takeoff_minimum() -> None:
     record = _entry("Freefly_Astro_Max").provenance["pack_min_takeoff_c"]
     assert record.value == 10.0
     assert record.unit == "C"
+    assert record.source is FieldSource.DATASHEET
 
 
 def test_the_pack_limit_is_not_the_airframe_limit() -> None:

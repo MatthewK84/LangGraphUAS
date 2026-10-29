@@ -5,11 +5,11 @@
     "weight_kg": {
       "value": 2.11,
       "unit": "kg",
-      "source": "secondary",
-      "source_url": null,
-      "retrieved_at": null,
-      "confidence": "medium",
-      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance."
+      "source": "datasheet",
+      "source_url": "https://www.skydio.com/x10d/technical-specs",
+      "retrieved_at": "2026-10-28",
+      "confidence": "high",
+      "notes": "Quote: \"Weight (incl. batteries) Connect SL: 4.65lbs / 2.11kg\". Retrieved 2026-10-28 from manufacturer document."
     },
     "max_payload_kg": {
       "value": 0.0,
@@ -21,22 +21,22 @@
       "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance."
     },
     "battery_wh": {
-      "value": 120.0,
+      "value": 156.17,
       "unit": "Wh",
-      "source": "unknown",
-      "source_url": null,
-      "retrieved_at": null,
-      "confidence": "low",
-      "notes": "The README records pack energy as estimated where the manufacturer does not state it, but does not say which airframes those are. Unrecorded rather than assumed."
+      "source": "datasheet",
+      "source_url": "https://www.skydio.com/x10d/technical-specs",
+      "retrieved_at": "2026-10-28",
+      "confidence": "high",
+      "notes": "Quote: \"Energy 156.17 Wh\". Retrieved 2026-10-28 from manufacturer document."
     },
     "max_wind_mps": {
-      "value": 12.0,
+      "value": 12.8,
       "unit": "m/s",
-      "source": "secondary",
-      "source_url": null,
-      "retrieved_at": null,
-      "confidence": "medium",
-      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance."
+      "source": "datasheet",
+      "source_url": "https://www.skydio.com/x10d/technical-specs",
+      "retrieved_at": "2026-10-28",
+      "confidence": "high",
+      "notes": "Quote: \"Max gust handling At or under 28 mph / 12.8 m/s\". Retrieved 2026-10-28 from manufacturer document."
     },
     "cruise_speed_mps": {
       "value": 14.0,
@@ -48,16 +48,16 @@
       "notes": "Nominal cruise, roughly 0.6 to 0.7 of published maximum speed."
     },
     "hover_power_w": {
-      "value": 180.0,
+      "value": 234.3,
       "unit": "W",
       "source": "derived",
       "source_url": null,
       "retrieved_at": null,
       "confidence": "low",
-      "notes": "hover_power_w = battery_wh / no_payload_endurance_hours."
+      "notes": "hover_power_w = battery_wh / no_payload_endurance_hours. Recomputed from datasheet battery_wh=156.17 and no-payload endurance 40 min (0.6667 h)."
     },
     "cruise_power_w": {
-      "value": 162.0,
+      "value": 210.9,
       "unit": "W",
       "source": "derived",
       "source_url": null,
@@ -68,33 +68,33 @@
     "max_temp_c": {
       "value": 45.0,
       "unit": "C",
-      "source": "secondary",
-      "source_url": null,
-      "retrieved_at": null,
-      "confidence": "medium",
-      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance."
+      "source": "datasheet",
+      "source_url": "https://www.skydio.com/x10d/technical-specs",
+      "retrieved_at": "2026-10-28",
+      "confidence": "high",
+      "notes": "Quote: \"Operational temperature range -4\u00b0F to 113\u00b0F / -20\u00b0C to +45\u00b0C\". Retrieved 2026-10-28 from manufacturer document."
     },
     "min_temp_c": {
       "value": -20.0,
       "unit": "C",
-      "source": "secondary",
-      "source_url": null,
-      "retrieved_at": null,
-      "confidence": "medium",
-      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance. Source cited in README: Skydio X10 specifications."
+      "source": "datasheet",
+      "source_url": "https://www.skydio.com/x10d/technical-specs",
+      "retrieved_at": "2026-10-28",
+      "confidence": "high",
+      "notes": "Quote: \"Operational temperature range -4\u00b0F to 113\u00b0F / -20\u00b0C to +45\u00b0C\". Retrieved 2026-10-28 from manufacturer document."
     }
   },
   "Skydio_X2D": {
     "id": "Skydio_X2D",
     "name": "Skydio X2D",
     "weight_kg": {
-      "value": 1.3,
+      "value": 1.325,
       "unit": "kg",
-      "source": "secondary",
-      "source_url": null,
-      "retrieved_at": null,
-      "confidence": "medium",
-      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance."
+      "source": "datasheet",
+      "source_url": "https://pages.skydio.com/rs/784-TUF-591/images/skydio-x2d-color-datasheet.pdf",
+      "retrieved_at": "2026-10-28",
+      "confidence": "high",
+      "notes": "Quote: \"Weight (with battery) 1325 g\". Retrieved 2026-10-28 from manufacturer document."
     },
     "max_payload_kg": {
       "value": 0.15,
@@ -115,13 +115,13 @@
       "notes": "The README records pack energy as estimated where the manufacturer does not state it, but does not say which airframes those are. Unrecorded rather than assumed."
     },
     "max_wind_mps": {
-      "value": 11.0,
+      "value": 10.28,
       "unit": "m/s",
-      "source": "secondary",
-      "source_url": null,
-      "retrieved_at": null,
-      "confidence": "medium",
-      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance."
+      "source": "datasheet",
+      "source_url": "https://pages.skydio.com/rs/784-TUF-591/images/skydio-x2d-color-datasheet.pdf",
+      "retrieved_at": "2026-10-28",
+      "confidence": "high",
+      "notes": "Converted 23 mph \u00d7 0.44704 = 10.28 m/s. Quote: \"MAX WIND SPEED RESISTANCE 23 mph\". Retrieved 2026-10-28 from manufacturer document."
     },
     "cruise_speed_mps": {
       "value": 11.0,
@@ -153,20 +153,20 @@
     "max_temp_c": {
       "value": 43.0,
       "unit": "C",
-      "source": "secondary",
-      "source_url": null,
-      "retrieved_at": null,
-      "confidence": "medium",
-      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance."
+      "source": "datasheet",
+      "source_url": "https://pages.skydio.com/rs/784-TUF-591/images/skydio-x2d-color-datasheet.pdf",
+      "retrieved_at": "2026-10-28",
+      "confidence": "high",
+      "notes": "Quote: \"OPERATIONAL TEMPERATURE RANGE -10\u00b0C to 43\u00b0C\". Retrieved 2026-10-28 from manufacturer document."
     },
     "min_temp_c": {
       "value": -10.0,
       "unit": "C",
-      "source": "secondary",
-      "source_url": null,
-      "retrieved_at": null,
-      "confidence": "medium",
-      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance. Source cited in README: Skydio X2 support documentation."
+      "source": "datasheet",
+      "source_url": "https://pages.skydio.com/rs/784-TUF-591/images/skydio-x2d-color-datasheet.pdf",
+      "retrieved_at": "2026-10-28",
+      "confidence": "high",
+      "notes": "Quote: \"OPERATIONAL TEMPERATURE RANGE -10\u00b0C to 43\u00b0C\". Retrieved 2026-10-28 from manufacturer document."
     }
   },
   "Parrot_ANAFI_USA": {
@@ -175,11 +175,11 @@
     "weight_kg": {
       "value": 0.5,
       "unit": "kg",
-      "source": "secondary",
-      "source_url": null,
-      "retrieved_at": null,
-      "confidence": "medium",
-      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance."
+      "source": "datasheet",
+      "source_url": "https://www.parrot.com/en/drones/anafi-usa/technical-specifications",
+      "retrieved_at": "2026-10-28",
+      "confidence": "high",
+      "notes": "Quote: \"Mass: 500 g / 1.10 lb\". Retrieved 2026-10-28 from manufacturer document."
     },
     "max_payload_kg": {
       "value": 0.0,
@@ -191,22 +191,22 @@
       "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance."
     },
     "battery_wh": {
-      "value": 24.0,
+      "value": 39.27,
       "unit": "Wh",
-      "source": "unknown",
-      "source_url": null,
-      "retrieved_at": null,
-      "confidence": "low",
-      "notes": "The README records pack energy as estimated where the manufacturer does not state it, but does not say which airframes those are. Unrecorded rather than assumed."
+      "source": "datasheet",
+      "source_url": "https://www.parrot.com/en/drones/anafi-usa/technical-specifications",
+      "retrieved_at": "2026-10-28",
+      "confidence": "high",
+      "notes": "Wh computed on-document as 3.4 Ah \u00d7 11.55 V = 39.27 Wh (manufacturer does not print Wh). Quote: \"Capacity: 3,400 mAh; Voltage: 11.55 V\". Retrieved 2026-10-28 from manufacturer document."
     },
     "max_wind_mps": {
       "value": 14.7,
       "unit": "m/s",
-      "source": "secondary",
-      "source_url": null,
-      "retrieved_at": null,
-      "confidence": "medium",
-      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance."
+      "source": "datasheet",
+      "source_url": "https://www.parrot.com/en/drones/anafi-usa/technical-specifications",
+      "retrieved_at": "2026-10-28",
+      "confidence": "high",
+      "notes": "Quote: \"Maximum wind resistance: 14.7 m/s\". Retrieved 2026-10-28 from manufacturer document."
     },
     "cruise_speed_mps": {
       "value": 10.0,
@@ -218,16 +218,16 @@
       "notes": "Nominal cruise, roughly 0.6 to 0.7 of published maximum speed."
     },
     "hover_power_w": {
-      "value": 45.0,
+      "value": 73.6,
       "unit": "W",
       "source": "derived",
       "source_url": null,
       "retrieved_at": null,
       "confidence": "low",
-      "notes": "hover_power_w = battery_wh / no_payload_endurance_hours."
+      "notes": "hover_power_w = battery_wh / no_payload_endurance_hours. Recomputed from datasheet battery_wh=39.27 and no-payload endurance 32 min (0.5333 h)."
     },
     "cruise_power_w": {
-      "value": 40.5,
+      "value": 66.2,
       "unit": "W",
       "source": "derived",
       "source_url": null,
@@ -236,27 +236,27 @@
       "notes": "cruise_power_w = 0.90 * hover_power_w."
     },
     "max_temp_c": {
-      "value": 43.0,
+      "value": 50.0,
       "unit": "C",
-      "source": "secondary",
-      "source_url": "https://www.parrot.com/en/drones/anafi-usa/technical-specifications",
-      "retrieved_at": "2026-09-14",
-      "confidence": "low",
-      "notes": "Unresolved. Three figures are in circulation for this airframe: 43, 49 and 50 C. The most restrictive is kept, because for an upper limit the conservative value is the safe one. Resolving this needs the manufacturer document. Figure obtained from a web search summary of this page on 2026-09-14; this session could not open the page itself (network egress blocked), so it is recorded as secondary rather than datasheet."
+      "source": "datasheet",
+      "source_url": "https://www.parrot.com/assets/s3fs-public/2023-02/ANAFI-USA-product-sheet.pdf",
+      "retrieved_at": "2026-10-28",
+      "confidence": "high",
+      "notes": "2023-02 product sheet resolves the prior 43/49/50 C circulation in favour of +50 C. Quote: \"Operating temperature: -33 \u00b0F (-36 \u00b0C) to +122 \u00b0F (+50 \u00b0C)\". Retrieved 2026-10-28 from manufacturer document."
     },
     "min_temp_c": {
-      "value": -35.0,
+      "value": -36.0,
       "unit": "C",
-      "source": "secondary",
-      "source_url": "https://www.parrot.com/en/drones/anafi-usa/technical-specifications",
-      "retrieved_at": "2026-09-14",
-      "confidence": "medium",
-      "notes": "Stored -35 C. A published -36 C also circulates; the higher figure is kept because for a lower limit the conservative value is the safe one. Figure obtained from a web search summary of this page on 2026-09-14; this session could not open the page itself (network egress blocked), so it is recorded as secondary rather than datasheet."
+      "source": "datasheet",
+      "source_url": "https://www.parrot.com/assets/s3fs-public/2023-02/ANAFI-USA-product-sheet.pdf",
+      "retrieved_at": "2026-10-28",
+      "confidence": "high",
+      "notes": "Quote: \"Operating temperature: -33 \u00b0F (-36 \u00b0C) to +122 \u00b0F (+50 \u00b0C)\". Retrieved 2026-10-28 from manufacturer document."
     }
   },
   "Teal_Golden_Eagle": {
     "id": "Teal_Golden_Eagle",
-    "name": "Teal Golden Eagle (Teal 2)",
+    "name": "Teal Golden Eagle",
     "weight_kg": {
       "value": 1.4,
       "unit": "kg",
@@ -267,31 +267,31 @@
       "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance."
     },
     "max_payload_kg": {
-      "value": 0.9,
+      "value": 0.075,
       "unit": "kg",
-      "source": "secondary",
-      "source_url": null,
-      "retrieved_at": null,
-      "confidence": "medium",
-      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance."
+      "source": "datasheet",
+      "source_url": "https://tealdrones.com/wp-content/uploads/2023/01/60056-MK1-Operators-Manual-REV-A-14-JULY-2022.pdf",
+      "retrieved_at": "2026-10-28",
+      "confidence": "high",
+      "notes": "75 g = 0.075 kg. Quote: \"Maximum Auxiliary Payload Weight: 75 grams\". Retrieved 2026-10-28 from manufacturer document."
     },
     "battery_wh": {
-      "value": 75.0,
+      "value": 66.6,
       "unit": "Wh",
-      "source": "unknown",
-      "source_url": null,
-      "retrieved_at": null,
-      "confidence": "low",
-      "notes": "The README records pack energy as estimated where the manufacturer does not state it, but does not say which airframes those are. Unrecorded rather than assumed."
+      "source": "datasheet",
+      "source_url": "https://tealdrones.com/wp-content/uploads/2023/01/60056-MK1-Operators-Manual-REV-A-14-JULY-2022.pdf",
+      "retrieved_at": "2026-10-28",
+      "confidence": "high",
+      "notes": "Quote: \"total nominal energy of 66.6 Wh\". Retrieved 2026-10-28 from manufacturer document."
     },
     "max_wind_mps": {
-      "value": 11.0,
+      "value": 8.05,
       "unit": "m/s",
-      "source": "secondary",
-      "source_url": null,
-      "retrieved_at": null,
-      "confidence": "medium",
-      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance."
+      "source": "datasheet",
+      "source_url": "https://tealdrones.com/wp-content/uploads/2023/01/60056-MK1-Operators-Manual-REV-A-14-JULY-2022.pdf",
+      "retrieved_at": "2026-10-28",
+      "confidence": "high",
+      "notes": "Conservative end: sustained 18 mph \u00d7 0.44704 = 8.05 m/s (gusts 25 mph = 11.18 m/s recorded in notes). Quote: \"Wind: Up to 18 mph/ 25 mph gusts\". Retrieved 2026-10-28 from manufacturer document."
     },
     "cruise_speed_mps": {
       "value": 14.0,
@@ -303,16 +303,16 @@
       "notes": "Nominal cruise, roughly 0.6 to 0.7 of published maximum speed."
     },
     "hover_power_w": {
-      "value": 150.0,
+      "value": 159.8,
       "unit": "W",
       "source": "derived",
       "source_url": null,
       "retrieved_at": null,
       "confidence": "low",
-      "notes": "hover_power_w = battery_wh / no_payload_endurance_hours."
+      "notes": "hover_power_w = battery_wh / no_payload_endurance_hours. Recomputed from datasheet battery_wh=66.6 and no-payload endurance 25 min (0.4167 h)."
     },
     "cruise_power_w": {
-      "value": 135.0,
+      "value": 143.8,
       "unit": "W",
       "source": "derived",
       "source_url": null,
@@ -321,62 +321,147 @@
       "notes": "cruise_power_w = 0.90 * hover_power_w."
     },
     "max_temp_c": {
-      "value": 43.0,
+      "value": 43.3,
       "unit": "C",
-      "source": "secondary",
-      "source_url": null,
-      "retrieved_at": null,
-      "confidence": "medium",
-      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance."
+      "source": "datasheet",
+      "source_url": "https://tealdrones.com/wp-content/uploads/2023/01/60056-MK1-Operators-Manual-REV-A-14-JULY-2022.pdf",
+      "retrieved_at": "2026-10-28",
+      "confidence": "high",
+      "notes": "Quote: \"Operating Temperature Range: -32 \u00b0F to 110 \u00b0F (-35.6 \u00b0C to 43.3 \u00b0C)\". Retrieved 2026-10-28 from manufacturer document."
     },
     "min_temp_c": {
-      "value": -36.7,
+      "value": -35.6,
       "unit": "C",
-      "source": "secondary",
+      "source": "datasheet",
+      "source_url": "https://tealdrones.com/wp-content/uploads/2023/01/60056-MK1-Operators-Manual-REV-A-14-JULY-2022.pdf",
+      "retrieved_at": "2026-10-28",
+      "confidence": "high",
+      "notes": "Quote: \"Operating Temperature Range: -32 \u00b0F to 110 \u00b0F (-35.6 \u00b0C to 43.3 \u00b0C)\". Retrieved 2026-10-28 from manufacturer document."
+    }
+  },
+  "Teal_2": {
+    "id": "Teal_2",
+    "name": "Teal 2",
+    "weight_kg": {
+      "value": 1.25,
+      "unit": "kg",
+      "source": "datasheet",
+      "source_url": "https://tealdrones.com/solutions/teal-2/",
+      "retrieved_at": "2026-10-28",
+      "confidence": "high",
+      "notes": "Quote: \"Weight 2.75 lbs (1.25 kg)\". Retrieved 2026-10-28 from manufacturer document."
+    },
+    "max_payload_kg": {
+      "value": 0.0,
+      "unit": "kg",
+      "source": "unknown",
       "source_url": null,
       "retrieved_at": null,
-      "confidence": "medium",
-      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance. Source cited in README: Teal 2 specifications."
+      "confidence": "low",
+      "notes": "Not published as a discrete external max-payload on the Teal 2 manufacturer page (retrieved 2026-10-28). Hadron 640R is stock/integrated. No external capacity claimed; value 0.0. No figure invented."
+    },
+    "battery_wh": {
+      "value": 1.0,
+      "unit": "Wh",
+      "source": "unknown",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "low",
+      "notes": "Not published on the Teal 2 manufacturer page (retrieved 2026-10-28). No figure invented from Golden Eagle or secondary sources. Schema requires a positive value; 1.0 Wh is a non-operational placeholder so advisory math cannot look energetic. Replace when Teal publishes pack Wh."
+    },
+    "max_wind_mps": {
+      "value": 8.05,
+      "unit": "m/s",
+      "source": "datasheet",
+      "source_url": "https://tealdrones.com/solutions/teal-2/",
+      "retrieved_at": "2026-10-28",
+      "confidence": "high",
+      "notes": "Conservative end: sustained 18 mph \u00d7 0.44704 = 8.05 m/s (gusts 25 mph = 11.18 m/s recorded in notes). Quote: \"Wind limits 18 mph (16 kn) sustained, gusts to 25 mph (22 kn)\". Retrieved 2026-10-28 from manufacturer document."
+    },
+    "cruise_speed_mps": {
+      "value": 6.5,
+      "unit": "m/s",
+      "source": "estimate",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "low",
+      "notes": "Nominal cruise, roughly 0.65 of published maximum speed 10 m/s (Quote: \"Flight speed 10 m/s (23 mph)\" on Teal 2 manufacturer page)."
+    },
+    "hover_power_w": {
+      "value": 2.0,
+      "unit": "W",
+      "source": "unknown",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "low",
+      "notes": "Not published. Cannot derive a real hover power without published pack Wh. Placeholder 2.0 W pairs with the 1.0 Wh battery placeholder and the published 30-minute flight time; replace when Teal publishes pack Wh."
+    },
+    "cruise_power_w": {
+      "value": 1.8,
+      "unit": "W",
+      "source": "unknown",
+      "source_url": null,
+      "retrieved_at": null,
+      "confidence": "low",
+      "notes": "Not published. Placeholder 0.90 \u00d7 hover_power_w placeholder; replace when Teal publishes pack Wh / power figures."
+    },
+    "max_temp_c": {
+      "value": 43.3,
+      "unit": "C",
+      "source": "datasheet",
+      "source_url": "https://tealdrones.com/solutions/teal-2/",
+      "retrieved_at": "2026-10-28",
+      "confidence": "high",
+      "notes": "Quote: \"Operating temperature -32 to 110 F (-35.6 to 43.3 C)\". Retrieved 2026-10-28 from manufacturer document."
+    },
+    "min_temp_c": {
+      "value": -35.6,
+      "unit": "C",
+      "source": "datasheet",
+      "source_url": "https://tealdrones.com/solutions/teal-2/",
+      "retrieved_at": "2026-10-28",
+      "confidence": "high",
+      "notes": "Quote: \"Operating temperature -32 to 110 F (-35.6 to 43.3 C)\". Retrieved 2026-10-28 from manufacturer document."
     }
   },
   "Freefly_Astro_Max": {
     "id": "Freefly_Astro_Max",
     "name": "Freefly Astro Max",
     "weight_kg": {
-      "value": 5.1,
+      "value": 5.593,
       "unit": "kg",
-      "source": "secondary",
-      "source_url": null,
-      "retrieved_at": null,
-      "confidence": "medium",
-      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance."
+      "source": "datasheet",
+      "source_url": "https://freeflysystems.com/astro/specs",
+      "retrieved_at": "2026-10-28",
+      "confidence": "high",
+      "notes": "AUW with two SL8 packs: 3.523 + 2\u00d71.035 = 5.593 kg (sum of published manufacturer masses). Quote: \"Typical Standard Empty weight 3,523 g; Weight (per battery) 1035 g\". Retrieved 2026-10-28 from manufacturer document."
     },
     "max_payload_kg": {
       "value": 3.0,
       "unit": "kg",
-      "source": "secondary",
-      "source_url": null,
-      "retrieved_at": null,
-      "confidence": "medium",
-      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance."
+      "source": "datasheet",
+      "source_url": "https://freeflysystems.com/astro/specs",
+      "retrieved_at": "2026-10-28",
+      "confidence": "high",
+      "notes": "Quote: \"Maximum Payload 3,000 g\". Retrieved 2026-10-28 from manufacturer document."
     },
     "battery_wh": {
       "value": 314.0,
       "unit": "Wh",
-      "source": "unknown",
-      "source_url": null,
-      "retrieved_at": null,
-      "confidence": "low",
-      "notes": "The README records pack energy as estimated where the manufacturer does not state it, but does not say which airframes those are. Unrecorded rather than assumed."
+      "source": "datasheet",
+      "source_url": "https://freeflysystems.com/astro/specs",
+      "retrieved_at": "2026-10-28",
+      "confidence": "high",
+      "notes": "System energy 2 \u00d7 157 Wh = 314 Wh. Quote: \"Capacity (SL8-Air) 157Wh (two batteries required)\". Retrieved 2026-10-28 from manufacturer document."
     },
     "max_wind_mps": {
-      "value": 12.0,
+      "value": 8.0,
       "unit": "m/s",
-      "source": "secondary",
-      "source_url": null,
-      "retrieved_at": null,
-      "confidence": "medium",
-      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance."
+      "source": "datasheet",
+      "source_url": "https://docs.freeflysystems.com/astro/pilots-operating-handbook/limitations",
+      "retrieved_at": "2026-10-28",
+      "confidence": "high",
+      "notes": "Manufacturer publishes an advisory band 8-10 m/s, not a single hard max. Conservative end 8.0 m/s used for the limit. Quote: \"Operating Astro at winds greater than 8-10m/s can be dangerous\". Retrieved 2026-10-28 from manufacturer document."
     },
     "cruise_speed_mps": {
       "value": 14.0,
@@ -394,7 +479,7 @@
       "source_url": null,
       "retrieved_at": null,
       "confidence": "low",
-      "notes": "hover_power_w = battery_wh / no_payload_endurance_hours."
+      "notes": "hover_power_w = battery_wh / no_payload_endurance_hours. Recomputed from datasheet battery_wh=314.0 and no-payload endurance 39 min (0.6500 h)."
     },
     "cruise_power_w": {
       "value": 434.8,
@@ -408,29 +493,29 @@
     "max_temp_c": {
       "value": 50.0,
       "unit": "C",
-      "source": "secondary",
-      "source_url": null,
-      "retrieved_at": null,
-      "confidence": "medium",
-      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance."
+      "source": "datasheet",
+      "source_url": "https://freeflysystems.com/astro/specs",
+      "retrieved_at": "2026-10-28",
+      "confidence": "high",
+      "notes": "Quote: \"Operating Temperatures -20 to 50 C\". Retrieved 2026-10-28 from manufacturer document."
     },
     "min_temp_c": {
       "value": -20.0,
       "unit": "C",
-      "source": "secondary",
-      "source_url": null,
-      "retrieved_at": null,
-      "confidence": "medium",
-      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance. Source cited in README: Freefly Astro pilot's operating handbook."
+      "source": "datasheet",
+      "source_url": "https://freeflysystems.com/astro/specs",
+      "retrieved_at": "2026-10-28",
+      "confidence": "high",
+      "notes": "Quote: \"Operating Temperatures -20 to 50 C\". Retrieved 2026-10-28 from manufacturer document."
     },
     "pack_min_takeoff_c": {
       "value": 10.0,
       "unit": "C",
-      "source": "secondary",
+      "source": "datasheet",
       "source_url": "https://docs.freeflysystems.com/astro/pilots-operating-handbook/limitations",
-      "retrieved_at": "2026-09-14",
-      "confidence": "medium",
-      "notes": "Freefly's pilot operating handbook directs that batteries be kept above 10 C at takeoff, after which self-heating maintains them. This is a procedure limit on the pack, not the airframe's -20 C environmental limit, and the cold-capacity derate is not a substitute for it. Figure obtained from a web search summary of this page on 2026-09-14; this session could not open the page itself (network egress blocked), so it is recorded as secondary rather than datasheet."
+      "retrieved_at": "2026-10-28",
+      "confidence": "high",
+      "notes": "Quote: \"Keep batteries warm, above 10 \u00b0C at takeoff, then self-heating will keep them warm.\". Retrieved 2026-10-28 from manufacturer document."
     }
   },
   "Freefly_Alta_X": {
@@ -448,11 +533,11 @@
     "max_payload_kg": {
       "value": 15.06,
       "unit": "kg",
-      "source": "secondary",
-      "source_url": null,
-      "retrieved_at": null,
-      "confidence": "medium",
-      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance."
+      "source": "datasheet",
+      "source_url": "https://freeflysystems.com/alta-x/specs",
+      "retrieved_at": "2026-10-28",
+      "confidence": "high",
+      "notes": "Quote: \"Maximum Payload 15.06 kg / 33.20 lb\". Retrieved 2026-10-28 from manufacturer document."
     },
     "battery_wh": {
       "value": 1420.0,
@@ -502,20 +587,20 @@
     "max_temp_c": {
       "value": 50.0,
       "unit": "C",
-      "source": "secondary",
-      "source_url": null,
-      "retrieved_at": null,
-      "confidence": "medium",
-      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance."
+      "source": "datasheet",
+      "source_url": "https://freeflysystems.com/alta-x/specs",
+      "retrieved_at": "2026-10-28",
+      "confidence": "high",
+      "notes": "Quote: \"Operating Temperature -20C to +50C\". Retrieved 2026-10-28 from manufacturer document."
     },
     "min_temp_c": {
       "value": -20.0,
       "unit": "C",
-      "source": "secondary",
-      "source_url": null,
-      "retrieved_at": null,
-      "confidence": "medium",
-      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance. Source cited in README: Freefly Alta X specifications."
+      "source": "datasheet",
+      "source_url": "https://freeflysystems.com/alta-x/specs",
+      "retrieved_at": "2026-10-28",
+      "confidence": "high",
+      "notes": "Quote: \"Operating Temperature -20C to +50C\". Retrieved 2026-10-28 from manufacturer document."
     }
   },
   "Inspired_Flight_IF1200A": {
@@ -524,38 +609,38 @@
     "weight_kg": {
       "value": 16.3,
       "unit": "kg",
-      "source": "secondary",
-      "source_url": null,
-      "retrieved_at": null,
-      "confidence": "medium",
-      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance."
+      "source": "datasheet",
+      "source_url": "https://docs.inspiredflight.com/inspired-documentation/products/aircraft/if1200/useful-documents",
+      "retrieved_at": "2026-10-28",
+      "confidence": "high",
+      "notes": "Quote: \"Weight w/ Batteries 16.3 kg\". Retrieved 2026-10-28 from manufacturer document."
     },
     "max_payload_kg": {
       "value": 8.7,
       "unit": "kg",
-      "source": "secondary",
-      "source_url": null,
-      "retrieved_at": null,
-      "confidence": "medium",
-      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance."
+      "source": "datasheet",
+      "source_url": "https://docs.inspiredflight.com/inspired-documentation/products/aircraft/if1200/useful-documents",
+      "retrieved_at": "2026-10-28",
+      "confidence": "high",
+      "notes": "Quote: \"Max Payload Capacity 8.7 kg\". Retrieved 2026-10-28 from manufacturer document."
     },
     "battery_wh": {
-      "value": 1420.0,
+      "value": 1420.8,
       "unit": "Wh",
-      "source": "estimate",
-      "source_url": "https://shop.inspiredflight.com/products/battery",
-      "retrieved_at": "2026-09-14",
-      "confidence": "low",
-      "notes": "Consistent with two 16 Ah packs at 12S (44.4 V nominal): 2 x 16 x 44.4 = 1420.8 Wh. Pack count and cell count are both unverified against a manufacturer document, so the 12S assumption stands. One of the softest numbers in this file."
+      "source": "datasheet",
+      "source_url": "https://docs.inspiredflight.com/inspired-documentation/products/aircraft/if1200/useful-documents",
+      "retrieved_at": "2026-10-28",
+      "confidence": "high",
+      "notes": "Field is system energy for the airframe (assessment uses aircraft.battery_wh as total usable capacity). IF1200A flies two packs: empty 7.8 kg vs weight w/ batteries 16.3 kg implies ~8.5 kg of batteries. System Wh = 2 x 710.4 = 1420.8 Wh. Per-pack figure quoted. Quote: \"Nominal Energy 710.4 Wh\". Retrieved 2026-10-28 from manufacturer document."
     },
     "max_wind_mps": {
-      "value": 11.8,
+      "value": 12.0,
       "unit": "m/s",
-      "source": "secondary",
-      "source_url": null,
-      "retrieved_at": null,
-      "confidence": "medium",
-      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance."
+      "source": "datasheet",
+      "source_url": "https://docs.inspiredflight.com/inspired-documentation/products/aircraft/if1200/useful-documents",
+      "retrieved_at": "2026-10-28",
+      "confidence": "high",
+      "notes": "Hard limit 12 m/s used; gust figure 15 m/s recorded in notes. Quote: \"Max Wind Resistance 12 m/s, 15 m/s gusts\". Retrieved 2026-10-28 from manufacturer document."
     },
     "cruise_speed_mps": {
       "value": 17.0,
@@ -567,16 +652,16 @@
       "notes": "Nominal cruise, roughly 0.6 to 0.7 of published maximum speed."
     },
     "hover_power_w": {
-      "value": 1981.4,
+      "value": 1982.5,
       "unit": "W",
       "source": "derived",
       "source_url": null,
       "retrieved_at": null,
       "confidence": "low",
-      "notes": "hover_power_w = battery_wh / no_payload_endurance_hours."
+      "notes": "hover_power_w = battery_wh / no_payload_endurance_hours. Recomputed from datasheet battery_wh=1420.8 and no-payload endurance 43 min (0.7167 h)."
     },
     "cruise_power_w": {
-      "value": 1783.3,
+      "value": 1784.2,
       "unit": "W",
       "source": "derived",
       "source_url": null,
@@ -585,22 +670,22 @@
       "notes": "cruise_power_w = 0.90 * hover_power_w."
     },
     "max_temp_c": {
-      "value": 45.0,
+      "value": 40.0,
       "unit": "C",
-      "source": "secondary",
-      "source_url": "https://docs.inspiredflight.com/inspired-documentation/products/aircraft/if1200/about-the-if1200",
-      "retrieved_at": "2026-09-14",
-      "confidence": "medium",
-      "notes": "Corrected from a stored 50 C, which was permissive against a published -20 to 45 C range. Figure obtained from a web search summary of this page on 2026-09-14; this session could not open the page itself (network egress blocked), so it is recorded as secondary rather than datasheet."
+      "source": "datasheet",
+      "source_url": "https://docs.inspiredflight.com/inspired-documentation/products/aircraft/if1200/useful-documents",
+      "retrieved_at": "2026-10-28",
+      "confidence": "high",
+      "notes": "Quote: \"Operating Temperature -10\u00b0C ~ 40\u00b0C\". Retrieved 2026-10-28 from manufacturer document."
     },
     "min_temp_c": {
-      "value": -20.0,
+      "value": -10.0,
       "unit": "C",
-      "source": "secondary",
-      "source_url": null,
-      "retrieved_at": null,
-      "confidence": "medium",
-      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance. Source cited in README: IF1200A specifications."
+      "source": "datasheet",
+      "source_url": "https://docs.inspiredflight.com/inspired-documentation/products/aircraft/if1200/useful-documents",
+      "retrieved_at": "2026-10-28",
+      "confidence": "high",
+      "notes": "Quote: \"Operating Temperature -10\u00b0C ~ 40\u00b0C\". Retrieved 2026-10-28 from manufacturer document."
     }
   }
 }

@@ -215,12 +215,17 @@ async def test_a_partial_improvement_does_not_open_the_gate(
     app_with_graph: FastAPI,
     session_factory: async_sessionmaker[AsyncSession],
 ) -> None:
-    """Measured hover power is not the same as an operational-grade airframe.
+    """Airframe power from a log still does not open the gate alone.
 
-    battery_wh is still unrecorded and payload power is still an estimate, so the
-    gate stays shut. A partial improvement that opened it would be the exact
-    failure the fail-closed design exists to prevent.
+    X10D battery_wh is datasheet-grade after the manufacturer promotion, and
+    applying a flight log makes hover_power_w and cruise_power_w flight_log-
+    grade too, so the airframe side clears. The bundled None payload's
+    power_draw_w remains an estimate, so power_is_operational_grade stays
+    False. Opening the gate on airframe progress alone would be the failure
+    the fail-closed design exists to prevent.
     """
+    from suas.db.models import PayloadRow
+
     async with _client(app_with_graph) as client:
         await client.post(
             "/api/logs?airframe_id=Skydio_X10D&apply=true",
@@ -235,10 +240,18 @@ async def test_a_partial_improvement_does_not_open_the_gate(
             field: FieldProvenance.model_validate(record)
             for field, record in aircraft.provenance.items()
         }
+        payload_row = await session.get(PayloadRow, "None")
+        assert payload_row is not None
+        payload = {
+            field: FieldProvenance.model_validate(record)
+            for field, record in payload_row.provenance.items()
+        }
 
     assert airframe["hover_power_w"].is_operational_grade
-    assert not airframe["battery_wh"].is_operational_grade
-    assert power_is_operational_grade(airframe, {}) is False
+    assert airframe["cruise_power_w"].is_operational_grade
+    assert airframe["battery_wh"].is_operational_grade
+    assert payload["power_draw_w"].source is FieldSource.ESTIMATE
+    assert power_is_operational_grade(airframe, payload) is False
 
 
 async def test_an_estimate_below_the_bar_is_recorded_but_not_applied(

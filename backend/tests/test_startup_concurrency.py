@@ -31,6 +31,7 @@ from suas.db.engine import create_engine, create_schema, create_session_factory
 from suas.db.models import AircraftRow, Base, PayloadRow
 from suas.db.seed import seed_reference_data
 from suas.graph.checkpointer import build_checkpointer
+from suas.reference_data import AIRCRAFT_FILE, PAYLOAD_FILE, load_rows
 
 ADMIN_URL = os.environ.get("SUAS_TEST_POSTGRES_URL", "")
 
@@ -82,7 +83,9 @@ async def test_concurrent_seeds_on_an_empty_database_all_succeed(
         async with create_session_factory(engine)() as session:
             aircraft = await session.scalar(select(func.count()).select_from(AircraftRow))
             payloads = await session.scalar(select(func.count()).select_from(PayloadRow))
-        assert (aircraft, payloads) == (7, 6)
+        # Catalog size follows the JSON seeds (Teal split → 8 airframes).
+        expected = (len(load_rows(AIRCRAFT_FILE)), len(load_rows(PAYLOAD_FILE)))
+        assert (aircraft, payloads) == expected
     finally:
         await engine.dispose()
 
