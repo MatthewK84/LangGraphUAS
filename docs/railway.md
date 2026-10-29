@@ -192,7 +192,7 @@ Substitute your planner service's actual name for `planner` in that reference.
 certificate for `.railway.internal`.
 
 > **Check:** open the generated domain. The form renders and the aircraft and
-> payload dropdowns populate with 7 airframes and 6 payloads. If the dropdowns
+> payload dropdowns populate with 8 airframes and 6 payloads. If the dropdowns
 > are empty with "Backend returned status 502", see Troubleshooting.
 
 ## 5. Ingest the corpus

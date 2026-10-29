@@ -318,11 +318,11 @@ Operating temperature limits are published manufacturer figures:
 | --- | --- | --- | --- |
 | Skydio X10D | -20 | -20 to 45 C | Skydio X10 specifications |
 | Skydio X2D | -10 | -10 to 43 C | Skydio X2 support documentation |
-| Parrot ANAFI USA | -35 | -32 F (-35 C) to 120 F (49 C) | ANAFI USA user guide |
-| Teal Golden Eagle (Teal 2) | -36.7 | -34 F to 110 F (-36.7 to 43.3 C) | Teal 2 specifications |
+| Parrot ANAFI USA | -36 | -33 F (-36 C) to 122 F (50 C) | ANAFI USA product sheet 2023-02 |
+| Teal Golden Eagle | -35.6 | -32 F to 110 F (-35.6 to 43.3 C) | Teal Golden Eagle Operators Manual |
 | Freefly Astro Max | -20 | -20 to 50 C | Freefly Astro pilot's operating handbook |
 | Freefly Alta X | -20 | -20 to 50 C | Freefly Alta X specifications |
-| Inspired Flight IF1200A | -20 | -20 to 45 C | IF1200A specifications |
+| Inspired Flight IF1200A | -10 | -10 to 40 C | IF1200A Information Sheet v1.0 |
 
 `Freefly_Astro_Max` additionally carries `pack_min_takeoff_c` at 10 C.
 
@@ -330,9 +330,9 @@ Operating temperature limits are published manufacturer figures:
 
 | Conflict | Resolution |
 | --- | --- |
-| IF1200A `max_temp_c` stored 50 against a published 45 | **Corrected to 45.** A stored limit more permissive than the published one is the dangerous direction. |
-| ANAFI USA `max_temp_c` stored 43, published figures of 43, 49 and 50 in circulation | **Unresolved; 43 kept.** For an upper limit the most restrictive candidate is the safe one. The disagreement is recorded in the field's notes. |
-| IF1200A `battery_wh` assuming a 12S pack | **Kept, arithmetic recorded.** 1420 Wh is consistent with two 16 Ah packs at 12S (2 x 16 x 44.4 = 1420.8). Pack count and cell count remain unverified, so it stays an `estimate`. |
+| IF1200A `max_temp_c` | **Promoted to datasheet 40 C** (IF1200A Information Sheet v1.0). |
+| ANAFI USA `max_temp_c` | **Promoted to datasheet 50 C** (2023-02 product sheet; resolves the prior 43/49/50 circulation). |
+| IF1200A `battery_wh` | **Promoted to datasheet 1420.8 Wh** system energy: 2 x 710.4 Wh per-pack figure; airframe flies two packs. |
 | Alta X power figures soft | **Kept, discrepancy recorded.** The stored hover figure implies ~20 minutes of endurance, which matches the published figure at a 20 lb load rather than the no-payload figure its own formula names. It is conservative, so it stays until a flight log settles it. |
 
 None of these became `datasheet`. Every figure above was obtained from a web
@@ -411,7 +411,7 @@ The frontend fetches the catalog from the API at runtime, so the dropdowns
 cannot drift from the data the backend actually holds.
 
 Aircraft: `Skydio_X10D`, `Skydio_X2D`, `Parrot_ANAFI_USA`, `Teal_Golden_Eagle`,
-`Freefly_Astro_Max`, `Freefly_Alta_X`, `Inspired_Flight_IF1200A`.
+`Teal_2`, `Freefly_Astro_Max`, `Freefly_Alta_X`, `Inspired_Flight_IF1200A`.
 
 Payloads: `None`, `FLIR_Hadron_640R`, `Sony_ILX_LR1`, `Nextvision_Raptor`,
 `Workswell_WIRIS_Ent`, `Trillium_HD40_LV`.
