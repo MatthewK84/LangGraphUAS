@@ -191,15 +191,22 @@ def test_an_all_estimate_configuration_is_estimate_on_every_figure() -> None:
     assert not any(figure.operational_grade for figure in view.values())
 
 
-def test_the_bundled_data_reads_as_unknown_on_every_figure() -> None:
-    """No bundled payload records where its mass came from, and every figure uses it.
+def test_the_bundled_x10d_sony_figures_follow_live_provenance() -> None:
+    """X10D + Sony ILX-LR1 now carry datasheet mass/energy and derived/estimate power.
 
-    So the honest label for every bundled W and Wh figure is ``unknown``, the
-    weakest bucket, even where the airframe's own power figure is ``derived``.
+    Every W/Wh figure's summary source is the weakest bucket among the reference
+    fields it rests on. After the manufacturer promotion that is datasheet,
+    derived, or estimate — not universally unknown. usable_capacity_wh rests
+    only on datasheet battery_wh, so it alone is operational-grade; figures that
+    still pull in derived hover or estimate cruise stay non-operational.
     """
     view = number_provenance(Aircraft.model_validate(_AIRCRAFT), Payload.model_validate(_PAYLOAD))
-    assert {figure.source for figure in view.values()} == {FieldSource.UNKNOWN}
-    assert not any(figure.operational_grade for figure in view.values())
+    sources = {figure.source for figure in view.values()}
+    assert sources == {FieldSource.DATASHEET, FieldSource.DERIVED, FieldSource.ESTIMATE}
+    assert view["battery_check.usable_capacity_wh"].operational_grade is True
+    assert view["battery_check.usable_capacity_wh"].source is FieldSource.DATASHEET
+    assert view["effective_hover_power_w"].operational_grade is False
+    assert view["energy_breakdown.total_wh"].operational_grade is False
 
 
 def test_every_figure_the_dashboard_labels_is_one_the_backend_reports() -> None:
