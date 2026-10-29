@@ -85,7 +85,11 @@ def test_if1200a_battery_is_dual_pack_system_energy() -> None:
     assert record.value == 1420.8
     assert record.source is FieldSource.DATASHEET
     assert "710.4" in record.notes
-    assert "two" in record.notes.lower() or "2 x" in record.notes.lower() or "2x" in record.notes.lower()
+    assert (
+        "two" in record.notes.lower()
+        or "2 x" in record.notes.lower()
+        or "2x" in record.notes.lower()
+    )
 
 
 def test_teal_2_unpublished_fields_are_unknown_not_invented() -> None:
