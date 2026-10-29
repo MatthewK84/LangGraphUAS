@@ -25,57 +25,57 @@
     "id": "FLIR_Hadron_640R",
     "name": "Teledyne FLIR Hadron 640R",
     "weight_kg": {
-      "value": 0.037,
+      "value": 0.056,
       "unit": "kg",
-      "source": "unknown",
-      "source_url": null,
-      "retrieved_at": null,
-      "confidence": "low",
-      "notes": "No provenance recorded for payload mass."
+      "source": "datasheet",
+      "source_url": "https://oem.flir.com/products/hadron-640/?model=70640AS32-6PARXP&segment=oem&vertical=lwir",
+      "retrieved_at": "2026-10-28",
+      "confidence": "high",
+      "notes": "Quote: \"Weight: 56g\". Retrieved 2026-10-28 from manufacturer document."
     },
     "power_draw_w": {
-      "value": 3.0,
+      "value": 2.9,
       "unit": "W",
-      "source": "estimate",
-      "source_url": null,
-      "retrieved_at": null,
-      "confidence": "low",
-      "notes": "The README records every payload power figure as an estimate."
+      "source": "datasheet",
+      "source_url": "https://oem.flir.com/products/hadron-640/?model=70640AS32-6PARXP&segment=oem&vertical=lwir",
+      "retrieved_at": "2026-10-28",
+      "confidence": "high",
+      "notes": "Typical/max band published; conservative end for energy budget is max 2.9 W. Quote: \"Typical power dissipation less than 1800mW, Max less than 2900mW\". Retrieved 2026-10-28 from manufacturer document."
     }
   },
   "Sony_ILX_LR1": {
     "id": "Sony_ILX_LR1",
     "name": "Sony ILX-LR1 (61MP)",
     "weight_kg": {
-      "value": 0.5,
+      "value": 0.243,
       "unit": "kg",
-      "source": "unknown",
-      "source_url": null,
-      "retrieved_at": null,
-      "confidence": "low",
-      "notes": "No provenance recorded for payload mass."
+      "source": "datasheet",
+      "source_url": "https://helpguide.sony.net/ilc/2390/v1/en/contents/221h_specifications.html",
+      "retrieved_at": "2026-10-28",
+      "confidence": "high",
+      "notes": "Quote: \"Mass (Approx.) 243 g (8.6 oz) (camera body only)\". Retrieved 2026-10-28 from manufacturer document."
     },
     "power_draw_w": {
-      "value": 5.0,
+      "value": 6.5,
       "unit": "W",
-      "source": "estimate",
-      "source_url": null,
-      "retrieved_at": null,
-      "confidence": "low",
-      "notes": "The README records every payload power figure as an estimate."
+      "source": "datasheet",
+      "source_url": "https://helpguide.sony.net/ilc/2390/v1/en/contents/221h_specifications.html",
+      "retrieved_at": "2026-10-28",
+      "confidence": "high",
+      "notes": "Stills approx. 3.8 W also published; conservative end for energy budget is movies 6.5 W. Quote: \"Approx. 6.5 W (while shooting movies)\". Retrieved 2026-10-28 from manufacturer document."
     }
   },
   "Nextvision_Raptor": {
     "id": "Nextvision_Raptor",
     "name": "Nextvision Raptor",
     "weight_kg": {
-      "value": 0.4,
+      "value": 0.64,
       "unit": "kg",
-      "source": "unknown",
-      "source_url": null,
-      "retrieved_at": null,
-      "confidence": "low",
-      "notes": "No provenance recorded for payload mass."
+      "source": "datasheet",
+      "source_url": "https://nextvision-sys.com/cameras-cpt/raptor/",
+      "retrieved_at": "2026-10-28",
+      "confidence": "high",
+      "notes": "Quote: \"640 gr weight\". Retrieved 2026-10-28 from manufacturer document."
     },
     "power_draw_w": {
       "value": 10.0,
@@ -91,44 +91,44 @@
     "id": "Workswell_WIRIS_Ent",
     "name": "Workswell WIRIS Enterprise",
     "weight_kg": {
-      "value": 0.4,
+      "value": 0.73,
       "unit": "kg",
-      "source": "unknown",
-      "source_url": null,
-      "retrieved_at": null,
-      "confidence": "low",
-      "notes": "No provenance recorded for payload mass."
+      "source": "datasheet",
+      "source_url": "https://my.workswell.eu/download/file/163/en",
+      "retrieved_at": "2026-10-28",
+      "confidence": "high",
+      "notes": "Upper bound <730 g used as 0.73 kg (conservative for mass). Quote: \"Weight < 730 grams (1.49 lb) including Rangefinder, without IP protection cap\". Retrieved 2026-10-28 from manufacturer document."
     },
     "power_draw_w": {
-      "value": 15.0,
+      "value": 20.0,
       "unit": "W",
-      "source": "estimate",
-      "source_url": null,
-      "retrieved_at": null,
-      "confidence": "low",
-      "notes": "The README records every payload power figure as an estimate."
+      "source": "datasheet",
+      "source_url": "https://my.workswell.eu/download/file/163/en",
+      "retrieved_at": "2026-10-28",
+      "confidence": "high",
+      "notes": "Quote: \"Power dissipation 20W average consumption\". Retrieved 2026-10-28 from manufacturer document."
     }
   },
   "Trillium_HD40_LV": {
     "id": "Trillium_HD40_LV",
     "name": "Trillium HD40-LV Gimbal",
     "weight_kg": {
-      "value": 1.6,
+      "value": 0.645,
       "unit": "kg",
-      "source": "unknown",
-      "source_url": null,
-      "retrieved_at": null,
-      "confidence": "low",
-      "notes": "No provenance recorded for payload mass."
+      "source": "datasheet",
+      "source_url": "https://www.trilliumeng.com/software/Datasheets/Trillium-HD40-2024.pdf",
+      "retrieved_at": "2026-10-28",
+      "confidence": "high",
+      "notes": "Quote: \"HD40-LV ... 645g\". Retrieved 2026-10-28 from manufacturer document."
     },
     "power_draw_w": {
-      "value": 35.0,
+      "value": 15.0,
       "unit": "W",
-      "source": "estimate",
-      "source_url": null,
-      "retrieved_at": null,
-      "confidence": "low",
-      "notes": "The README records every payload power figure as an estimate."
+      "source": "datasheet",
+      "source_url": "https://www.trilliumeng.com/software/Datasheets/Trillium-HD40-2024.pdf",
+      "retrieved_at": "2026-10-28",
+      "confidence": "high",
+      "notes": "Continuous planning uses average 15 W; peak 75 W is surge, not sustained draw. Quote: \"15W average, 75W peak power\". Retrieved 2026-10-28 from manufacturer document."
     }
   }
 }
