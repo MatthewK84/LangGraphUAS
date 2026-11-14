@@ -6,6 +6,10 @@ current week's section, creating that section if the week has none. Each line
 names the PRs or issues it records. `backend/tests/test_changelog.py` checks
 the format.
 
+## Week of 2026-11-09
+
+- `restore.sh` drops `SET transaction_timeout` from pg_dump 17+ SQL before applying it, so a backup still restores onto Postgres 16; the runbook test had started failing on ubuntu-latest once the runner's client was newer than the Postgres 16 service (#113).
+
 ## Week of 2026-10-26
 
 - Every W and Wh figure in a plan response now carries its own provenance (weakest source, lowest confidence, operational grade, inputs), and the dashboard shows it beside each number, so an estimate can no longer render as a measured watt; a test perturbs each reference field through the calculator to keep the figure-to-input table honest (#79).
