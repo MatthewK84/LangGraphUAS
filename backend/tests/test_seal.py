@@ -288,6 +288,8 @@ def test_insufficient_data_names_every_input_blocker() -> None:
         Blocker.ASSESSMENT_INCOMPLETE,
         Blocker.PROVENANCE_INCOMPLETE,
         Blocker.POWER_NOT_OPERATIONAL_GRADE,
+        Blocker.FIELD_NOT_OPERATIONAL_GRADE,
+        Blocker.CONFIGURATION_NOT_LAB_OPERATIONAL,
         Blocker.BLUE_LIST_SNAPSHOT_UNAVAILABLE,
     ]
 
@@ -303,5 +305,7 @@ def test_an_assessment_without_weather_is_degraded_but_complete() -> None:
         Blocker.WEATHER_DEGRADED,
         Blocker.PROVENANCE_INCOMPLETE,
         Blocker.POWER_NOT_OPERATIONAL_GRADE,
+        Blocker.FIELD_NOT_OPERATIONAL_GRADE,
+        Blocker.CONFIGURATION_NOT_LAB_OPERATIONAL,
         Blocker.BLUE_LIST_SNAPSHOT_UNAVAILABLE,
     ]
