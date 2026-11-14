@@ -97,3 +97,12 @@ def test_the_opening_avoids_tactics_frequencies_and_procedures() -> None:
     opening = _opening()
     for term in ("MHz", "GHz", "kHz", "frequency", "frequencies", "tactic", "tactics"):
         assert term not in opening, term
+
+
+def test_the_license_section_disclaims_endorsement_and_authorisation() -> None:
+    """Programmes named in the seed data are reference data, not a clearance."""
+    section = re.sub(r"\s+", " ", _section("License")).lower()
+    assert "[mit](license)" in section
+    assert "not an endorsement" in section or "not endorsement" in section
+    assert "flight authorisation" in section or "flight authorization" in section
+    assert "reference data" in section

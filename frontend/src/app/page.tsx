@@ -27,6 +27,7 @@ import { ReplanPanel } from "./components/ReplanPanel";
 import { ResultsPanel } from "./components/ResultsPanel";
 import { ReviewPanel } from "./components/ReviewPanel";
 import { SkipToSignOff } from "./components/SkipToSignOff";
+import { LegalFooter } from "./components/LegalFooter";
 import { UtcClock } from "./components/UtcClock";
 
 function TopBar(): JSX.Element {
@@ -159,6 +160,7 @@ export default function MissionPlanner(): JSX.Element {
           }}
         />
       </div>
+      <LegalFooter />
     </div>
   );
 }
