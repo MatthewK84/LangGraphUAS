@@ -151,3 +151,18 @@ def test_citations_file_is_current() -> None:
         check=False,
     )
     assert result.returncode == 0, result.stderr
+
+
+def test_citations_lists_every_field_bucketed_by_source() -> None:
+    """The durable ticket needs a flat inventory, not only per-entry tables."""
+    text = (_REPO_ROOT / "backend" / "suas" / "data" / "CITATIONS.md").read_text(
+        encoding="utf-8"
+    )
+    assert "## Fields by source" in text
+    seen = 0
+    for entry in load_entries(AIRCRAFT_FILE) + load_entries(PAYLOAD_FILE):
+        for field in entry.provenance:
+            seen += 1
+            assert f"`{entry.id}.{field}`" in text
+    assert seen
+
