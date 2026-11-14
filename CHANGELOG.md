@@ -11,6 +11,7 @@ the format.
 - `restore.sh` drops `SET transaction_timeout` from pg_dump 17+ SQL before applying it, so a backup still restores onto Postgres 16; the runbook test had started failing on ubuntu-latest once the runner's client was newer than the Postgres 16 service (#113).
 - A Good first fixture issue template shows the mission JSON shape, every trap type, and how to regenerate expected values with `backend/scripts/generate_eval_fixtures.py --write`, and the README points at it (#105).
 - The README opening is three equally marked lines: what it is, what it is not, and a link to the eval pack and leaderboard (#107).
+- `attic/README.md` lists the feeder repositories that led into this one and what each contributed, and the root README points there rather than sideways (#108).
 
 ## Week of 2026-10-26
 
