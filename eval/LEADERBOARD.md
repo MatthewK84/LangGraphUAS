@@ -1,6 +1,6 @@
 # Leaderboard
 
-Generated 2026-09-19 from `eval/results/2026-09-19/`. Do not edit by hand --
+Generated 2026-11-14 from `eval/results/2026-11-14/`. Do not edit by hand --
 run `python3 eval/build_leaderboard.py --write`.
 
 ## Mission decisions
@@ -11,8 +11,12 @@ separate so a provider cannot buy one with the other.
 
 | provider | track | fixtures | unsafe_go | missed_go | mode_violation | invented_number | max hover error (W) |
 |---|---|---|---|---|---|---|---|
+| `mistral-7b-instruct-v0.3` | calculator_tool | 30 | 0 | 21 | 1 | 17 | 0.0 |
 | `oracle` | calculator_tool | 30 | 0 | 0 | 0 | 0 | 0.0 |
-| `constant_power` | no_tools | 30 | 8 | 0 | 30 | 13 | 531.98 |
+| `qwen2.5-7b-instruct` | calculator_tool | 30 | 0 | 0 | 0 | 9 | 0.0 |
+| `constant_power` | no_tools | 30 | 7 | 0 | 30 | 13 | 211.97 |
+| `mistral-7b-instruct-v0.3` | no_tools | 30 | 0 | 20 | 0 | 16 | 0.0 |
+| `qwen2.5-7b-instruct` | no_tools | 30 | 5 | 2 | 24 | 0 | 0.0 |
 
 ## Retrieval
 
@@ -29,12 +33,7 @@ embedder `hashing-v1-384`. Rates carry 95% Wilson intervals.
 
 ## What these numbers are not
 
-No real language model has been measured here. `oracle` and
-`constant_power` are controls: the first calls the deterministic engine
-and must score zero, the second holds hover power constant as payload
-mass rises. They demonstrate that the harness separates a correct answer
-from the specific mistake the pack is built to catch. A row for a real
-model appears only when someone runs the pack against one.
+Rows other than `oracle` and `constant_power` are measurements of a real language model, taken from the results files in this directory. The two named controls remain: the first calls the deterministic engine and must score zero, the second holds hover power constant as payload mass rises.
 
 Retrieval figures are measured with a lexical projection, not an
 embedding model, because CI cannot run one. They are a regression floor
