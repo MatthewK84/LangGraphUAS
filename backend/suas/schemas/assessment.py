@@ -55,6 +55,8 @@ class Blocker(StrEnum):
     ASSESSMENT_INCOMPLETE = "ASSESSMENT_INCOMPLETE"
     PROVENANCE_INCOMPLETE = "PROVENANCE_INCOMPLETE"
     POWER_NOT_OPERATIONAL_GRADE = "POWER_NOT_OPERATIONAL_GRADE"
+    FIELD_NOT_OPERATIONAL_GRADE = "FIELD_NOT_OPERATIONAL_GRADE"
+    CONFIGURATION_NOT_LAB_OPERATIONAL = "CONFIGURATION_NOT_LAB_OPERATIONAL"
     BLUE_LIST_SNAPSHOT_UNAVAILABLE = "BLUE_LIST_SNAPSHOT_UNAVAILABLE"
     BLUE_LIST_SNAPSHOT_STALE = "BLUE_LIST_SNAPSHOT_STALE"
     CORPUS_QUARANTINED = "CORPUS_QUARANTINED"
@@ -106,6 +108,13 @@ BLOCKER_REASONS: dict[Blocker, str] = {
     Blocker.PROVENANCE_INCOMPLETE: "A required figure has no provenance record.",
     Blocker.POWER_NOT_OPERATIONAL_GRADE: (
         "An energy-budget figure is not from a datasheet or flight log."
+    ),
+    Blocker.FIELD_NOT_OPERATIONAL_GRADE: (
+        "A required figure is not from a datasheet or flight log."
+    ),
+    Blocker.CONFIGURATION_NOT_LAB_OPERATIONAL: (
+        "Operational mode is only considered for the lab configuration "
+        "Freefly Astro Max + Sony ILX-LR1."
     ),
     Blocker.BLUE_LIST_SNAPSHOT_UNAVAILABLE: (
         "No usable Blue UAS snapshot is stored, so configuration clearance cannot be asserted."

@@ -128,6 +128,8 @@ def test_a_fresh_snapshot_is_not_a_blue_list_blocker() -> None:
             power_is_operational_grade=True,
             blue_list_snapshot_available=True,
             blue_list_snapshot_stale=False,
+            configuration_is_lab_operational=True,
+            fields_are_operational_grade=True,
         )
     )
     assert blockers == []

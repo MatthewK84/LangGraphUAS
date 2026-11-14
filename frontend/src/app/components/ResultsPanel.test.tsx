@@ -69,3 +69,16 @@ describe("advisory blockers", () => {
     expect(note.textContent).toMatch(/bluelist\.dcma\.mil/);
   });
 });
+
+describe("empty assessment", () => {
+  it("states that operational mode is off by default and names the lab pair", () => {
+    const view = render(
+      <ResultsPanel loading={false} error={null} result={null} />,
+    );
+    expect(view.container.textContent).toMatch(
+      /Operational mode is off by default/,
+    );
+    expect(view.container.textContent).toMatch(/Freefly Astro Max/);
+    expect(view.container.textContent).toMatch(/Sony ILX-LR1/);
+  });
+});

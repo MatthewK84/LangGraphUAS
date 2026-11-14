@@ -18,7 +18,7 @@ beside it:
 | `docs/adr/` | The four decisions that everything else assumes |
 | `docs/backlog/` | The seventeen opening issues, ready to file |
 
-## Status as of 2026-09-19
+## Status as of 2026-11-14
 
 Calendar day 7 of 90. The calendar is not the progress bar: all seventeen
 opening issues are merged, including the Phase 3 eval work, so the backlog is
@@ -54,24 +54,29 @@ ahead of the dates. What follows is measured from `main`, not from the plan.
 
 ### Blocking operational mode
 
-Two blockers fire on every plan today, even given live weather and a complete
-assessment. Both are emitted by `operational_blockers()` in
+Four blockers fire on a typical plan today, even given live weather and a
+complete assessment. They are emitted by `operational_blockers()` in
 `backend/suas/calculations/gate.py`; the names below are `Blocker` enum values,
-not prose.
+not prose. Operational mode is off by default and is only considered for the
+lab pair Freefly Astro Max + Sony ILX-LR1.
 
 | Blocker | Why it fires | What clears it |
 |---|---|---|
-| `POWER_NOT_OPERATIONAL_GRADE` | Every energy-budget figure in the bundled data is `derived` or `estimate`. None is read from a manufacturer document or a measured flight log. | Issues #75 and #76: one field promoted to `datasheet`, and one flight log that can move a power field. |
-| `BLUE_LIST_SNAPSHOT_UNAVAILABLE` | No Blue List snapshot is stored, so configuration clearance cannot be asserted at all. This one is unconditional -- the gate appends it on every call. | Issue #78: a stored snapshot plus a freshness blocker, which turns a standing blocker into a real check. |
+| `POWER_NOT_OPERATIONAL_GRADE` | Hover and cruise power in the bundled data are `derived`. The Astro Max flight-log excerpt can promote hover in a test database only; cruise stays derived, and the excerpt is a no-payload hover. | A datasheet or flight-log figure for every energy-budget field, applied honestly to the configuration being flown. |
+| `FIELD_NOT_OPERATIONAL_GRADE` | A required field is not datasheet- or flight-log-grade. On every bundled airframe `cruise_speed_mps` is still an `estimate`. | Promote every required field, including cruise speed, to `datasheet` or `flight_log`. |
+| `CONFIGURATION_NOT_LAB_OPERATIONAL` | The plan is not the single lab configuration (Freefly Astro Max + Sony ILX-LR1). | Request operational only for that pair; other airframes and payloads stay advisory. |
+| `BLUE_LIST_SNAPSHOT_UNAVAILABLE` | No Blue UAS snapshot is stored in the public demo, so configuration clearance cannot be asserted. A pinned snapshot that has aged out is refused as stale instead. | Pin a hashed snapshot with the refresh script and keep it fresh (#78). |
 
 `PROVENANCE_INCOMPLETE` does **not** fire: every field that must carry a
 provenance record has one. The records exist; what they say is not yet good
 enough.
 
-**Operational mode is therefore unreachable today, and that is the honest
-state.** The gate fails closed by design: a condition this codebase cannot
-verify is a blocker rather than a pass. Issue #77 closes this either by making
-one lab configuration pass, or by writing the refusal down.
+**Operational mode is therefore unreachable today, including on the public demo, and that is the honest state.** Even the lab configuration cannot be granted operational
+on the bundled seed: hover and cruise are derived, cruise speed is an
+estimate, and no snapshot is stored. A fixture test pins the exact inputs
+that *would* clear the gate (datasheet- or flight-log-grade required fields,
+the lab pair, live weather, a fresh snapshot). The gate was not loosened to
+make the seed pass.
 
 ### Next three PRs
 
