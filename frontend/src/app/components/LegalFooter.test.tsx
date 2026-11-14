@@ -33,7 +33,7 @@ describe("legal footer (issue 117)", () => {
     const text = footer.textContent ?? "";
     expect(text).toMatch(/MIT licence/i);
     expect(text).toMatch(/reference data/i);
-    expect(text).toMatch(/not endorsement/i);
+    expect(text).toMatch(/not an endorsement/i);
     expect(text).toMatch(/not a flight authorisation/i);
     expect(footer.querySelector("img")).toBeNull();
     expect(footer.querySelector("svg")).toBeNull();
