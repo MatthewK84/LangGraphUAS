@@ -32,6 +32,14 @@ dev = [
     "pip-audit==2.10.1",
     "ruff==0.14.4",
     "mypy==2.3.1",
+    # Workstation ULog converter (scripts/ulog_to_csv.py) and its tests. BSD-3-Clause.
+    "pyulog==1.3.0",
+    "numpy==2.2.6",
+]
+ulog = [
+    # Optional extra for scripts/ulog_to_csv.py. pyulog is BSD-3-Clause.
+    "pyulog==1.3.0",
+    "numpy==2.2.6",
 ]
 
 [build-system]
