@@ -90,7 +90,7 @@ deterministic go/no-go summary instead of a model narrative.
 
 | Layer | Choice |
 |---|---|
-| Frontend | Next.js 14 (App Router, standalone output), TypeScript strict, TailwindCSS. |
+| Frontend | Next.js 15 (App Router, standalone output), React 19, TypeScript strict, TailwindCSS. |
 | Backend | FastAPI on Python 3.11 to 3.13, fully async request path. |
 | Orchestration | LangGraph 1.x `StateGraph` with a conditional edge and durable checkpointing. |
 | Language model | `langchain-openai` `ChatOpenAI`, called with `ainvoke`, timeout, and bounded retries. |
@@ -248,10 +248,9 @@ npm run build
 ```
 
 `npm run lint` includes `@next/eslint-plugin-next` 16.4.6 (recommended and
-core-web-vitals) under the existing ESLint 10 flat config. Next.js stays on 14
-because enabling the plugin did not require a framework upgrade. The v14 plugin
-was the one that crashed under flat config; that is no longer a reason to wait
-for Next 15.
+core-web-vitals) under the existing ESLint 10 flat config. The app runs
+Next.js 15.5 and React 19; route-handler `params` are awaited. The plugin was
+already compatible with this stack, so it stays as enabled in #217.
 
 Dependency audit, report-only (as `audit.yml` runs it weekly):
 

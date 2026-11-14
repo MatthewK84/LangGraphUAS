@@ -122,13 +122,15 @@ def test_provenance_links_the_open_durable_ticket_not_a_closed_issue() -> None:
     assert "durable" in collapsed
 
 
-def test_the_next_eslint_plugin_is_enabled_without_upgrading_next() -> None:
-    """The plugin runs under ESLint 10 flat config; Next 14 does not have to move."""
+def test_the_next_eslint_plugin_stays_enabled_on_next_15() -> None:
+    """The plugin stays on; the app itself is now Next 15 and React 19."""
     limitations = _section("Operations and limitations")
     assert "Next.js ESLint plugin is disabled" not in limitations
     collapsed = re.sub(r"\s+", " ", README)
     assert "@next/eslint-plugin-next" in collapsed
-    assert "stays on 14" in collapsed.lower()
+    assert "Next.js 15" in collapsed
+    assert "React 19" in collapsed
+    assert "stays on 14" not in collapsed.lower()
     config = (ROOT / "frontend" / "eslint.config.mjs").read_text(encoding="utf-8")
     assert 'from "@next/eslint-plugin-next"' in config
     assert "recommended" in config

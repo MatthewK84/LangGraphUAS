@@ -4,7 +4,7 @@ import { forwardForBrowser } from "@/lib/server/session";
 export const dynamic = "force-dynamic";
 
 interface RouteContext {
-  readonly params: { readonly thread_id: string };
+  readonly params: Promise<{ readonly thread_id: string }>;
 }
 
 export async function GET(
@@ -12,7 +12,8 @@ export async function GET(
   context: RouteContext,
 ): Promise<Response> {
   // Encoded so a crafted thread id cannot escape the intended backend path.
-  const threadId: string = encodeURIComponent(context.params.thread_id);
+  const { thread_id } = await context.params;
+  const threadId: string = encodeURIComponent(thread_id);
   return forwardForBrowser(request, {
     path: `/api/plan/${threadId}`,
     method: "GET",
