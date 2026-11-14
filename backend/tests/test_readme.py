@@ -120,4 +120,3 @@ def test_provenance_links_the_open_durable_ticket_not_a_closed_issue() -> None:
     assert "CITATIONS.md" in section
     collapsed = re.sub(r"\s+", " ", section).lower()
     assert "durable" in collapsed
-

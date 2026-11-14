@@ -66,7 +66,6 @@ def _summary(entries: list[ReferenceEntry]) -> dict[str, int]:
     return counts
 
 
-
 def _fields_by_source(entries: list[ReferenceEntry]) -> list[str]:
     """Return a flat markdown inventory of every field, grouped by source."""
     buckets: dict[str, list[str]] = {source: [] for source in _SOURCE_ORDER}
