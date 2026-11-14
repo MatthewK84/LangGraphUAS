@@ -454,13 +454,19 @@ headroom, select `Freefly_Astro_Max`.
 
 `assessment_mode` is what you ask for. The backend decides what you get, and it
 fails closed: a gate condition it cannot verify counts against the plan. Today
-that means **operational mode is unreachable** — every plan returns `200` with
-`mode: "advisory"` and blockers naming what is missing, because the bundled
-power figures are not datasheet- or flight-log-grade and, unless a snapshot has
-been pinned with `refresh_blue_list.py`, no Blue UAS snapshot is stored. A
-pinned snapshot older than `SUAS_BLUE_LIST_MAX_AGE_S` (default 7 days) is
-`BLUE_LIST_SNAPSHOT_STALE` and also cannot be operational; advisory still
-runs. An
+that means **operational mode is unreachable on the public demo** — every plan
+returns `200` with `mode: "advisory"` and blockers naming what is missing.
+Operational mode is off by default (`assessment_mode` defaults to `advisory`)
+and is only considered for one lab configuration, Freefly Astro Max + Sony
+ILX-LR1 (`CONFIGURATION_NOT_LAB_OPERATIONAL` otherwise). Even that pair cannot
+be granted operational on the bundled seed: hover and cruise power are
+`derived` (`POWER_NOT_OPERATIONAL_GRADE`), `cruise_speed_mps` is an
+`estimate` (`FIELD_NOT_OPERATIONAL_GRADE`), and unless a snapshot has been
+pinned with `refresh_blue_list.py`, no Blue UAS snapshot is stored
+(`BLUE_LIST_SNAPSHOT_UNAVAILABLE`). A pinned snapshot older than
+`SUAS_BLUE_LIST_MAX_AGE_S` (default 7 days) is `BLUE_LIST_SNAPSHOT_STALE`.
+Advisory still runs. A fixture test pins the exact inputs that would clear
+the gate; the gate was not loosened to make the seed pass. An
 ungrantable mode is a downgrade with reasons attached, not a `409`; see
 [ADR-005](docs/adr/005-mode-downgrade-is-not-an-error.md). A mode that is not a
 valid value is still a `422`.

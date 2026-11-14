@@ -63,6 +63,8 @@ _ALL_CLEAR = GateInputs(
     assessment_is_complete=True,
     provenance_is_complete=True,
     power_is_operational_grade=True,
+    configuration_is_lab_operational=True,
+    fields_are_operational_grade=True,
 )
 
 _BODY: dict[str, Any] = {

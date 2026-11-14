@@ -21,6 +21,8 @@ from suas.calculations.battery import DEFAULT_RESERVE_PERCENT, check_battery_via
 from suas.calculations.gate import (
     GateInputs,
     blue_list_snapshot_is_stale,
+    configuration_is_lab_operational,
+    fields_are_operational_grade,
     operational_blockers,
     power_is_operational_grade,
     provenance_is_complete,
@@ -58,7 +60,7 @@ DEFAULT_CLIMB_EFFICIENCY: float = 0.6
 # purpose: an automatic hash of the source would churn on a comment edit and
 # stop meaning anything. CI fails a change under calculations/ that does not
 # bump it, so forgetting is not a quiet failure mode.
-CALCULATOR_VERSION: str = "1.8.0"
+CALCULATOR_VERSION: str = "1.9.0"
 
 # Reason text per safety flag, used when that flag is False. Keyed by the field
 # name on SafetyFlags so a new flag that is never mapped shows up immediately as
@@ -335,6 +337,13 @@ def build_assessment(
             corpus_quarantined=corpus_quarantined,
             blue_list_snapshot_available=available,
             blue_list_snapshot_stale=stale,
+            configuration_is_lab_operational=configuration_is_lab_operational(
+                None if aircraft is None else aircraft.id,
+                None if payload is None else payload.id,
+            ),
+            fields_are_operational_grade=fields_are_operational_grade(
+                aircraft_provenance, payload_provenance
+            ),
         )
     )
     return DeterministicAssessment(

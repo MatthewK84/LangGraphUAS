@@ -7,6 +7,10 @@ export const BLOCKER_REASONS: Readonly<Record<string, string>> = {
   PROVENANCE_INCOMPLETE: "A required figure has no provenance record.",
   POWER_NOT_OPERATIONAL_GRADE:
     "An energy-budget figure is not from a datasheet or flight log.",
+  FIELD_NOT_OPERATIONAL_GRADE:
+    "A required figure is not from a datasheet or flight log.",
+  CONFIGURATION_NOT_LAB_OPERATIONAL:
+    "Operational mode is only considered for the lab configuration Freefly Astro Max + Sony ILX-LR1.",
   BLUE_LIST_SNAPSHOT_UNAVAILABLE:
     "No usable Blue UAS snapshot is stored, so configuration clearance cannot be asserted.",
   BLUE_LIST_SNAPSHOT_STALE:

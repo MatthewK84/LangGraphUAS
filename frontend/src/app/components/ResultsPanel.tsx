@@ -291,7 +291,8 @@ export function ResultsPanel(props: ResultsPanelProps): JSX.Element {
     return (
       <div className="flex h-full items-center justify-center p-8 text-center text-md text-fg-muted">
         No plan yet. Set the aircraft, payload, profile and location, then
-        analyze flight feasibility.
+        analyze flight feasibility. Operational mode is off by default and is
+        only considered for Freefly Astro Max + Sony ILX-LR1.
       </div>
     );
   }

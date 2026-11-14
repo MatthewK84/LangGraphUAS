@@ -30,6 +30,15 @@ POWER_FIELDS_AIRCRAFT: Final[frozenset[str]] = frozenset(
 )
 POWER_FIELDS_PAYLOAD: Final[frozenset[str]] = frozenset({"power_draw_w"})
 
+# The only configuration operational mode will consider. Chosen because
+# Freefly_Astro_Max has the most datasheet-grade fields of any bundled
+# airframe (seven, including pack_min_takeoff_c) and is the only one with a
+# redacted flight-log fixture (#76 / #220); Sony_ILX_LR1 has datasheet
+# weight and power_draw_w. The public seed still cannot clear the gate:
+# hover and cruise are derived, cruise speed is an estimate.
+LAB_OPERATIONAL_AIRFRAME_ID: Final[str] = "Freefly_Astro_Max"
+LAB_OPERATIONAL_PAYLOAD_ID: Final[str] = "Sony_ILX_LR1"
+
 # Every numeric field that must carry a provenance record at all. Missing
 # provenance is a different failure from weak provenance, and they are reported
 # separately: one means nobody wrote it down, the other means what was written
@@ -60,14 +69,51 @@ def provenance_is_complete(
     )
 
 
+def _records_are_operational_grade(
+    aircraft: dict[str, FieldProvenance],
+    payload: dict[str, FieldProvenance],
+    aircraft_fields: frozenset[str],
+    payload_fields: frozenset[str],
+) -> bool:
+    """Return whether every named figure is present and datasheet- or flight-log-grade."""
+    records = [aircraft.get(field) for field in sorted(aircraft_fields)]
+    records += [payload.get(field) for field in sorted(payload_fields)]
+    return all(record is not None and record.is_operational_grade for record in records)
+
+
 def power_is_operational_grade(
     aircraft: dict[str, FieldProvenance],
     payload: dict[str, FieldProvenance],
 ) -> bool:
     """Return whether every energy-budget figure comes from a datasheet or a log."""
-    records = [aircraft.get(field) for field in sorted(POWER_FIELDS_AIRCRAFT)]
-    records += [payload.get(field) for field in sorted(POWER_FIELDS_PAYLOAD)]
-    return all(record is not None and record.is_operational_grade for record in records)
+    return _records_are_operational_grade(
+        aircraft, payload, POWER_FIELDS_AIRCRAFT, POWER_FIELDS_PAYLOAD
+    )
+
+
+def configuration_is_lab_operational(aircraft_id: str | None, payload_id: str | None) -> bool:
+    """Return whether this pair is the single lab configuration in scope."""
+    return aircraft_id == LAB_OPERATIONAL_AIRFRAME_ID and payload_id == LAB_OPERATIONAL_PAYLOAD_ID
+
+
+def fields_are_operational_grade(
+    aircraft: dict[str, FieldProvenance],
+    payload: dict[str, FieldProvenance],
+) -> bool:
+    """Return whether every required figure is datasheet- or flight-log-grade.
+
+    Walks the full required inventory, including envelope fields such as
+    cruise_speed_mps that are outside the energy-budget set.
+    """
+    for field in sorted(REQUIRED_PROVENANCE_AIRCRAFT):
+        record = aircraft.get(field)
+        if record is None or not record.is_operational_grade:
+            return False
+    for field in sorted(REQUIRED_PROVENANCE_PAYLOAD):
+        record = payload.get(field)
+        if record is None or not record.is_operational_grade:
+            return False
+    return True
 
 
 @dataclass(frozen=True)
@@ -87,6 +133,11 @@ class GateInputs:
     # assertion would be about the past.
     blue_list_snapshot_available: bool = False
     blue_list_snapshot_stale: bool = False
+    # Operational mode is considered only for the one lab configuration.
+    # Default False: a missing identity is not in scope.
+    configuration_is_lab_operational: bool = False
+    # Every required provenance field, not only the energy-budget subset.
+    fields_are_operational_grade: bool = False
 
 
 def blue_list_snapshot_is_stale(
@@ -105,22 +156,24 @@ def blue_list_snapshot_is_stale(
     return (now - fetched_at).total_seconds() > max_age_s
 
 
+def _condition_blockers(inputs: GateInputs) -> list[Blocker]:
+    """Return the independent flag blockers, in a stable order."""
+    flags: tuple[tuple[bool, Blocker], ...] = (
+        (not inputs.weather_is_live, Blocker.WEATHER_NOT_LIVE),
+        (inputs.weather_degraded, Blocker.WEATHER_DEGRADED),
+        (not inputs.assessment_is_complete, Blocker.ASSESSMENT_INCOMPLETE),
+        (not inputs.provenance_is_complete, Blocker.PROVENANCE_INCOMPLETE),
+        (not inputs.power_is_operational_grade, Blocker.POWER_NOT_OPERATIONAL_GRADE),
+        (not inputs.fields_are_operational_grade, Blocker.FIELD_NOT_OPERATIONAL_GRADE),
+        (not inputs.configuration_is_lab_operational, Blocker.CONFIGURATION_NOT_LAB_OPERATIONAL),
+        (inputs.corpus_quarantined, Blocker.CORPUS_QUARANTINED),
+    )
+    return [blocker for flag, blocker in flags if flag]
+
+
 def operational_blockers(inputs: GateInputs) -> list[Blocker]:
     """Return every reason this plan cannot be operational, in a stable order."""
-    blockers: list[Blocker] = []
-    if not inputs.weather_is_live:
-        blockers.append(Blocker.WEATHER_NOT_LIVE)
-    if inputs.weather_degraded:
-        blockers.append(Blocker.WEATHER_DEGRADED)
-    if not inputs.assessment_is_complete:
-        blockers.append(Blocker.ASSESSMENT_INCOMPLETE)
-
-    if not inputs.provenance_is_complete:
-        blockers.append(Blocker.PROVENANCE_INCOMPLETE)
-    if not inputs.power_is_operational_grade:
-        blockers.append(Blocker.POWER_NOT_OPERATIONAL_GRADE)
-    if inputs.corpus_quarantined:
-        blockers.append(Blocker.CORPUS_QUARANTINED)
+    blockers = _condition_blockers(inputs)
     if not inputs.blue_list_snapshot_available:
         blockers.append(Blocker.BLUE_LIST_SNAPSHOT_UNAVAILABLE)
     elif inputs.blue_list_snapshot_stale:
