@@ -1,0 +1,96 @@
+name: Good first fixture
+description: Add one mission to the frozen eval pack
+title: "eval: add <id> fixture (<trap type>)"
+labels: ["good first issue", "eval"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The frozen pack lives in `eval/fixtures/missions.jsonl`. It is generated,
+        never hand-edited. To add a mission, add one row to `CASES` in
+        `backend/scripts/generate_eval_fixtures.py`, then regenerate the
+        expected values.
+
+        ## Regenerating expected values
+
+        The calculator is the oracle. After adding the case, run:
+
+        ```bash
+        python3 backend/scripts/generate_eval_fixtures.py --write
+        ```
+
+        Commit the new case and the regenerated `eval/fixtures/missions.jsonl`
+        together. Do not type expected decisions, residual ranges, hover power,
+        blockers, or `calculator_version` by hand.
+
+  - type: dropdown
+    id: trap
+    attributes:
+      label: Trap type
+      description: The pack uses these trap (and non-trap) labels today.
+      options:
+        - payload_scale
+        - density_altitude
+        - fallback_weather
+        - pack_procedure
+        - delisted_config
+        - datasheet_conflict
+        - wind_limit
+        - endurance
+    validations:
+      required: true
+
+  - type: textarea
+    id: case
+    attributes:
+      label: Generator case to add
+      description: One tuple for CASES in backend/scripts/generate_eval_fixtures.py. Pick a unique id.
+      value: |
+        # id, airframe, payload, distance_m, hover_s, target_alt, elevation, weather, trap
+        ("ps-07", "Freefly_Astro_Max", "Nextvision_Raptor", 3000, 300, 100, 0, _weather(), "payload_scale"),
+    validations:
+      required: true
+
+  - type: textarea
+    id: mission_json
+    attributes:
+      label: Mission JSON (inputs only)
+      description: >
+        Shape of one pack row. Fill only the inputs. Leave expected_* and
+        calculator_version to the generator.
+      value: |
+        ```json
+        {
+          "id": "ps-07",
+          "trap": "payload_scale",
+          "airframe": "Freefly_Astro_Max",
+          "payload": "Nextvision_Raptor",
+          "params": {
+            "distance_m": 3000.0,
+            "hover_time_s": 300.0,
+            "target_altitude_m": 100.0,
+            "elevation_m": 0.0,
+            "latitude": 39.7392,
+            "longitude": -104.9903
+          },
+          "weather": {
+            "temperature_c": 18.0,
+            "wind_speed_mps": 3.0,
+            "wind_gust_mps": 4.0,
+            "wind_direction": 180.0,
+            "humidity_percent": 45.0,
+            "conditions": "clear",
+            "source": "live"
+          }
+        }
+        ```
+    validations:
+      required: true
+
+  - type: textarea
+    id: why
+    attributes:
+      label: What this fixture is meant to catch
+      description: One or two sentences. Not a pitch.
+    validations:
+      required: true
