@@ -209,7 +209,7 @@ list required status checks. Rules and rationale for each gate are in
 | `postgres-integration` | Blocks | Real Postgres: migrations apply, the app boots end to end, `/ready` refuses an unmigrated database, and concurrent startup seeds all succeed |
 | `calculator-version` | Blocks (pull requests only) | A change to `backend/suas/calculations/` must bump `CALCULATOR_VERSION` |
 | `ub-mode` | Blocks | CRAP below 10 for every function in `backend/suas`, and no unlisted duplicate pair at 0.8 or above |
-| `frontend` | Blocks | `tsc`, ESLint (cyclomatic complexity 10 or less), the UI standard scan ([docs/ui-standard.md](docs/ui-standard.md)), Prettier, Vitest (which includes axe-core over the planner page and a keyboard-only acknowledgement), production build |
+| `frontend` | Blocks | `tsc`, ESLint (cyclomatic complexity 10 or less, plus `@next/eslint-plugin-next`), the UI standard scan ([docs/ui-standard.md](docs/ui-standard.md)), Prettier, Vitest (which includes axe-core over the planner page and a keyboard-only acknowledgement), production build |
 | `docker` | Blocks on the build | Both images build. Its trivy scan of HIGH and CRITICAL findings is **report-only** (job summary) |
 | `workflow-lint` | Blocks | actionlint and zizmor over `.github/`: actions pinned to commits, no template injection, least-privilege tokens |
 | `secrets-scan` | Blocks | gitleaks, a checksum-verified pinned release, over the full history |
@@ -246,6 +246,12 @@ npm run format                        # prettier --check
 npm test                              # vitest, covers the server-side proxy
 npm run build
 ```
+
+`npm run lint` includes `@next/eslint-plugin-next` 16.4.6 (recommended and
+core-web-vitals) under the existing ESLint 10 flat config. Next.js stays on 14
+because enabling the plugin did not require a framework upgrade. The v14 plugin
+was the one that crashed under flat config; that is no longer a reason to wait
+for Next 15.
 
 Dependency audit, report-only (as `audit.yml` runs it weekly):
 
@@ -844,9 +850,6 @@ the air.
   `enum.StrEnum` and `datetime.UTC` available to this codebase. The production
   image still pins `python:3.11-slim`, the floor of the supported range, so CI
   exercises a wider range than the container runs.
-- **Next.js ESLint plugin is disabled.** The `@next/eslint-plugin-next` v14 rules
-  crash under ESLint 9 flat config, so Next-specific lint is off. Re-add it after
-  moving to Next 15, which is flat-config compatible.
 - **No dependency-audit gate.** `pip-audit --strict` failed regularly on
   transitive advisories outside this project's control, so it does not block a
   merge. [`audit.yml`](.github/workflows/audit.yml) runs `pip-audit` and
