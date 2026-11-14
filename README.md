@@ -825,6 +825,7 @@ specifications:
 | [`docs/adr/`](docs/adr/README.md) | The decisions later code is allowed to assume |
 | [`docs/backlog/`](docs/backlog/README.md) | The seventeen opening issues, ready to file |
 | [`CHANGELOG.md`](CHANGELOG.md) | What reached `main` each week, five lines at most, appended by every PR |
+| [`attic/README.md`](attic/README.md) | Earlier repositories that fed this work, and what each contributed |
 
 To add a mission to the frozen eval pack, open a Good first fixture issue from [`.github/ISSUE_TEMPLATE/good-first-fixture.yml`](.github/ISSUE_TEMPLATE/good-first-fixture.yml). Expected values are regenerated with `python3 backend/scripts/generate_eval_fixtures.py --write`; never hand-edit `eval/fixtures/missions.jsonl`.
 
@@ -944,6 +945,7 @@ frontend/
     lib/            typed API client, catalog hook, geolocation, shared types
       server/       backend proxy; the only reader of the API key
 corpus/             manifest-listed manufacturer documents for citations
+attic/              earlier repositories that fed this one, and what they contributed
 docs/               plan, practices, threat model, ADRs, runbooks
 eval/               frozen mission pack and retrieval evaluation (offline by default)
 scripts/            Compose smoke test, pinned trivy installer, backlog filer
