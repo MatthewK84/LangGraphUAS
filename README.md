@@ -822,6 +822,8 @@ specifications:
 | [`docs/backlog/`](docs/backlog/README.md) | The seventeen opening issues, ready to file |
 | [`CHANGELOG.md`](CHANGELOG.md) | What reached `main` each week, five lines at most, appended by every PR |
 
+To add a mission to the frozen eval pack, open a Good first fixture issue from [`.github/ISSUE_TEMPLATE/good-first-fixture.yml`](.github/ISSUE_TEMPLATE/good-first-fixture.yml). Expected values are regenerated with `python3 backend/scripts/generate_eval_fixtures.py --write`; never hand-edit `eval/fixtures/missions.jsonl`.
+
 The organizing rule across all of it: the language model writes prose, and
 `backend/suas/calculations/` writes every number that can keep an aircraft in
 the air.

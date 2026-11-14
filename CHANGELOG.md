@@ -9,6 +9,7 @@ the format.
 ## Week of 2026-11-09
 
 - `restore.sh` drops `SET transaction_timeout` from pg_dump 17+ SQL before applying it, so a backup still restores onto Postgres 16; the runbook test had started failing on ubuntu-latest once the runner's client was newer than the Postgres 16 service (#113).
+- A Good first fixture issue template shows the mission JSON shape, every trap type, and how to regenerate expected values with `backend/scripts/generate_eval_fixtures.py --write`, and the README points at it (#105).
 
 ## Week of 2026-10-26
 
