@@ -523,3 +523,19 @@ client IP, which may be the attacker's. For a leaked session secret, rotate
 what the key did:
 `SELECT thread_id, created_at, ack_actor, ack_at FROM mission_threads WHERE operator_key_id = '<id>' AND created_at > '<leak time>';`.
 Treat each ack in that window as unsigned until its operator confirms it.
+
+## Converting a PX4 ULog
+
+The API accepts CSV, not `.ulg`. On a workstation, with the backend `ulog`
+extra installed (`pip install -e '.[ulog]'` from `backend/`):
+
+```bash
+python scripts/ulog_to_csv.py flight.ulg flight.csv
+```
+
+The script sums every battery pack, prefers `vehicle_local_position`, and falls
+back to barometric altitude plus EKF velocity. Landed samples are dropped.
+Pack serials and vehicle identifiers stay in the ULog. The resulting CSV is
+what `POST /api/logs` reads; `apply=true` still requires at least 30 hover
+samples, and it writes the runtime database, never the seed JSON.
+
