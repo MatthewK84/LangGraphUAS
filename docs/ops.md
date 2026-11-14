@@ -524,6 +524,30 @@ what the key did:
 `SELECT thread_id, created_at, ack_actor, ack_at FROM mission_threads WHERE operator_key_id = '<id>' AND created_at > '<leak time>';`.
 Treat each ack in that window as unsigned until its operator confirms it.
 
+
+## Blue UAS snapshot
+
+Blue-list status enters the planner only as a hashed, time-stamped file written
+out-of-band (`backend/scripts/refresh_blue_list.py`). The request path never
+fetches the list. See [ADR-002](adr/002-blue-list-is-not-the-oracle.md).
+
+```bash
+python3 backend/scripts/refresh_blue_list.py --from-file public.json
+```
+
+`public.json` is a JSON object with an `items` list already retrieved from a
+public source, and an optional `source_url`. The script writes
+`backend/suas/data/blue_list_snapshot.json` (or `SUAS_BLUE_LIST_SNAPSHOT`),
+stamps `fetched_at`, and stores a `sha256:` hash of the items. A hash mismatch
+or a missing, naive, or unparseable `fetched_at` is treated as unavailable, not
+stale: clearance cannot be asserted.
+
+`SUAS_BLUE_LIST_MAX_AGE_S` (default 604800, seven days per ADR-002) is the
+age at which a usable snapshot becomes `BLUE_LIST_SNAPSHOT_STALE`. Operational
+mode is refused; advisory still produces a plan. A snapshot exactly at the
+threshold is still current; one second over is stale. Verify the current list
+at bluelist.dcma.mil before flight.
+
 ## Converting a PX4 ULog
 
 The API accepts CSV, not `.ulg`. On a workstation, with the backend `ulog`

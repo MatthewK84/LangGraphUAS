@@ -117,8 +117,9 @@ def test_resolve_mode_never_upgrades_an_advisory_request() -> None:
 def test_gate_fails_closed_on_the_unverifiable_condition() -> None:
     """With everything checkable satisfied, only the unchecked condition blocks.
 
-    No Blue List snapshot is stored, so configuration clearance cannot be
-    asserted at all. This test changes again when the snapshot work lands.
+    GateInputs defaults leave the snapshot unavailable, so configuration
+    clearance cannot be asserted. Fresh and stale snapshots are covered in
+    test_blue_list_snapshot.py.
     """
     blockers = operational_blockers(_ALL_CLEAR)
     assert blockers == [Blocker.BLUE_LIST_SNAPSHOT_UNAVAILABLE]

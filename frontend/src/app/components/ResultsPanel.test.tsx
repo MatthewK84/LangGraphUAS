@@ -2,6 +2,7 @@
 import { cleanup, render, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
+import type { PlanResult } from "@/lib/types";
 import { ADVISORY_PLAN } from "@/test/fixtures";
 
 import { ResultsPanel } from "./ResultsPanel";
@@ -41,5 +42,24 @@ describe("results panel", () => {
     expect(hover?.querySelector(".text-caution")?.textContent).toBe(
       "estimate, low confidence",
     );
+  });
+});
+
+describe("advisory blockers", () => {
+  it("shows an operator-facing reason next to a stale Blue UAS snapshot code", () => {
+    const result: PlanResult = {
+      ...ADVISORY_PLAN,
+      assessment: {
+        ...ADVISORY_PLAN.assessment,
+        blockers: ["BLUE_LIST_SNAPSHOT_STALE"],
+      },
+    };
+    const view = render(
+      <ResultsPanel loading={false} error={null} result={result} />,
+    );
+    const note = view.getByRole("note");
+    expect(note.textContent).toMatch(/BLUE_LIST_SNAPSHOT_STALE/);
+    expect(note.textContent).toMatch(/older than the configured maximum age/);
+    expect(note.textContent).toMatch(/bluelist\.dcma\.mil/);
   });
 });

@@ -456,7 +456,11 @@ headroom, select `Freefly_Astro_Max`.
 fails closed: a gate condition it cannot verify counts against the plan. Today
 that means **operational mode is unreachable** — every plan returns `200` with
 `mode: "advisory"` and blockers naming what is missing, because the bundled
-power figures carry no provenance and no Blue List snapshot is stored. An
+power figures are not datasheet- or flight-log-grade and, unless a snapshot has
+been pinned with `refresh_blue_list.py`, no Blue UAS snapshot is stored. A
+pinned snapshot older than `SUAS_BLUE_LIST_MAX_AGE_S` (default 7 days) is
+`BLUE_LIST_SNAPSHOT_STALE` and also cannot be operational; advisory still
+runs. An
 ungrantable mode is a downgrade with reasons attached, not a `409`; see
 [ADR-005](docs/adr/005-mode-downgrade-is-not-an-error.md). A mode that is not a
 valid value is still a `422`.
@@ -788,6 +792,8 @@ Backend variables use the `SUAS_` prefix. Compose maps friendly names to them.
 | `SUAS_RATE_LIMIT_REQUESTS` | `30` | Requests allowed per window, per client (per worker unless shared). At least 1; limiting cannot be switched off. |
 | `SUAS_RATE_LIMIT_WINDOW_S` | `60` | Rate limit window in seconds. |
 | `SUAS_WEATHER_STALE_MAX_AGE_S` | `10800` | Oldest cached reading an outage may fall back to as `cached_stale`; older is answered as no cache and pruned. At least `SUAS_WEATHER_CACHE_TTL_S`. |
+| `SUAS_BLUE_LIST_MAX_AGE_S` | `604800` | Age of the pinned Blue UAS snapshot at which operational clearance would describe the past (7 days). Advisory still runs. |
+| `SUAS_BLUE_LIST_SNAPSHOT` | (data dir default) | Path to the hashed snapshot written by `backend/scripts/refresh_blue_list.py`. A missing file is unavailable, not stale. |
 | `SUAS_WEATHER_CACHE_SHARED` | `false` | Keep weather readings in the database so all workers share one cache. Compose sets `true`. |
 | `SUAS_RATE_LIMIT_SHARED` | `false` | Keep the budget in the database so all workers share one ceiling. Compose sets `true`. |
 | `BACKEND_API_URL` | `http://localhost:8000` | Backend URL as reached by the Next.js **server**, not the browser. |

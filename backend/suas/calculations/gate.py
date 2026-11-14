@@ -7,17 +7,16 @@ can grant the mode.
 
 The gate fails closed. A condition this codebase cannot yet verify is a blocker,
 not a pass -- an unchecked condition and a satisfied one are different things,
-and only one of them is safe to treat as met. One condition is still in that
-state, which means operational remains unreachable: no Blue List snapshot is
-stored, so configuration clearance cannot be asserted.
+and only one of them is safe to treat as met.
 
-Provenance is now checked for real. Power figures in the bundled data are
-derived or estimated rather than read from a datasheet, so
-POWER_NOT_OPERATIONAL_GRADE fires on every plan today -- but it fires because
-the numbers were examined and found wanting, not because nobody looked.
+The Blue UAS snapshot is a real check: a missing or unreadable snapshot is
+BLUE_LIST_SNAPSHOT_UNAVAILABLE, and a snapshot older than the configured
+maximum age is BLUE_LIST_SNAPSHOT_STALE. Advisory plans still run in both
+cases. Provenance of the energy-budget figures is also checked for real.
 """
 
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Final
 
 from suas.schemas.assessment import AssessmentMode, Blocker
@@ -83,6 +82,27 @@ class GateInputs:
     # True when this configuration has corpus chunks awaiting human review.
     # Default False: no corpus at all is not the same as a poisoned one.
     corpus_quarantined: bool = False
+    # The pinned Blue UAS snapshot. Missing or unreadable is not the same as
+    # stale: one means clearance cannot be asserted, the other means the
+    # assertion would be about the past.
+    blue_list_snapshot_available: bool = False
+    blue_list_snapshot_stale: bool = False
+
+
+def blue_list_snapshot_is_stale(
+    fetched_at: datetime | None,
+    *,
+    now: datetime,
+    max_age_s: float,
+) -> bool:
+    """Return whether a known snapshot is older than the configured age.
+
+    A missing date is not stale: the caller must treat that as unavailable.
+    Age equal to the threshold is still current; one second over is stale.
+    """
+    if fetched_at is None:
+        return False
+    return (now - fetched_at).total_seconds() > max_age_s
 
 
 def operational_blockers(inputs: GateInputs) -> list[Blocker]:
@@ -101,12 +121,10 @@ def operational_blockers(inputs: GateInputs) -> list[Blocker]:
         blockers.append(Blocker.POWER_NOT_OPERATIONAL_GRADE)
     if inputs.corpus_quarantined:
         blockers.append(Blocker.CORPUS_QUARANTINED)
-
-    # Still not verifiable: no Blue List snapshot is stored, so configuration
-    # clearance cannot be asserted at all. Retired by the snapshot work split out
-    # of #37, at which point this becomes a real check rather than a standing
-    # blocker.
-    blockers.append(Blocker.BLUE_LIST_SNAPSHOT_UNAVAILABLE)
+    if not inputs.blue_list_snapshot_available:
+        blockers.append(Blocker.BLUE_LIST_SNAPSHOT_UNAVAILABLE)
+    elif inputs.blue_list_snapshot_stale:
+        blockers.append(Blocker.BLUE_LIST_SNAPSHOT_STALE)
     return blockers
 
 

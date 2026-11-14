@@ -11,6 +11,8 @@ from typing import Final, NamedTuple
 from pydantic import AliasChoices, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from suas.blue_list import DEFAULT_BLUE_LIST_MAX_AGE_S
+
 DEFAULT_DATABASE_URL: Final[str] = "sqlite+aiosqlite:///./suas_local.db"
 DEFAULT_WEATHER_URL: Final[str] = "https://api.open-meteo.com/v1/forecast"
 
@@ -279,6 +281,12 @@ class Settings(BaseSettings):
     checkpoint_retention_days: float = Field(default=30.0, ge=0.0)
     # How often every worker repeats retention after its startup pass (#86).
     retention_interval_s: float = Field(default=3600.0, gt=0.0)
+    # Age of the pinned Blue UAS snapshot at which operational clearance would
+    # be a claim about the past (ADR-002, default 7 days). Advisory still runs.
+    blue_list_max_age_s: float = Field(default=DEFAULT_BLUE_LIST_MAX_AGE_S, gt=0.0)
+    # Path to the hashed snapshot written by refresh_blue_list.py. Empty uses
+    # the default under backend/suas/data/. Missing file: unavailable, not stale.
+    blue_list_snapshot: str = Field(default="")
 
     @property
     def cors_origin_list(self) -> list[str]:

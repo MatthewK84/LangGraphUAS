@@ -13,11 +13,14 @@ biased the result toward GO.
 import hashlib
 import json
 from collections.abc import Mapping
+from datetime import UTC, datetime
 from typing import Any
 
+from suas.blue_list import configured_snapshot_path, load_snapshot
 from suas.calculations.battery import DEFAULT_RESERVE_PERCENT, check_battery_viability
 from suas.calculations.gate import (
     GateInputs,
+    blue_list_snapshot_is_stale,
     operational_blockers,
     power_is_operational_grade,
     provenance_is_complete,
@@ -32,6 +35,7 @@ from suas.calculations.physics import (
     calculate_ground_speed,
     scale_power_for_conditions,
 )
+from suas.config import get_settings
 from suas.schemas.assessment import (
     AssessmentMode,
     Blocker,
@@ -54,7 +58,7 @@ DEFAULT_CLIMB_EFFICIENCY: float = 0.6
 # purpose: an automatic hash of the source would churn on a comment edit and
 # stop meaning anything. CI fails a change under calculations/ that does not
 # bump it, so forgetting is not a quiet failure mode.
-CALCULATOR_VERSION: str = "1.7.0"
+CALCULATOR_VERSION: str = "1.8.0"
 
 # Reason text per safety flag, used when that flag is False. Keyed by the field
 # name on SafetyFlags so a new flag that is never mapped shows up immediately as
@@ -286,6 +290,18 @@ def _decide(calculations: Calculations) -> tuple[Decision, list[str]]:
     return Decision.GO, []
 
 
+def _blue_list_gate_flags(now: datetime) -> tuple[bool, bool]:
+    """Return (available, stale) for the pinned snapshot at `now`."""
+    settings = get_settings()
+    snapshot = load_snapshot(configured_snapshot_path(settings.blue_list_snapshot))
+    fetched_at = None if snapshot is None else snapshot.usable_fetched_at
+    available = fetched_at is not None
+    stale = blue_list_snapshot_is_stale(
+        fetched_at, now=now, max_age_s=settings.blue_list_max_age_s
+    )
+    return available, stale
+
+
 def build_assessment(
     *,
     calculations: Calculations,
@@ -295,6 +311,7 @@ def build_assessment(
     aircraft: Aircraft | None = None,
     payload: Payload | None = None,
     corpus_quarantined: bool = False,
+    now: datetime | None = None,
 ) -> DeterministicAssessment:
     """Return the sealed assessment for a completed calculation.
 
@@ -305,6 +322,7 @@ def build_assessment(
     decision, reasons = _decide(calculations)
     aircraft_provenance = aircraft.provenance if aircraft else {}
     payload_provenance = payload.provenance if payload else {}
+    available, stale = _blue_list_gate_flags(now or datetime.now(UTC))
     blockers: list[Blocker] = operational_blockers(
         GateInputs(
             weather_is_live=weather.is_operational_grade if weather else False,
@@ -315,6 +333,8 @@ def build_assessment(
                 aircraft_provenance, payload_provenance
             ),
             corpus_quarantined=corpus_quarantined,
+            blue_list_snapshot_available=available,
+            blue_list_snapshot_stale=stale,
         )
     )
     return DeterministicAssessment(

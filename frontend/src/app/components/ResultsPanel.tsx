@@ -1,5 +1,6 @@
 import type { JSX } from "react";
 
+import { blockerReason } from "@/lib/blockers";
 import type { PlanFailure } from "@/lib/failure";
 import type {
   Assessment,
@@ -65,12 +66,28 @@ function BlockerList({
     return null;
   }
   return (
-    <Notice
-      title="Why this plan is advisory"
-      items={assessment.blockers}
-      tone="neutral"
-      mono
-    />
+    <div
+      className="border-b border-l-2 border-l-line-strong border-b-line px-3 py-2"
+      role="note"
+    >
+      <span className="section-label">Why this plan is advisory</span>
+      <ul className="mt-1 list-inside list-disc space-y-0.5 text-md text-fg-secondary">
+        {assessment.blockers.map((code) => {
+          const reason = blockerReason(code);
+          return (
+            <li key={code}>
+              <span className="font-mono text-sm">{code}</span>
+              {reason !== undefined ? (
+                <span className="text-md font-sans text-fg-muted">
+                  {" "}
+                  — {reason}
+                </span>
+              ) : null}
+            </li>
+          );
+        })}
+      </ul>
+    </div>
   );
 }
 
