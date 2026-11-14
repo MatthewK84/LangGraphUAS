@@ -675,6 +675,14 @@ The estimator reports the median rather than the mean, with the interquartile
 range and a sample count beside it, because a log routinely contains brief spikes
 that a mean would let move the figure.
 
+PX4 `.ulg` logs are converted first, on a workstation, with
+[`backend/scripts/ulog_to_csv.py`](backend/scripts/ulog_to_csv.py). The script
+sums every battery pack, prefers `vehicle_local_position`, and falls back to
+barometric altitude plus EKF velocity when that topic is missing. Pack serials
+and vehicle identifiers are left in the ULog; they never appear in the CSV.
+Install the optional `ulog` extra (`pip install -e '.[ulog]'` or `.[dev]`) to
+get the pinned `pyulog` and `numpy` the script needs.
+
 </details>
 
 <details>

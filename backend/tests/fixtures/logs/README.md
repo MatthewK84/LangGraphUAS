@@ -44,3 +44,39 @@ averaging climb power into a hover figure biases the energy budget toward GO.
 
 Cruise is the mirror image: not labelled `climb`, `descent`, or `hover`, within
 ±1.0 m/s vertically, and at or above 3.0 m/s.
+
+## `astro_max_hover_excerpt.csv` is real flight data, used only in tests
+
+This file is a redacted, contiguous excerpt of a public PX4 Flight Review log
+of a Freefly Astro Max. It is checked in so the ingest path can be tested
+against real samples. **It is test-only.** It does not seed
+`backend/suas/data/aircraft.json`, and applying it in tests must leave that
+file unchanged. The payload on this flight is unknown: the public log does not
+name one, and every `payload_id` cell in the excerpt is empty.
+
+The source log is licensed [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)
+(“CC-BY PX4” in the PX4 documentation). The excerpt is provided under the same
+license, with attribution below.
+
+Timestamps in the excerpt are boot-relative microseconds rendered as UTC
+datetimes starting at `1970-01-01`. They preserve the original intervals so
+climb rate stays valid; they are not a claim about the wall-clock flight time.
+
+### Attribution
+
+| Field | Value |
+| --- | --- |
+| Flight Review | https://review.px4.io/plot_app?log=054112f4-683e-49c2-8777-097f5fe35df2 |
+| Source ULog | https://cdn.logs.px4.io/054112f4-683e-49c2-8777-097f5fe35df2.ulg |
+| Uploader description | Astro Max flight |
+| License | CC BY 4.0 (CC-BY PX4) |
+| Retrieved | 2026-11-14 14:53:58 EST (America/New_York) |
+| Source SHA-256 | `5bcef1faf0bcd0a72e5ac38a4b36150951635f80edd5d888c4ae942f50b50618` |
+| Source size | 21,731,794 bytes |
+| Excerpt SHA-256 | `4c6f179debc48ea0e5580ab5fe97ad2db4253946478f57a2e72df5177c6fd531` |
+| Excerpt window | boot-relative 00:02:15.331489–00:03:01.332054 (93 rows, 64 hover samples) |
+
+The excerpt was produced by `backend/scripts/ulog_to_csv.py`, which sums both
+battery packs, uses barometric altitude plus EKF velocity (this log has no
+`vehicle_local_position` because stealth logging was on), drops landed
+samples, and does not copy pack serials or vehicle identifiers.
