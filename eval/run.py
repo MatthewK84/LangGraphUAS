@@ -47,6 +47,12 @@ from typing import Any, Final, Protocol
 REPO_ROOT: Final[Path] = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT / "backend"))
 
+from openai_provider import (  # noqa: E402
+    OpenAICompatibleProvider,
+    endpoint_metadata,
+    load_endpoint,
+)
+
 from suas.calculations.assessment import assess_mission, build_assessment  # noqa: E402
 from suas.db.seed import load_rows  # noqa: E402
 from suas.eval.mission_scoring import (  # noqa: E402
@@ -58,12 +64,6 @@ from suas.eval.mission_scoring import (  # noqa: E402
 from suas.schemas.domain import Aircraft, Payload  # noqa: E402
 from suas.schemas.requests import MissionParams  # noqa: E402
 from suas.schemas.responses import WeatherReading  # noqa: E402
-
-from openai_provider import (  # noqa: E402
-    OpenAICompatibleProvider,
-    endpoint_metadata,
-    load_endpoint,
-)
 
 FIXTURES: Final[Path] = REPO_ROOT / "eval" / "fixtures" / "missions.jsonl"
 RESULTS: Final[Path] = REPO_ROOT / "eval" / "results"
@@ -81,12 +81,8 @@ class Provider(Protocol):
 
 
 def _catalog() -> tuple[dict[str, Aircraft], dict[str, Payload]]:
-    aircraft = {
-        row["id"]: Aircraft.model_validate(row) for row in load_rows("aircraft.json")
-    }
-    payloads = {
-        row["id"]: Payload.model_validate(row) for row in load_rows("payloads.json")
-    }
+    aircraft = {row["id"]: Aircraft.model_validate(row) for row in load_rows("aircraft.json")}
+    payloads = {row["id"]: Payload.model_validate(row) for row in load_rows("payloads.json")}
     return aircraft, payloads
 
 
@@ -228,9 +224,7 @@ def run_provider(provider: Provider, fixtures: list[MissionFixture]) -> dict[str
         "fixtures": len(fixtures),
         "calculator_version": fixtures[0].calculator_version if fixtures else None,
         "scores": _summarise(overall),
-        "per_trap": {
-            name: _summarise(scores) for name, scores in sorted(per_trap.items())
-        },
+        "per_trap": {name: _summarise(scores) for name, scores in sorted(per_trap.items())},
         "wall_time_s": round(time.perf_counter() - started, 3),
         "cases": cases,
     }
@@ -242,9 +236,7 @@ def _summarise(scores: Scores) -> dict[str, Any]:
     data = asdict(scores)
     energy = scores.energy_errors_wh
     hover = scores.hover_errors_w
-    data["max_abs_energy_error_wh"] = round(
-        max((abs(v) for v in energy), default=0.0), 3
-    )
+    data["max_abs_energy_error_wh"] = round(max((abs(v) for v in energy), default=0.0), 3)
     data["max_abs_hover_error_w"] = round(max((abs(v) for v in hover), default=0.0), 3)
     del data["energy_errors_wh"]
     del data["hover_errors_w"]
@@ -295,21 +287,15 @@ def result_filename(report: dict[str, Any]) -> str:
 def main() -> int:
     """Run every selected provider and print or write the results."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--write", action="store_true", help="write eval/results/<date>/"
-    )
+    parser.add_argument("--write", action="store_true", help="write eval/results/<date>/")
     parser.add_argument(
         "--provider",
         choices=("oracle", "constant_power", "openai"),
         default=None,
         help="default: the two offline controls, which do not touch the network",
     )
-    parser.add_argument(
-        "--track", choices=("no_tools", "calculator_tool"), default=None
-    )
-    parser.add_argument(
-        "--limit", type=int, default=None, help="score only the first N fixtures"
-    )
+    parser.add_argument("--track", choices=("no_tools", "calculator_tool"), default=None)
+    parser.add_argument("--limit", type=int, default=None, help="score only the first N fixtures")
     parsed = parser.parse_args()
 
     fixtures = load_fixtures()
@@ -320,9 +306,7 @@ def main() -> int:
     if parsed.provider == "openai":
         endpoint = load_endpoint()
         for report in reports:
-            report["run"] = endpoint_metadata(
-                endpoint, wall_time_s=report["wall_time_s"]
-            )
+            report["run"] = endpoint_metadata(endpoint, wall_time_s=report["wall_time_s"])
 
     for report in reports:
         _emit(json.dumps(report, indent=2))

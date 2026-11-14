@@ -11,7 +11,6 @@ from __future__ import annotations
 import json
 import os
 import re
-from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any, Final
 
@@ -27,9 +26,7 @@ from suas.schemas.responses import WeatherReading
 _DEFAULT_TEMPERATURE: Final[float] = 0.0
 _DEFAULT_SEED: Final[int] = 42
 _DEFAULT_TIMEOUT_S: Final[float] = 180.0
-_JSON_FENCE: Final[re.Pattern[str]] = re.compile(
-    r"```(?:json)?\s*(\{.*?\})\s*```", re.DOTALL
-)
+_JSON_FENCE: Final[re.Pattern[str]] = re.compile(r"```(?:json)?\s*(\{.*?\})\s*```", re.DOTALL)
 _FIRST_OBJECT: Final[re.Pattern[str]] = re.compile(r"\{.*\}", re.DOTALL)
 
 ASSESS_TOOL: Final[dict[str, Any]] = {
@@ -90,7 +87,7 @@ class EvalEndpoint:
     sha256: str = ""
 
 
-def load_endpoint(env: Mapping[str, str] | None = None) -> EvalEndpoint:
+def load_endpoint(env: dict[str, str] | None = None) -> EvalEndpoint:
     """Return the configured endpoint, or raise if the required values are missing."""
     source = env if env is not None else os.environ
     base = source.get("SUAS_EVAL_BASE_URL", "").strip().rstrip("/")
@@ -208,9 +205,7 @@ def _optional_float(raw: object) -> float | None:
         return None
 
 
-def mission_prompt(
-    fixture: MissionFixture, aircraft: Aircraft, payload: Payload
-) -> str:
+def mission_prompt(fixture: MissionFixture, aircraft: Aircraft, payload: Payload) -> str:
     """Return the user prompt describing one fixture, without expected answers."""
     return (
         f"Fixture: {fixture.fixture_id}. Trap type (for your information, not "
@@ -249,13 +244,8 @@ class OpenAICompatibleProvider:
         self.track = track
         self.endpoint = endpoint
         self._client = client
-        aircraft = {
-            row["id"]: Aircraft.model_validate(row)
-            for row in load_rows("aircraft.json")
-        }
-        payloads = {
-            row["id"]: Payload.model_validate(row) for row in load_rows("payloads.json")
-        }
+        aircraft = {row["id"]: Aircraft.model_validate(row) for row in load_rows("aircraft.json")}
+        payloads = {row["id"]: Payload.model_validate(row) for row in load_rows("payloads.json")}
         self._aircraft = aircraft
         self._payloads = payloads
         self.last_raw: str = ""
@@ -337,9 +327,7 @@ class OpenAICompatibleProvider:
             return f"{base}/chat/completions"
         return f"{base}/v1/chat/completions"
 
-    def _run_tool(
-        self, call: dict[str, Any], fixture: MissionFixture
-    ) -> dict[str, Any]:
+    def _run_tool(self, call: dict[str, Any], fixture: MissionFixture) -> dict[str, Any]:
         name = (call.get("function") or {}).get("name", "")
         if name != "assess_mission":
             return {"error": f"unknown tool: {name}"}
