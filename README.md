@@ -314,7 +314,10 @@ power remain `derived`, and Blue-list snapshot checks still apply — see
 `secondary` is not a hedge. The figures below were gathered from published
 specification summaries rather than retrieved from the manufacturers' own
 documents, and recording them as `datasheet` would overstate what this project
-knows. Resolving them is [#39](https://github.com/MatthewK84/LangGraphUAS/issues/39).
+knows. The remaining non-operational fields, bucketed by source, are listed in
+[`CITATIONS.md`](backend/suas/data/CITATIONS.md). That inventory's durable
+ticket is [#74](https://github.com/MatthewK84/LangGraphUAS/issues/74), which
+stays open until those fields are promoted or a flight log settles them.
 
 Operating temperature limits are published manufacturer figures:
 

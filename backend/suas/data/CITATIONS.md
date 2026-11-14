@@ -27,6 +27,110 @@ has traced to a primary document, and the operational gate treats it that way.
 | `secondary` | 6 |
 | `unknown` | 6 |
 
+## Fields by source
+
+Every numeric field, grouped by `source`, so the remaining gap is visible in one list rather than only in the per-entry tables.
+
+### `datasheet` (48)
+
+- `Skydio_X10D.battery_wh`
+- `Skydio_X10D.max_temp_c`
+- `Skydio_X10D.max_wind_mps`
+- `Skydio_X10D.min_temp_c`
+- `Skydio_X10D.weight_kg`
+- `Skydio_X2D.max_temp_c`
+- `Skydio_X2D.max_wind_mps`
+- `Skydio_X2D.min_temp_c`
+- `Skydio_X2D.weight_kg`
+- `Parrot_ANAFI_USA.battery_wh`
+- `Parrot_ANAFI_USA.max_temp_c`
+- `Parrot_ANAFI_USA.max_wind_mps`
+- `Parrot_ANAFI_USA.min_temp_c`
+- `Parrot_ANAFI_USA.weight_kg`
+- `Teal_Golden_Eagle.battery_wh`
+- `Teal_Golden_Eagle.max_payload_kg`
+- `Teal_Golden_Eagle.max_temp_c`
+- `Teal_Golden_Eagle.max_wind_mps`
+- `Teal_Golden_Eagle.min_temp_c`
+- `Teal_2.max_temp_c`
+- `Teal_2.max_wind_mps`
+- `Teal_2.min_temp_c`
+- `Teal_2.weight_kg`
+- `Freefly_Astro_Max.battery_wh`
+- `Freefly_Astro_Max.max_payload_kg`
+- `Freefly_Astro_Max.max_temp_c`
+- `Freefly_Astro_Max.max_wind_mps`
+- `Freefly_Astro_Max.min_temp_c`
+- `Freefly_Astro_Max.pack_min_takeoff_c`
+- `Freefly_Astro_Max.weight_kg`
+- `Freefly_Alta_X.max_payload_kg`
+- `Freefly_Alta_X.max_temp_c`
+- `Freefly_Alta_X.min_temp_c`
+- `Inspired_Flight_IF1200A.battery_wh`
+- `Inspired_Flight_IF1200A.max_payload_kg`
+- `Inspired_Flight_IF1200A.max_temp_c`
+- `Inspired_Flight_IF1200A.max_wind_mps`
+- `Inspired_Flight_IF1200A.min_temp_c`
+- `Inspired_Flight_IF1200A.weight_kg`
+- `FLIR_Hadron_640R.power_draw_w`
+- `FLIR_Hadron_640R.weight_kg`
+- `Sony_ILX_LR1.power_draw_w`
+- `Sony_ILX_LR1.weight_kg`
+- `Nextvision_Raptor.weight_kg`
+- `Workswell_WIRIS_Ent.power_draw_w`
+- `Workswell_WIRIS_Ent.weight_kg`
+- `Trillium_HD40_LV.power_draw_w`
+- `Trillium_HD40_LV.weight_kg`
+
+### `secondary` (6)
+
+- `Skydio_X10D.max_payload_kg`
+- `Skydio_X2D.max_payload_kg`
+- `Parrot_ANAFI_USA.max_payload_kg`
+- `Teal_Golden_Eagle.weight_kg`
+- `Freefly_Alta_X.max_wind_mps`
+- `Freefly_Alta_X.weight_kg`
+
+### `derived` (15)
+
+- `Skydio_X10D.cruise_power_w`
+- `Skydio_X10D.hover_power_w`
+- `Skydio_X2D.cruise_power_w`
+- `Skydio_X2D.hover_power_w`
+- `Parrot_ANAFI_USA.cruise_power_w`
+- `Parrot_ANAFI_USA.hover_power_w`
+- `Teal_Golden_Eagle.cruise_power_w`
+- `Teal_Golden_Eagle.hover_power_w`
+- `Freefly_Astro_Max.cruise_power_w`
+- `Freefly_Astro_Max.hover_power_w`
+- `Freefly_Alta_X.battery_wh`
+- `Freefly_Alta_X.cruise_power_w`
+- `Freefly_Alta_X.hover_power_w`
+- `Inspired_Flight_IF1200A.cruise_power_w`
+- `Inspired_Flight_IF1200A.hover_power_w`
+
+### `estimate` (10)
+
+- `Skydio_X10D.cruise_speed_mps`
+- `Skydio_X2D.cruise_speed_mps`
+- `Parrot_ANAFI_USA.cruise_speed_mps`
+- `Teal_Golden_Eagle.cruise_speed_mps`
+- `Teal_2.cruise_speed_mps`
+- `Freefly_Astro_Max.cruise_speed_mps`
+- `Freefly_Alta_X.cruise_speed_mps`
+- `Inspired_Flight_IF1200A.cruise_speed_mps`
+- `None.power_draw_w`
+- `Nextvision_Raptor.power_draw_w`
+
+### `unknown` (6)
+
+- `Skydio_X2D.battery_wh`
+- `Teal_2.battery_wh`
+- `Teal_2.cruise_power_w`
+- `Teal_2.hover_power_w`
+- `Teal_2.max_payload_kg`
+- `None.weight_kg`
+
 ## Airframes
 
 ### Skydio X10D (`Skydio_X10D`)
