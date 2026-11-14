@@ -7,6 +7,17 @@ has no API key:
 
     python3 eval/run.py                      # offline providers, both tracks
     python3 eval/run.py --write              # also write eval/results/<date>/
+    python3 eval/run.py --provider openai --track no_tools
+
+The openai provider talks to an OpenAI-compatible ``/v1/chat/completions``
+endpoint configured by environment, never by a hardcoded host or model:
+
+``SUAS_EVAL_BASE_URL``, ``SUAS_EVAL_MODEL`` (required), plus optional
+``SUAS_EVAL_API_KEY``, ``SUAS_EVAL_TEMPERATURE`` (default 0.0),
+``SUAS_EVAL_SEED`` (default 42), ``SUAS_EVAL_PROVIDER_NAME``, and the
+``SUAS_EVAL_QUANTIZATION`` / ``SUAS_EVAL_RUNTIME`` / ``SUAS_EVAL_HARDWARE`` /
+``SUAS_EVAL_HF_REPO`` / ``SUAS_EVAL_FILENAME`` / ``SUAS_EVAL_SHA256``
+fields recorded in the results file. This is not invoked from CI.
 
 Two tracks, as in docs/backlog/10:
 
@@ -20,13 +31,14 @@ hover watts at the unladen figure however heavy the payload, which is the
 specific mistake the payload-scaling trap is built to catch. A harness that
 cannot separate those two cannot say anything about a real model.
 
-Adding a real provider means implementing ``Provider`` and passing --provider.
-That is the only path that touches the network.
+A real model is reached only with ``--provider openai`` and the ``SUAS_EVAL_*``
+environment. That is the only path that touches the network. Do not add it to CI.
 """
 
 import argparse
 import json
 import sys
+import time
 from dataclasses import asdict
 from datetime import UTC, datetime
 from pathlib import Path
@@ -47,6 +59,12 @@ from suas.schemas.domain import Aircraft, Payload  # noqa: E402
 from suas.schemas.requests import MissionParams  # noqa: E402
 from suas.schemas.responses import WeatherReading  # noqa: E402
 
+from openai_provider import (  # noqa: E402
+    OpenAICompatibleProvider,
+    endpoint_metadata,
+    load_endpoint,
+)
+
 FIXTURES: Final[Path] = REPO_ROOT / "eval" / "fixtures" / "missions.jsonl"
 RESULTS: Final[Path] = REPO_ROOT / "eval" / "results"
 
@@ -63,8 +81,12 @@ class Provider(Protocol):
 
 
 def _catalog() -> tuple[dict[str, Aircraft], dict[str, Payload]]:
-    aircraft = {row["id"]: Aircraft.model_validate(row) for row in load_rows("aircraft.json")}
-    payloads = {row["id"]: Payload.model_validate(row) for row in load_rows("payloads.json")}
+    aircraft = {
+        row["id"]: Aircraft.model_validate(row) for row in load_rows("aircraft.json")
+    }
+    payloads = {
+        row["id"]: Payload.model_validate(row) for row in load_rows("payloads.json")
+    }
     return aircraft, payloads
 
 
@@ -167,19 +189,52 @@ def run_provider(provider: Provider, fixtures: list[MissionFixture]) -> dict[str
     """Score one provider over the whole pack, and per trap."""
     overall = Scores()
     per_trap: dict[str, Scores] = {}
+    cases: list[dict[str, Any]] = []
+    started = time.perf_counter()
     for fixture in fixtures:
         answer = provider.answer(fixture)
+        before = Scores()
         score_one(fixture, answer, overall)
         score_one(fixture, answer, per_trap.setdefault(fixture.trap, Scores()))
+        score_one(fixture, answer, before)
+        case: dict[str, Any] = {
+            "fixture_id": fixture.fixture_id,
+            "trap": fixture.trap,
+            "expected_decision": fixture.expected_decision,
+            "expected_mode": fixture.expected_mode,
+            "answer": {
+                "decision": answer.decision,
+                "mode": answer.mode,
+                "hover_power_w": answer.hover_power_w,
+                "residual_wh": answer.residual_wh,
+                "prose": answer.prose,
+            },
+            "unsafe_go": bool(before.unsafe_go),
+            "missed_go": bool(before.missed_go),
+            "mode_violation": bool(before.mode_violation),
+            "invented_number": bool(before.invented_number),
+        }
+        raw = getattr(provider, "last_raw", None)
+        if raw is not None:
+            case["raw"] = raw
+        tools = getattr(provider, "last_tool_results", None)
+        if tools:
+            case["tool_results"] = tools
+        cases.append(case)
 
-    return {
+    report: dict[str, Any] = {
         "provider": provider.name,
         "track": provider.track,
         "fixtures": len(fixtures),
         "calculator_version": fixtures[0].calculator_version if fixtures else None,
         "scores": _summarise(overall),
-        "per_trap": {name: _summarise(scores) for name, scores in sorted(per_trap.items())},
+        "per_trap": {
+            name: _summarise(scores) for name, scores in sorted(per_trap.items())
+        },
+        "wall_time_s": round(time.perf_counter() - started, 3),
+        "cases": cases,
     }
+    return report
 
 
 def _summarise(scores: Scores) -> dict[str, Any]:
@@ -187,7 +242,9 @@ def _summarise(scores: Scores) -> dict[str, Any]:
     data = asdict(scores)
     energy = scores.energy_errors_wh
     hover = scores.hover_errors_w
-    data["max_abs_energy_error_wh"] = round(max((abs(v) for v in energy), default=0.0), 3)
+    data["max_abs_energy_error_wh"] = round(
+        max((abs(v) for v in energy), default=0.0), 3
+    )
     data["max_abs_hover_error_w"] = round(max((abs(v) for v in hover), default=0.0), 3)
     del data["energy_errors_wh"]
     del data["hover_errors_w"]
@@ -203,15 +260,69 @@ def _emit(text: str) -> None:
     print(text)  # noqa: T201
 
 
+def _select_providers(provider: str | None, track: str | None) -> list[Provider]:
+    """Return the providers to run.
+
+    With no --provider, the two offline controls run, so CI and a reviewer
+    without an endpoint still get a complete check of the harness. A real
+    model is only reached when --provider openai is passed and the
+    SUAS_EVAL_* environment is set.
+    """
+    if provider is None:
+        chosen: list[Provider] = [OracleProvider(), ConstantPowerProvider()]
+    elif provider == "oracle":
+        chosen = [OracleProvider()]
+    elif provider == "constant_power":
+        chosen = [ConstantPowerProvider()]
+    elif provider == "openai":
+        endpoint = load_endpoint()
+        tracks = [track] if track else ["no_tools", "calculator_tool"]
+        chosen = [OpenAICompatibleProvider(endpoint, track=item) for item in tracks]
+    else:
+        raise SystemExit(f"unknown provider: {provider}")
+    if track and provider != "openai":
+        chosen = [item for item in chosen if item.track == track]
+        if not chosen:
+            raise SystemExit(f"provider {provider} does not offer track {track}")
+    return chosen
+
+
+def result_filename(report: dict[str, Any]) -> str:
+    """Return a filename that can hold both tracks of the same provider."""
+    return f"{report['provider']}.{report['track']}.json"
+
+
 def main() -> int:
     """Run every selected provider and print or write the results."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--write", action="store_true", help="write eval/results/<date>/")
+    parser.add_argument(
+        "--write", action="store_true", help="write eval/results/<date>/"
+    )
+    parser.add_argument(
+        "--provider",
+        choices=("oracle", "constant_power", "openai"),
+        default=None,
+        help="default: the two offline controls, which do not touch the network",
+    )
+    parser.add_argument(
+        "--track", choices=("no_tools", "calculator_tool"), default=None
+    )
+    parser.add_argument(
+        "--limit", type=int, default=None, help="score only the first N fixtures"
+    )
     parsed = parser.parse_args()
 
     fixtures = load_fixtures()
-    providers: list[Provider] = [OracleProvider(), ConstantPowerProvider()]
+    if parsed.limit is not None:
+        fixtures = fixtures[: parsed.limit]
+    providers = _select_providers(parsed.provider, parsed.track)
     reports = [run_provider(provider, fixtures) for provider in providers]
+    if parsed.provider == "openai":
+        endpoint = load_endpoint()
+        for report in reports:
+            report["run"] = endpoint_metadata(
+                endpoint, wall_time_s=report["wall_time_s"]
+            )
 
     for report in reports:
         _emit(json.dumps(report, indent=2))
@@ -221,7 +332,7 @@ def main() -> int:
         target = RESULTS / stamp
         target.mkdir(parents=True, exist_ok=True)
         for report in reports:
-            path = target / f"{report['provider']}.json"
+            path = target / result_filename(report)
             path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
             _emit(f"wrote {path}")
     return 0

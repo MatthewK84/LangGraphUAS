@@ -27,7 +27,8 @@ def _latest_run() -> tuple[str, list[dict[str, Any]]]:
         raise SystemExit("no results; run eval/run.py --write first")
     newest = days[0]
     reports = [
-        json.loads(path.read_text(encoding="utf-8")) for path in sorted(newest.glob("*.json"))
+        json.loads(path.read_text(encoding="utf-8"))
+        for path in sorted(newest.glob("*.json"))
     ]
     return newest.name, reports
 
@@ -90,16 +91,30 @@ def render() -> str:
         lines.append(f"| `{name}` | {entry['rate']} | [{low}, {high}] | {entry['n']} |")
     lines.append(f"| `mrr` | {gated['mrr']} | - | - |")
 
+    controls = {"oracle", "constant_power"}
+    has_real = any(report["provider"] not in controls for report in reports)
+    if has_real:
+        caveat = (
+            "Rows other than `oracle` and `constant_power` are measurements of a "
+            "real language model, taken from the results files in this directory. "
+            "The two named controls remain: the first calls the deterministic "
+            "engine and must score zero, the second holds hover power constant "
+            "as payload mass rises."
+        )
+    else:
+        caveat = (
+            "No real language model has been measured here. `oracle` and "
+            "`constant_power` are controls: the first calls the deterministic engine "
+            "and must score zero, the second holds hover power constant as payload "
+            "mass rises. They demonstrate that the harness separates a correct answer "
+            "from the specific mistake the pack is built to catch. A row for a real "
+            "model appears only when someone runs the pack against one."
+        )
     lines += [
         "",
         "## What these numbers are not",
         "",
-        "No real language model has been measured here. `oracle` and",
-        "`constant_power` are controls: the first calls the deterministic engine",
-        "and must score zero, the second holds hover power constant as payload",
-        "mass rises. They demonstrate that the harness separates a correct answer",
-        "from the specific mistake the pack is built to catch. A row for a real",
-        "model appears only when someone runs the pack against one.",
+        caveat,
         "",
         "Retrieval figures are measured with a lexical projection, not an",
         "embedding model, because CI cannot run one. They are a regression floor",
@@ -112,7 +127,9 @@ def render() -> str:
 def main() -> int:
     """Render the leaderboard and print or write it."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--write", action="store_true", help="write eval/LEADERBOARD.md")
+    parser.add_argument(
+        "--write", action="store_true", help="write eval/LEADERBOARD.md"
+    )
     parsed = parser.parse_args()
 
     rendered = render()
