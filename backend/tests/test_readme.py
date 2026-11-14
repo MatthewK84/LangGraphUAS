@@ -106,3 +106,17 @@ def test_the_license_section_disclaims_endorsement_and_authorisation() -> None:
     assert "not an endorsement" in section or "not endorsement" in section
     assert "flight authorisation" in section or "flight authorization" in section
     assert "reference data" in section
+
+
+def _performance_model() -> str:
+    return _section("The performance model")
+
+
+def test_provenance_links_the_open_durable_ticket_not_a_closed_issue() -> None:
+    """The field inventory needs a live home; issue 39 was closed in September 2026."""
+    section = _performance_model()
+    assert "issues/74" in section
+    assert "issues/39" not in section
+    assert "CITATIONS.md" in section
+    collapsed = re.sub(r"\s+", " ", section).lower()
+    assert "durable" in collapsed
