@@ -120,3 +120,16 @@ def test_provenance_links_the_open_durable_ticket_not_a_closed_issue() -> None:
     assert "CITATIONS.md" in section
     collapsed = re.sub(r"\s+", " ", section).lower()
     assert "durable" in collapsed
+
+
+def test_the_next_eslint_plugin_is_enabled_without_upgrading_next() -> None:
+    """The plugin runs under ESLint 10 flat config; Next 14 does not have to move."""
+    limitations = _section("Operations and limitations")
+    assert "Next.js ESLint plugin is disabled" not in limitations
+    collapsed = re.sub(r"\s+", " ", README)
+    assert "@next/eslint-plugin-next" in collapsed
+    assert "stays on 14" in collapsed.lower()
+    config = (ROOT / "frontend" / "eslint.config.mjs").read_text(encoding="utf-8")
+    assert 'from "@next/eslint-plugin-next"' in config
+    assert "recommended" in config
+    assert "core-web-vitals" in config

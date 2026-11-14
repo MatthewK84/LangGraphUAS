@@ -1,6 +1,7 @@
 // ESLint flat config enforcing the strict code standards (Principles 1-10).
 // Type-aware rules are scoped to application source under src/ so config files
 // do not require type information.
+import nextPlugin from "@next/eslint-plugin-next";
 import prettier from "eslint-config-prettier";
 import tseslint from "typescript-eslint";
 
@@ -23,6 +24,16 @@ export default tseslint.config(
   },
   ...typeCheckedForSrc,
   prettier,
+  {
+    files: SRC,
+    plugins: {
+      "@next/next": nextPlugin,
+    },
+    rules: {
+      ...nextPlugin.configs.recommended.rules,
+      ...nextPlugin.configs["core-web-vitals"].rules,
+    },
+  },
   {
     files: SRC,
     languageOptions: {
