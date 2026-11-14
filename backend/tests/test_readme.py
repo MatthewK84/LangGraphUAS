@@ -75,3 +75,25 @@ def test_safety_language_is_kept() -> None:
         "written by `suas/calculations/` and never by the language model",
     ):
         assert phrase in README
+
+
+def _opening() -> str:
+    return README.split("\n## Contents\n", 1)[0]
+
+
+def test_the_opening_states_what_it_is_what_it_is_not_and_links_the_eval() -> None:
+    """Three equally marked lines decide whether anyone opens the repository."""
+    opening = _opening()
+    lines = re.findall(
+        r'<p align="center"><b>(What it is|What it is not|Eval)\.</b>.*?</p>',
+        opening,
+        flags=re.DOTALL,
+    )
+    assert lines == ["What it is", "What it is not", "Eval"], lines
+    assert "eval/LEADERBOARD.md" in opening
+
+
+def test_the_opening_avoids_tactics_frequencies_and_procedures() -> None:
+    opening = _opening()
+    for term in ("MHz", "GHz", "kHz", "frequency", "frequencies", "tactic", "tactics"):
+        assert term not in opening, term

@@ -1,6 +1,10 @@
 <h1 align="center">sUAS Intelligent Mission Planner</h1>
 
-<h4 align="center">Deterministic energy and performance feasibility for small unmanned aircraft.<br>The language model writes prose; the calculator writes every number.</h4>
+<p align="center"><b>What it is.</b> Deterministic energy and performance feasibility for small unmanned aircraft. The language model writes prose; the calculator writes every number.</p>
+
+<p align="center"><b>What it is not.</b> It is explicitly not an airspace, NOTAM, or regulatory clearance tool. A GO means only that the energy budget and airframe envelope close. Today operational mode is unreachable.</p>
+
+<p align="center"><b>Eval.</b> The frozen mission pack and generated leaderboard live in <a href="eval/LEADERBOARD.md"><code>eval/</code></a>.</p>
 
 <div align="center">
 
