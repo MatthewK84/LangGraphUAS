@@ -69,7 +69,10 @@ image has no `pg_dump`. From `backend/`:
    `CREATE DATABASE suas_restored;`, then
    `SUAS_DATABASE_URL=<restored> scripts/restore.sh suas.dump`.
    It is one transaction that stops at the first error, so it lands whole or
-   not at all.
+   not at all. A dump taken with pg_dump 17+ includes `SET transaction_timeout`;
+   `restore.sh` drops that session SET before applying the SQL, because
+   Postgres 16 (Compose and CI) does not recognize it. COPY data that only
+   mentions the name is left alone.
 3. **Migrate** only if the backup predates the release you will serve:
    `SUAS_DATABASE_URL=<restored> alembic upgrade head` (see
    [Migrations](#migrations)).
