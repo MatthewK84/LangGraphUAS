@@ -27,8 +27,7 @@ def _latest_run() -> tuple[str, list[dict[str, Any]]]:
         raise SystemExit("no results; run eval/run.py --write first")
     newest = days[0]
     reports = [
-        json.loads(path.read_text(encoding="utf-8"))
-        for path in sorted(newest.glob("*.json"))
+        json.loads(path.read_text(encoding="utf-8")) for path in sorted(newest.glob("*.json"))
     ]
     return newest.name, reports
 
@@ -127,9 +126,7 @@ def render() -> str:
 def main() -> int:
     """Render the leaderboard and print or write it."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--write", action="store_true", help="write eval/LEADERBOARD.md"
-    )
+    parser.add_argument("--write", action="store_true", help="write eval/LEADERBOARD.md")
     parsed = parser.parse_args()
 
     rendered = render()
