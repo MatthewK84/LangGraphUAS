@@ -150,7 +150,7 @@ def _script(name: str, *args: str, path: str, **env: str) -> subprocess.Complete
 def fakes(tmp_path: Path) -> tuple[Path, Path]:
     bin_dir, log = tmp_path / "bin", tmp_path / "calls.log"
     bin_dir.mkdir()
-    for name in ("pg_dump", "pg_restore"):
+    for name in ("pg_dump", "pg_restore", "psql"):
         _fake(bin_dir, name, log)
     return bin_dir, log
 
@@ -189,15 +189,19 @@ def test_restore_is_all_or_nothing_into_the_target(
         "restore.sh", str(dump), path=f"{bin_dir}:/usr/bin:/bin", SUAS_DATABASE_URL=_SA_URL
     )
     assert done.returncode == 0, done.stderr
-    assert log.read_text().split() == [
-        "pg_restore",
-        "--exit-on-error",
-        "--single-transaction",
-        "--no-owner",
-        "--no-privileges",
-        "--dbname=postgresql://suas:pw@db:5432/suas",
-        str(dump),
-    ]
+    lines = [line.split() for line in log.read_text().splitlines() if line.strip()]
+    assert len(lines) == 2
+    restore_cmd, apply_cmd = lines
+    assert restore_cmd[0] == "pg_restore"
+    assert "--no-owner" in restore_cmd
+    assert "--no-privileges" in restore_cmd
+    assert any(part.startswith("--file=") for part in restore_cmd)
+    assert restore_cmd[-1] == str(dump)
+    assert apply_cmd[0] == "psql"
+    assert "--single-transaction" in apply_cmd
+    assert "ON_ERROR_STOP=on" in apply_cmd
+    assert "--dbname=postgresql://suas:pw@db:5432/suas" in apply_cmd
+    assert any(part.startswith("--file=") for part in apply_cmd)
 
 
 @pytest.mark.parametrize("name", ["backup.sh", "restore.sh"])
