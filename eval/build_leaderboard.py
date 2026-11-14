@@ -90,16 +90,30 @@ def render() -> str:
         lines.append(f"| `{name}` | {entry['rate']} | [{low}, {high}] | {entry['n']} |")
     lines.append(f"| `mrr` | {gated['mrr']} | - | - |")
 
+    controls = {"oracle", "constant_power"}
+    has_real = any(report["provider"] not in controls for report in reports)
+    if has_real:
+        caveat = (
+            "Rows other than `oracle` and `constant_power` are measurements of a "
+            "real language model, taken from the results files in this directory. "
+            "The two named controls remain: the first calls the deterministic "
+            "engine and must score zero, the second holds hover power constant "
+            "as payload mass rises."
+        )
+    else:
+        caveat = (
+            "No real language model has been measured here. `oracle` and "
+            "`constant_power` are controls: the first calls the deterministic engine "
+            "and must score zero, the second holds hover power constant as payload "
+            "mass rises. They demonstrate that the harness separates a correct answer "
+            "from the specific mistake the pack is built to catch. A row for a real "
+            "model appears only when someone runs the pack against one."
+        )
     lines += [
         "",
         "## What these numbers are not",
         "",
-        "No real language model has been measured here. `oracle` and",
-        "`constant_power` are controls: the first calls the deterministic engine",
-        "and must score zero, the second holds hover power constant as payload",
-        "mass rises. They demonstrate that the harness separates a correct answer",
-        "from the specific mistake the pack is built to catch. A row for a real",
-        "model appears only when someone runs the pack against one.",
+        caveat,
         "",
         "Retrieval figures are measured with a lexical projection, not an",
         "embedding model, because CI cannot run one. They are a regression floor",
