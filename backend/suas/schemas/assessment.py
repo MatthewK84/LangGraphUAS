@@ -56,6 +56,7 @@ class Blocker(StrEnum):
     PROVENANCE_INCOMPLETE = "PROVENANCE_INCOMPLETE"
     POWER_NOT_OPERATIONAL_GRADE = "POWER_NOT_OPERATIONAL_GRADE"
     BLUE_LIST_SNAPSHOT_UNAVAILABLE = "BLUE_LIST_SNAPSHOT_UNAVAILABLE"
+    BLUE_LIST_SNAPSHOT_STALE = "BLUE_LIST_SNAPSHOT_STALE"
     CORPUS_QUARANTINED = "CORPUS_QUARANTINED"
 
 
@@ -94,3 +95,30 @@ class DeterministicAssessment(BaseModel):
         unassessed mission is not a safe one.
         """
         return self.decision is Decision.GO
+
+
+# Operator-facing sentences for each blocker. The sealed assessment still
+# carries the machine-readable code; this text is for the dashboard and docs.
+BLOCKER_REASONS: dict[Blocker, str] = {
+    Blocker.WEATHER_NOT_LIVE: "Weather is not a live or fresh cached observation.",
+    Blocker.WEATHER_DEGRADED: "The weather reading is degraded.",
+    Blocker.ASSESSMENT_INCOMPLETE: "The mission could not be fully assessed.",
+    Blocker.PROVENANCE_INCOMPLETE: "A required figure has no provenance record.",
+    Blocker.POWER_NOT_OPERATIONAL_GRADE: (
+        "An energy-budget figure is not from a datasheet or flight log."
+    ),
+    Blocker.BLUE_LIST_SNAPSHOT_UNAVAILABLE: (
+        "No usable Blue UAS snapshot is stored, so configuration clearance cannot be asserted."
+    ),
+    Blocker.BLUE_LIST_SNAPSHOT_STALE: (
+        "The pinned Blue UAS snapshot is older than the configured maximum age, "
+        "so an operational claim would describe the past. Verify the current list "
+        "at bluelist.dcma.mil before flight."
+    ),
+    Blocker.CORPUS_QUARANTINED: "Corpus chunks for this configuration are awaiting review.",
+}
+
+
+def blocker_reason(blocker: Blocker) -> str:
+    """Return the operator-facing sentence for a blocker."""
+    return BLOCKER_REASONS[blocker]

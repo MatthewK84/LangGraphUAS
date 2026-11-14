@@ -44,7 +44,8 @@ text.
 | Cross-site request forges a plan or an ack from an operator's browser | `SameSite=Strict` cookie, and the proxy refuses any `POST` whose `Origin` is missing or not its own host with 403 before calling the backend | `frontend/src/lib/server/session.test.ts`: cross-origin and Origin-less POSTs return 403 without a backend call |
 | Forged "live" weather | `source` is tagged by our client from transport outcome, never read from the response body | A fake body cannot set `source=live` when the request failed |
 | Demo mode left on in a deployment (#97) | `SUAS_DEMO_MODE` defaults off in Settings, Compose and `.env.example`. Demo weather is tagged `fixture`, never operational grade, so the gate blocks operational (`WEATHER_NOT_LIVE`) and every plan says advisory. The backend logs a `DEMO MODE` warning at startup | `tests/test_demo_mode.py`: an operational request on fixture weather comes back advisory; `scripts/compose_smoke.py` checks the same end to end when run locally |
-| Forged Blue List page | Snapshot plus `content_hash`; the gate reads the snapshot, never a request-path scrape | Tampered hash fails the gate |
+| Forged Blue List page | Snapshot plus `content_hash`; the gate reads the snapshot, never a request-path scrape | Tampered hash is treated as unavailable (`tests/test_blue_list_snapshot.py`) |
+| Stale Blue List snapshot treated as current | `SUAS_BLUE_LIST_MAX_AGE_S` (default 7 days); older yields `BLUE_LIST_SNAPSHOT_STALE` and cannot be operational. Advisory still runs. A missing or unreadable date is `BLUE_LIST_SNAPSHOT_UNAVAILABLE`, not stale | `tests/test_blue_list_snapshot.py`: exact threshold, one second over, missing/unknown date |
 | Model claiming to be the calculator | Seal drop-list | `test_seal.py` |
 
 ## Tampering
