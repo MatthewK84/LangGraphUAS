@@ -959,3 +959,7 @@ docker-compose.yml
 ## License
 
 [MIT](LICENSE) © 2026 Matthew K.
+
+Blue UAS names in the bundled reference data identify published platforms.
+They are reference data, not an endorsement by those programmes, the
+manufacturers, DIU, or DCMA. A GO from this calculator is not a flight authorisation.

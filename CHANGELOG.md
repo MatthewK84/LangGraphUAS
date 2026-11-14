@@ -12,6 +12,7 @@ the format.
 - A Good first fixture issue template shows the mission JSON shape, every trap type, and how to regenerate expected values with `backend/scripts/generate_eval_fixtures.py --write`, and the README points at it (#105).
 - The README opening is three equally marked lines: what it is, what it is not, and a link to the eval pack and leaderboard (#107).
 - `attic/README.md` lists the feeder repositories that led into this one and what each contributed, and the root README points there rather than sideways (#108).
+- The planner footer and the README License section state the MIT licence, that Blue UAS names are reference data and not endorsement, and that a GO is not a flight authorisation, with no third-party logo (#117).
 
 ## Week of 2026-10-26
 
