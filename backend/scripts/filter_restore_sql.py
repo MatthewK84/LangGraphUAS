@@ -10,7 +10,10 @@ from __future__ import annotations
 
 import re
 import sys
-from collections.abc import Iterable, Iterator
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Iterator
 
 # Parameters added after Postgres 16. Extend this set when a newer pg_dump
 # introduces another session SET that 16 rejects.
