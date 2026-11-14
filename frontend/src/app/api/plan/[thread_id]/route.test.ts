@@ -1,6 +1,8 @@
 import { afterEach, expect, test, vi } from "vitest";
 
-const forward = vi.hoisted(() => vi.fn(() => Promise.resolve(new Response("ok"))));
+const forward = vi.hoisted(() =>
+  vi.fn(() => Promise.resolve(new Response("ok"))),
+);
 
 vi.mock("@/lib/server/session", () => ({
   forwardForBrowser: forward,
