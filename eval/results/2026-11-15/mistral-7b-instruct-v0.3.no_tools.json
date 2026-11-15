@@ -1,0 +1,980 @@
+{
+  "provider": "mistral-7b-instruct-v0.3",
+  "track": "no_tools",
+  "fixtures": 30,
+  "calculator_version": "1.9.0",
+  "scores": {
+    "unsafe_go": 0,
+    "missed_go": 0,
+    "mode_violation": 0,
+    "invented_number": 0,
+    "max_abs_energy_error_wh": 0.0,
+    "max_abs_hover_error_w": 0.0
+  },
+  "per_trap": {
+    "datasheet_conflict": {
+      "unsafe_go": 0,
+      "missed_go": 0,
+      "mode_violation": 0,
+      "invented_number": 0,
+      "max_abs_energy_error_wh": 0.0,
+      "max_abs_hover_error_w": 0.0
+    },
+    "delisted_config": {
+      "unsafe_go": 0,
+      "missed_go": 0,
+      "mode_violation": 0,
+      "invented_number": 0,
+      "max_abs_energy_error_wh": 0.0,
+      "max_abs_hover_error_w": 0.0
+    },
+    "density_altitude": {
+      "unsafe_go": 0,
+      "missed_go": 0,
+      "mode_violation": 0,
+      "invented_number": 0,
+      "max_abs_energy_error_wh": 0.0,
+      "max_abs_hover_error_w": 0.0
+    },
+    "endurance": {
+      "unsafe_go": 0,
+      "missed_go": 0,
+      "mode_violation": 0,
+      "invented_number": 0,
+      "max_abs_energy_error_wh": 0.0,
+      "max_abs_hover_error_w": 0.0
+    },
+    "fallback_weather": {
+      "unsafe_go": 0,
+      "missed_go": 0,
+      "mode_violation": 0,
+      "invented_number": 0,
+      "max_abs_energy_error_wh": 0.0,
+      "max_abs_hover_error_w": 0.0
+    },
+    "pack_procedure": {
+      "unsafe_go": 0,
+      "missed_go": 0,
+      "mode_violation": 0,
+      "invented_number": 0,
+      "max_abs_energy_error_wh": 0.0,
+      "max_abs_hover_error_w": 0.0
+    },
+    "payload_scale": {
+      "unsafe_go": 0,
+      "missed_go": 0,
+      "mode_violation": 0,
+      "invented_number": 0,
+      "max_abs_energy_error_wh": 0.0,
+      "max_abs_hover_error_w": 0.0
+    },
+    "wind_limit": {
+      "unsafe_go": 0,
+      "missed_go": 0,
+      "mode_violation": 0,
+      "invented_number": 0,
+      "max_abs_energy_error_wh": 0.0,
+      "max_abs_hover_error_w": 0.0
+    }
+  },
+  "wall_time_s": 890.639,
+  "cases": [
+    {
+      "fixture_id": "ps-01",
+      "trap": "payload_scale",
+      "expected_decision": "go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "go",
+        "mode": "advisory",
+        "hover_power_w": 487.98,
+        "residual_wh": 159.84,
+        "prose": "The mission is approved with the decision set to 'go' and the recommended mode as 'advisory'. The UAS, Freefly Astro Max, will consume approximately 487.98 watts during hover and 434.8 watts during cruise. The residual battery capacity after the mission is estimated to be 159.84 Wh."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission is approved with the decision set to 'go' and the recommended mode as 'advisory'. The UAS, Freefly Astro Max, will consume approximately 487.98 watts during hover and 434.8 watts during cruise. The residual battery capacity after the mission is estimated to be 159.84 Wh.\",\n  \"suggested_contingencies\": [\"Monitor wind conditions and adjust flight plan if wind speed exceeds 8 mps.\", \"Ensure the temperature at takeoff is above 10\u00b0C.\", \"Consider grounding the UAS if the temperature drops below -20\u00b0C or rises above 50\u00b0C.\"],\n  \"cited_chunk_ids\": [\"airframe\", \"payload\", \"mission\", \"weather\", \"decision\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "go"
+        }
+      ],
+      "narrative_source": "model"
+    },
+    {
+      "fixture_id": "ps-02",
+      "trap": "payload_scale",
+      "expected_decision": "go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "go",
+        "mode": "advisory",
+        "hover_power_w": 520.12,
+        "residual_wh": 153.1,
+        "prose": "Mission status: GO (advisory).\n\nThe generated brief was withheld because it disagreed with this assessment. What follows comes from the calculator alone.\n\nBlocking operational use:\n- POWER_NOT_OPERATIONAL_GRADE\n- FIELD_NOT_OPERATIONAL_GRADE\n- BLUE_LIST_SNAPSHOT_UNAVAILABLE\n\nCalculator 1.9.0, inputs ec270a5903e79b84b71049678cbd808ff81aebac890518a3aafbef68f8979df3."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission with Freefly Astro Max drone carrying Sony ILX-LR1 payload, flying 3000m at 100m altitude, and hovering for 300s is approved with an advisory mode. The required hover power is 520.12W and the residual battery capacity is 153.1Wh.\",\n  \"suggested_contingencies\": [\n    \"Monitor wind conditions and adjust flight path if wind speed exceeds 8m/s.\",\n    \"Ensure the drone is within visual line of sight at all times.\",\n    \"Check battery level regularly and land immediately if battery level drops below 20%.\"\n  ],\n  \"cited_chunk_ids\": [\"airframe\", \"payload\", \"mission\", \"weather\", \"decision\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "go"
+        }
+      ],
+      "narrative_source": "deterministic",
+      "ungrounded_numerics": [
+        "3000 m",
+        "100 m",
+        "300 s"
+      ]
+    },
+    {
+      "fixture_id": "ps-03",
+      "trap": "payload_scale",
+      "expected_decision": "go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "go",
+        "mode": "advisory",
+        "hover_power_w": 574.78,
+        "residual_wh": 142.12,
+        "prose": "Mission status: GO (advisory).\n\nThe generated brief was withheld because it disagreed with this assessment. What follows comes from the calculator alone.\n\nBlocking operational use:\n- POWER_NOT_OPERATIONAL_GRADE\n- FIELD_NOT_OPERATIONAL_GRADE\n- CONFIGURATION_NOT_LAB_OPERATIONAL\n- BLUE_LIST_SNAPSHOT_UNAVAILABLE\n\nCalculator 1.9.0, inputs e0e73b467e7c78201b7380ababd2430b24a86e53fe5ef7c67e1e544cbaaeb5c6."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission with Freefly Astro Max UAS carrying Trillium HD40-LV Gimbal, flying 3000m at 100m altitude, and hovering for 300s, is advisable under current weather conditions (clear, 18\u00b0C, 3m/s wind, 45% humidity). The required hover power is 574.78W and the residual battery capacity after the mission is 142.12Wh.\",\n  \"suggested_contingencies\": [\"Monitor wind speed and direction for potential gusts exceeding 8m/s\", \"Consider reducing mission distance or hover time if wind conditions worsen\"],\n  \"cited_chunk_ids\": [\"airframe\", \"payload\", \"mission\", \"weather\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "go"
+        }
+      ],
+      "narrative_source": "deterministic",
+      "ungrounded_numerics": [
+        "3000 m",
+        "100 m",
+        "300 s",
+        "3 m/s",
+        "45 %"
+      ]
+    },
+    {
+      "fixture_id": "ps-04",
+      "trap": "payload_scale",
+      "expected_decision": "go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "go",
+        "mode": "advisory",
+        "hover_power_w": 2004.47,
+        "residual_wh": 543.69,
+        "prose": "The mission is approved with the decision set to 'go' and the recommended mode as 'advisory'. The UAS will consume approximately 2004.47 watts during hover and 1784.2 watts during cruise. The residual battery capacity after the mission is estimated to be 543.69 Wh."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission is approved with the decision set to 'go' and the recommended mode as 'advisory'. The UAS will consume approximately 2004.47 watts during hover and 1784.2 watts during cruise. The residual battery capacity after the mission is estimated to be 543.69 Wh.\",\n  \"suggested_contingencies\": [\"Monitor wind conditions and adjust flight path if wind speed exceeds 12 mps.\", \"Ensure the UAS is grounded if temperature drops below -10 degrees Celsius or rises above 40 degrees Celsius.\", \"Maintain a safe distance from other aircraft and obstacles.\"],\n  \"cited_chunk_ids\": [\"airframe\", \"mission\", \"weather\", \"decision\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "go"
+        }
+      ],
+      "narrative_source": "model"
+    },
+    {
+      "fixture_id": "ps-05",
+      "trap": "payload_scale",
+      "expected_decision": "go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "go",
+        "mode": "advisory",
+        "hover_power_w": 2124.62,
+        "residual_wh": 505.6,
+        "prose": "Mission status: GO (advisory).\n\nThe generated brief was withheld because it disagreed with this assessment. What follows comes from the calculator alone.\n\nBlocking operational use:\n- POWER_NOT_OPERATIONAL_GRADE\n- FIELD_NOT_OPERATIONAL_GRADE\n- CONFIGURATION_NOT_LAB_OPERATIONAL\n- BLUE_LIST_SNAPSHOT_UNAVAILABLE\n\nCalculator 1.9.0, inputs 64a39b8aeb33b3611b0789093cc6212257cf3bbd2a589bd15935e441cfb26d42."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission with the Inspired Flight IF1200A airframe carrying the Trillium HD40-LV Gimbal payload, flying a 5000m distance, hovering for 600s at 120m altitude, and cruising at the specified coordinates, is advisable under the given weather conditions (clear, 18\u00b0C, 3m/s wind, 45% humidity). The required hover power is 2124.62W and the residual battery capacity after the mission is 505.6Wh.\",\n  \"suggested_contingencies\": [\"Monitor wind speed and gusts, adjust flight plan if necessary.\", \"Consider reducing hover time or distance if wind conditions worsen.\", \"Ensure battery pack is at the minimum takeoff temperature.\"],\n  \"cited_chunk_ids\": [\"airframe\", \"payload\", \"mission\", \"weather\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "go"
+        }
+      ],
+      "narrative_source": "deterministic",
+      "ungrounded_numerics": [
+        "5000 m",
+        "600 s",
+        "120 m",
+        "3 m/s",
+        "45 %"
+      ]
+    },
+    {
+      "fixture_id": "ps-06",
+      "trap": "payload_scale",
+      "expected_decision": "go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "go",
+        "mode": "advisory",
+        "hover_power_w": 4515.0,
+        "residual_wh": 34.72,
+        "prose": "Mission status: GO (advisory).\n\nThe generated brief was withheld because it disagreed with this assessment. What follows comes from the calculator alone.\n\nBlocking operational use:\n- POWER_NOT_OPERATIONAL_GRADE\n- FIELD_NOT_OPERATIONAL_GRADE\n- CONFIGURATION_NOT_LAB_OPERATIONAL\n- BLUE_LIST_SNAPSHOT_UNAVAILABLE\n\nCalculator 1.9.0, inputs 488f4f1a4433fa6e41effd637e94664e2d01df519ad0091f82db3bf428d9e39d."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission with a distance of 4000m, target altitude of 100m, and hover time of 480s can proceed with the Freefly Alta X (Blue) UAS carrying the Trillium HD40-LV Gimbal payload. The advisory mode is recommended due to the wind speed of 3m/s and gust of 4m/s. The required hover power is 4515W and the residual battery capacity is 34.72Wh.\",\n  \"suggested_contingencies\": [\"Monitor wind conditions for potential gusts exceeding 12m/s\", \"Consider reducing hover time or distance to conserve battery life\", \"Ensure the UAS is within visual line of sight at all times\"],\n  \"cited_chunk_ids\": [\"airframe\", \"payload\", \"mission\", \"weather\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "go"
+        }
+      ],
+      "narrative_source": "deterministic",
+      "ungrounded_numerics": [
+        "4000 m",
+        "100 m",
+        "480 s",
+        "3 m/s",
+        "4 m/s"
+      ]
+    },
+    {
+      "fixture_id": "da-01",
+      "trap": "density_altitude",
+      "expected_decision": "go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "go",
+        "mode": "advisory",
+        "hover_power_w": 520.63,
+        "residual_wh": 120.96,
+        "prose": "Mission status: GO (advisory).\n\nThe generated brief was withheld because it disagreed with this assessment. What follows comes from the calculator alone.\n\nBlocking operational use:\n- POWER_NOT_OPERATIONAL_GRADE\n- FIELD_NOT_OPERATIONAL_GRADE\n- BLUE_LIST_SNAPSHOT_UNAVAILABLE\n\nCalculator 1.9.0, inputs c2a6385bee0971b2d8d05f0d861cbe3095b97b08da271438354fdc7e6ac076a9."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission with Freefly Astro Max drone carrying Sony ILX-LR1 payload is approved for execution. The drone will hover at 120m altitude, travel 4000m, and remain in the air for 420 seconds. The required hover power is 520.63W and the residual battery capacity is 120.96Wh. Please consider the following contingencies: wind speed may exceed 8m/s, temperature may drop below -20\u00b0C, and humidity may exceed 45%.\",\n  \"suggested_contingencies\": [\"Wind speed may exceed 8m/s\", \"Temperature may drop below -20\u00b0C\", \"Humidity may exceed 45%\"],\n  \"cited_chunk_ids\": [\"airframe\", \"payload\", \"mission\", \"weather\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "go"
+        }
+      ],
+      "narrative_source": "deterministic",
+      "ungrounded_numerics": [
+        "120 m",
+        "4000 m",
+        "8 m/s",
+        "45 %"
+      ]
+    },
+    {
+      "fixture_id": "da-02",
+      "trap": "density_altitude",
+      "expected_decision": "go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "go",
+        "mode": "advisory",
+        "hover_power_w": 570.41,
+        "residual_wh": 109.53,
+        "prose": "Mission status: GO (advisory).\n\nThe generated brief was withheld because it disagreed with this assessment. What follows comes from the calculator alone.\n\nBlocking operational use:\n- POWER_NOT_OPERATIONAL_GRADE\n- FIELD_NOT_OPERATIONAL_GRADE\n- BLUE_LIST_SNAPSHOT_UNAVAILABLE\n\nCalculator 1.9.0, inputs 817b42c7d2ebe365a1bfed9d6a5fbea07655ad7663438f2d70704ac1d7c00b00."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission for the Freefly Astro Max UAS with the Sony ILX-LR1 payload is approved. The UAS will hover at 120m altitude, 1500m elevation, and a distance of 4000m from the launch point (39.7392, -104.9903). The advisory mode will be used with a hover power of 570.41W and a residual battery capacity of 109.53Wh. Please note that the weather conditions are clear with a temperature of 18\u00b0C, wind speed of 3m/s, and wind direction of 180\u00b0.\",\n  \"suggested_contingencies\": [\"Monitor UAS battery level regularly.\", \"Adjust flight plan if weather conditions worsen.\", \"Ensure safe landing zone is clear and within communication range.\"],\n  \"cited_chunk_ids\": [\"airframe\", \"payload\", \"mission\", \"weather\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "go"
+        }
+      ],
+      "narrative_source": "deterministic",
+      "ungrounded_numerics": [
+        "120 m",
+        "1500 m",
+        "4000 m",
+        "3 m/s"
+      ]
+    },
+    {
+      "fixture_id": "da-03",
+      "trap": "density_altitude",
+      "expected_decision": "go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "go",
+        "mode": "advisory",
+        "hover_power_w": 627.54,
+        "residual_wh": 96.41,
+        "prose": "Mission status: GO (advisory).\n\nThe generated brief was withheld because it disagreed with this assessment. What follows comes from the calculator alone.\n\nBlocking operational use:\n- POWER_NOT_OPERATIONAL_GRADE\n- FIELD_NOT_OPERATIONAL_GRADE\n- BLUE_LIST_SNAPSHOT_UNAVAILABLE\n\nCalculator 1.9.0, inputs 7725ef314472f42b1fa59424daed3f159e413006df3946d494d4f85c6eca3b5b."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission for the Freefly Astro Max UAS with the Sony ILX-LR1 payload is approved. The UAS will hover at 120m altitude for 420 seconds, covering a distance of 4000m, starting from an elevation of 3000m and a location (39.7392, -104.9903). The calculated hover power is 627.54W, with a residual battery capacity of 96.41Wh. The weather conditions are clear with a temperature of 18\u00b0C, wind speed of 3m/s, and wind direction of 180\u00b0. Please note the wind gust is 4m/s. The UAS should be operated in advisory mode.\",\n  \"suggested_contingencies\": [\"Monitor wind conditions and adjust flight plan if wind gust exceeds 8m/s.\", \"Ensure battery capacity is sufficient for the mission and landing.\", \"Check for any potential obstacles along the flight path.\"],\n  \"cited_chunk_ids\": [\"airframe\", \"payload\", \"mission\", \"weather\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "go"
+        }
+      ],
+      "narrative_source": "deterministic",
+      "ungrounded_numerics": [
+        "120 m",
+        "4000 m",
+        "3000 m",
+        "3 m/s",
+        "4 m/s"
+      ]
+    },
+    {
+      "fixture_id": "da-04",
+      "trap": "density_altitude",
+      "expected_decision": "go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "go",
+        "mode": "advisory",
+        "hover_power_w": 236.67,
+        "residual_wh": 83.51,
+        "prose": "Mission status: GO (advisory).\n\nThe generated brief was withheld because it disagreed with this assessment. What follows comes from the calculator alone.\n\nBlocking operational use:\n- POWER_NOT_OPERATIONAL_GRADE\n- FIELD_NOT_OPERATIONAL_GRADE\n- CONFIGURATION_NOT_LAB_OPERATIONAL\n- BLUE_LIST_SNAPSHOT_UNAVAILABLE\n\nCalculator 1.9.0, inputs fdf86410ea48df536d8ec82145b625f28394ed0bedc4efd814db27c4b6b1f72b."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission is approved with a decision of 'go' and advisory mode. The UAS, Skydio X10D, will hover at 100m altitude for 300s, covering a distance of 2500m. The current weather conditions are clear with a temperature of 18\u00b0C, wind speed of 3m/s, and wind direction of 180\u00b0. The required hover power is 236.67W and the residual battery capacity after the mission is 83.51Wh.\",\n  \"suggested_contingencies\": [\"Monitor wind speed and direction for potential changes during the mission.\", \"Ensure the UAS is within visual line of sight at all times.\", \"Be prepared to abort the mission if weather conditions worsen.\"],\n  \"cited_chunk_ids\": [\"airframe\", \"mission\", \"weather\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "go"
+        }
+      ],
+      "narrative_source": "deterministic",
+      "ungrounded_numerics": [
+        "100 m",
+        "300 s",
+        "2500 m",
+        "3 m/s"
+      ]
+    },
+    {
+      "fixture_id": "da-05",
+      "trap": "density_altitude",
+      "expected_decision": "go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "go",
+        "mode": "advisory",
+        "hover_power_w": 276.18,
+        "residual_wh": 77.23,
+        "prose": "Mission status: GO (advisory).\n\nThe generated brief was withheld because it disagreed with this assessment. What follows comes from the calculator alone.\n\nBlocking operational use:\n- POWER_NOT_OPERATIONAL_GRADE\n- FIELD_NOT_OPERATIONAL_GRADE\n- CONFIGURATION_NOT_LAB_OPERATIONAL\n- BLUE_LIST_SNAPSHOT_UNAVAILABLE\n\nCalculator 1.9.0, inputs 038795c27988ca275c06176875c3d1fc53bcdd0c55ca0f68b6a2cc6bea10d3b7."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission is approved with the decision set to 'go' and the recommended mode as 'advisory'. The UAS, Skydio X10D, will operate at a density altitude of 2500m. The mission involves flying 2500m with a hover time of 300s at an altitude of 100m, starting from an elevation of 2500m. The takeoff location is at latitude 39.7392 and longitude -104.9903. The current weather conditions are clear with a temperature of 18\u00b0C, wind speed of 3m/s, wind gust of 4m/s, and humidity of 45%. The required hover power is 276.18W and the residual energy is 77.23Wh.\",\n  \"suggested_contingencies\": [\"Monitor wind speed and gusts to ensure they do not exceed the UAS's maximum limit of 12.8m/s.\", \"Check the temperature to ensure it remains within the UAS's operating range of -20\u00b0C to 45\u00b0C.\"],\n  \"cited_chunk_ids\": [\"airframe\", \"mission\", \"weather\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "go"
+        }
+      ],
+      "narrative_source": "deterministic",
+      "ungrounded_numerics": [
+        "2500 m",
+        "2500 m",
+        "300 s",
+        "100 m",
+        "2500 m",
+        "3 m/s",
+        "4 m/s",
+        "45 %"
+      ]
+    },
+    {
+      "fixture_id": "da-06",
+      "trap": "density_altitude",
+      "expected_decision": "go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "go",
+        "mode": "advisory",
+        "hover_power_w": 193.43,
+        "residual_wh": 26.14,
+        "prose": "The mission is approved with the decision set to 'go' and the recommended mode as 'advisory'. The UAS will require a hover power of 193.43 watts and will have a residual battery capacity of 26.14 Wh. Please consider the following contingencies:"
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission is approved with the decision set to 'go' and the recommended mode as 'advisory'. The UAS will require a hover power of 193.43 watts and will have a residual battery capacity of 26.14 Wh. Please consider the following contingencies:\",\n  \"suggested_contingencies\": [\n    \"Monitor wind speed and adjust flight plan if it exceeds the UAS's max wind speed of 8.05 mps.\",\n    \"Ensure the UAS is within its temperature operating range (-35.6\u00b0C to 43.3\u00b0C).\",\n    \"Verify that the payload power draw (2.9 watts) does not exceed the UAS's available power during hover (193.43 watts).\",\n    \"Consider grounding the UAS if the wind gusts exceed the UAS's max wind gust limit (not provided in the given data).\"\n  ],\n  \"cited_chunk_ids\": [\"airframe\", \"payload\", \"mission\", \"weather\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "go"
+        }
+      ],
+      "narrative_source": "model"
+    },
+    {
+      "fixture_id": "fw-01",
+      "trap": "fallback_weather",
+      "expected_decision": "go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "go",
+        "mode": "advisory",
+        "hover_power_w": 487.98,
+        "residual_wh": 159.84,
+        "prose": "Mission status: GO (advisory).\n\nThe generated brief was withheld because it disagreed with this assessment. What follows comes from the calculator alone.\n\nBlocking operational use:\n- WEATHER_NOT_LIVE\n- WEATHER_DEGRADED\n- POWER_NOT_OPERATIONAL_GRADE\n- FIELD_NOT_OPERATIONAL_GRADE\n- CONFIGURATION_NOT_LAB_OPERATIONAL\n- BLUE_LIST_SNAPSHOT_UNAVAILABLE\n\nCalculator 1.9.0, inputs 395672e2348ff5af46ad9f847714e2efa5549183074659076a312b1ea246201b."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission with Freefly Astro Max UAS (FW-01) is approved for a 3000m distance flight at 100m altitude, given the current clear weather conditions. However, due to a wind speed of 3m/s and a gust of 4m/s, the hover power will be 487.98W and the residual energy will be 159.84Wh. Please consider contingencies for windy conditions.\",\n  \"suggested_contingencies\": [\"Increase ground crew for wind handling\", \"Adjust flight plan to avoid windy areas\", \"Delay flight until wind conditions improve\"],\n  \"cited_chunk_ids\": [\"fw-01\", \"Freefly_Astro_Max\", \"Mission\", \"Weather\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "go"
+        }
+      ],
+      "narrative_source": "deterministic",
+      "ungrounded_numerics": [
+        "3000 m",
+        "100 m",
+        "3 m/s",
+        "4 m/s"
+      ]
+    },
+    {
+      "fixture_id": "fw-02",
+      "trap": "fallback_weather",
+      "expected_decision": "go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "go",
+        "mode": "advisory",
+        "hover_power_w": 236.44,
+        "residual_wh": 91.24,
+        "prose": "Mission status: GO (advisory).\n\nThe generated brief was withheld because it disagreed with this assessment. What follows comes from the calculator alone.\n\nBlocking operational use:\n- WEATHER_NOT_LIVE\n- WEATHER_DEGRADED\n- POWER_NOT_OPERATIONAL_GRADE\n- FIELD_NOT_OPERATIONAL_GRADE\n- CONFIGURATION_NOT_LAB_OPERATIONAL\n- BLUE_LIST_SNAPSHOT_UNAVAILABLE\n\nCalculator 1.9.0, inputs 74cabe76454f8157c4fdf994ad19afd33cf6ffb671aee28af693bb0c5c2036cb."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission is approved with a decision of 'go' and advisory mode. The UAS, Skydio X10D, will hover at 80m altitude for 240s and cover a distance of 2000m. The current weather conditions are clear with a temperature of 18\u00b0C, wind speed of 3m/s, and wind direction of 180\u00b0. The required hover power is 236.44W and the residual battery capacity after the mission is 91.24Wh.\",\n  \"suggested_contingencies\": [\"Monitor wind conditions for potential gusts exceeding 12.8m/s\", \"Ensure the UAS is within visual line of sight at all times\", \"Consider adjusting the mission parameters if weather conditions worsen\"],\n  \"cited_chunk_ids\": [\"airframe\", \"mission\", \"weather\", \"decision\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "go"
+        }
+      ],
+      "narrative_source": "deterministic",
+      "ungrounded_numerics": [
+        "80 m",
+        "240 s",
+        "2000 m",
+        "3 m/s"
+      ]
+    },
+    {
+      "fixture_id": "fw-03",
+      "trap": "fallback_weather",
+      "expected_decision": "go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "go",
+        "mode": "advisory",
+        "hover_power_w": 520.12,
+        "residual_wh": 153.1,
+        "prose": "Mission status: GO (advisory).\n\nThe generated brief was withheld because it disagreed with this assessment. What follows comes from the calculator alone.\n\nBlocking operational use:\n- WEATHER_NOT_LIVE\n- WEATHER_DEGRADED\n- POWER_NOT_OPERATIONAL_GRADE\n- FIELD_NOT_OPERATIONAL_GRADE\n- BLUE_LIST_SNAPSHOT_UNAVAILABLE\n\nCalculator 1.9.0, inputs d408da267e4bcb61d66cbb439291d9cfdf18ce4d45caa1c920cb91e0e4ade184."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission with Freefly Astro Max drone carrying Sony ILX-LR1 payload is approved for execution. The drone will hover at 100m altitude for 300 seconds, covering a distance of 3000m. The calculated hover power is 520.12W and the residual battery capacity is 153.1Wh. Please note that the wind speed is 3m/s, which is within the drone's max wind limit of 8m/s. However, a wind speed of 4m/s was recorded as a gust, which is slightly above the drone's limit. Consider adjusting the flight plan or implementing contingencies if necessary.\",\n  \"suggested_contingencies\": [\"Adjust flight plan to account for wind gusts\", \"Implement wind mitigation strategies\", \"Consider reducing payload to reduce power requirements\"],\n  \"cited_chunk_ids\": [\"fw-03\", \"airframe\", \"payload\", \"mission\", \"weather\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "go"
+        }
+      ],
+      "narrative_source": "deterministic",
+      "ungrounded_numerics": [
+        "100 m",
+        "3000 m",
+        "3 m/s",
+        "8 m/s",
+        "4 m/s"
+      ]
+    },
+    {
+      "fixture_id": "fw-04",
+      "trap": "fallback_weather",
+      "expected_decision": "go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "go",
+        "mode": "advisory",
+        "hover_power_w": 2002.53,
+        "residual_wh": 722.4,
+        "prose": "The mission is approved with the decision set to 'go' and the recommended mode as 'advisory'. The UAS will require a hover power of 2002.53 W and will have a residual battery capacity of 722.4 Wh. No contingencies are suggested for this mission."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission is approved with the decision set to 'go' and the recommended mode as 'advisory'. The UAS will require a hover power of 2002.53 W and will have a residual battery capacity of 722.4 Wh. No contingencies are suggested for this mission.\",\n  \"suggested_contingencies\": [],\n  \"cited_chunk_ids\": [\"fw-04\", \"airframe\", \"mission\", \"weather\", \"decision\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "go"
+        }
+      ],
+      "narrative_source": "model"
+    },
+    {
+      "fixture_id": "pp-01",
+      "trap": "pack_procedure",
+      "expected_decision": "no_go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "no_go",
+        "mode": "advisory",
+        "hover_power_w": 477.08,
+        "residual_wh": 123.57,
+        "prose": "Based on the mission parameters and current weather conditions, the Freefly Astro Max UAS is not recommended for operation due to exceeding the maximum hover power (477.08 W) and residual energy (123.57 Wh) limits. Consider reducing the mission distance or hover time, or adjusting the target altitude to meet power requirements."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"Based on the mission parameters and current weather conditions, the Freefly Astro Max UAS is not recommended for operation due to exceeding the maximum hover power (477.08 W) and residual energy (123.57 Wh) limits. Consider reducing the mission distance or hover time, or adjusting the target altitude to meet power requirements.\",\n  \"suggested_contingencies\": [\n    \"Reduce mission distance\",\n    \"Reduce hover time\",\n    \"Adjust target altitude\",\n    \"Consider using a larger battery\"\n  ],\n  \"cited_chunk_ids\": [\"airframe\", \"mission\", \"weather\", \"decision\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "no_go"
+        }
+      ],
+      "narrative_source": "model"
+    },
+    {
+      "fixture_id": "pp-02",
+      "trap": "pack_procedure",
+      "expected_decision": "no_go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "no_go",
+        "mode": "advisory",
+        "hover_power_w": 461.0,
+        "residual_wh": 82.35,
+        "prose": "Based on the mission parameters and current weather conditions, the Freefly Astro Max UAS is not recommended for operation due to exceeding the maximum wind speed limit (3.0 mps vs. 8.0 mps). The calculated hover power is 461.0 watts, with a residual battery capacity of 82.35 watt-hours remaining."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"Based on the mission parameters and current weather conditions, the Freefly Astro Max UAS is not recommended for operation due to exceeding the maximum wind speed limit (3.0 mps vs. 8.0 mps). The calculated hover power is 461.0 watts, with a residual battery capacity of 82.35 watt-hours remaining.\",\n  \"suggested_contingencies\": [\"Consider rescheduling the mission for calmer weather conditions.\", \"Evaluate the impact of reducing the mission distance or altitude to stay within wind limits.\"],\n  \"cited_chunk_ids\": [\"airframe\", \"mission\", \"weather\", \"decision\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "no_go"
+        }
+      ],
+      "narrative_source": "model"
+    },
+    {
+      "fixture_id": "pp-03",
+      "trap": "pack_procedure",
+      "expected_decision": "go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "go",
+        "mode": "advisory",
+        "hover_power_w": 514.72,
+        "residual_wh": 136.42,
+        "prose": "The mission is approved with the decision set to 'go' and the recommended mode as 'advisory'. The UAS will consume approximately 514.72 watts during hover and 434.8 watts during cruise. The residual battery capacity after the mission is estimated to be 136.42 Wh."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission is approved with the decision set to 'go' and the recommended mode as 'advisory'. The UAS will consume approximately 514.72 watts during hover and 434.8 watts during cruise. The residual battery capacity after the mission is estimated to be 136.42 Wh.\",\n  \"suggested_contingencies\": [\n    \"Monitor wind conditions and adjust flight path if wind speed exceeds 8 mps or gusts exceed 10 mps.\",\n    \"Ensure the temperature at takeoff is above 10\u00b0C to avoid potential battery performance issues.\",\n    \"Maintain a safe distance from any obstacles or people during the mission.\"\n  ],\n  \"cited_chunk_ids\": [\"airframe\", \"payload\", \"mission\", \"weather\", \"decision\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "go"
+        }
+      ],
+      "narrative_source": "model"
+    },
+    {
+      "fixture_id": "pp-04",
+      "trap": "pack_procedure",
+      "expected_decision": "go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "go",
+        "mode": "advisory",
+        "hover_power_w": 4206.91,
+        "residual_wh": 236.8,
+        "prose": "The mission is approved with the decision set to 'go' and the recommended mode as 'advisory'. The Freefly Alta X UAS will consume approximately 4206.91 watts during hover and 3834.0 watts during cruise. The residual battery capacity after the mission is estimated to be 236.8 Wh."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission is approved with the decision set to 'go' and the recommended mode as 'advisory'. The Freefly Alta X UAS will consume approximately 4206.91 watts during hover and 3834.0 watts during cruise. The residual battery capacity after the mission is estimated to be 236.8 Wh.\",\n  \"suggested_contingencies\": [\n    \"Monitor wind conditions and adjust flight path if wind speed exceeds 12 mps or wind gusts exceed 15 mps.\",\n    \"Ensure the UAS is grounded if temperature drops below -20\u00b0C or rises above 50\u00b0C.\",\n    \"Verify that the UAS is within the specified weight and power limits for safe operation.\"\n  ],\n  \"cited_chunk_ids\": [\"airframe\", \"mission\", \"weather\", \"decision\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "go"
+        }
+      ],
+      "narrative_source": "model"
+    },
+    {
+      "fixture_id": "dl-01",
+      "trap": "delisted_config",
+      "expected_decision": "go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "go",
+        "mode": "advisory",
+        "hover_power_w": 74.27,
+        "residual_wh": 19.15,
+        "prose": "Mission status: GO (advisory).\n\nThe generated brief was withheld because it disagreed with this assessment. What follows comes from the calculator alone.\n\nBlocking operational use:\n- POWER_NOT_OPERATIONAL_GRADE\n- FIELD_NOT_OPERATIONAL_GRADE\n- CONFIGURATION_NOT_LAB_OPERATIONAL\n- BLUE_LIST_SNAPSHOT_UNAVAILABLE\n\nCalculator 1.9.0, inputs 181073d92c1e62be60ab8d0642d7501cc5b37e094f781f8491ffc565230765d4."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission with Parrot ANAFI USA drone (weight: 0.5 kg, max wind: 14.7 m/s) is approved for a 2000m distance flight at 80m altitude, given the current weather conditions (temperature: 18\u00b0C, wind speed: 3 m/s, wind direction: 180\u00b0, humidity: 45%, clear skies). The drone will consume approximately 74.27 watts during hover and will have a residual battery capacity of 19.15 Wh after the mission. Advisory mode is recommended due to wind conditions.\",\n  \"suggested_contingencies\": [\"Monitor wind conditions for potential gusts exceeding 14.7 m/s\", \"Adjust flight plan to account for wind direction\", \"Consider grounding the drone if wind conditions worsen\"],\n  \"cited_chunk_ids\": [\"airframe\", \"mission\", \"weather\", \"decision\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "go"
+        }
+      ],
+      "narrative_source": "deterministic",
+      "ungrounded_numerics": [
+        "14.7 m/s",
+        "2000 m",
+        "80 m",
+        "3 m/s",
+        "45 %"
+      ]
+    },
+    {
+      "fixture_id": "dl-02",
+      "trap": "delisted_config",
+      "expected_decision": "go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "go",
+        "mode": "advisory",
+        "hover_power_w": 139.78,
+        "residual_wh": 43.59,
+        "prose": "Mission status: GO (advisory).\n\nThe generated brief was withheld because it disagreed with this assessment. What follows comes from the calculator alone.\n\nBlocking operational use:\n- POWER_NOT_OPERATIONAL_GRADE\n- FIELD_NOT_OPERATIONAL_GRADE\n- CONFIGURATION_NOT_LAB_OPERATIONAL\n- BLUE_LIST_SNAPSHOT_UNAVAILABLE\n\nCalculator 1.9.0, inputs c5ca558ae4a0d3bd87c8a81ddba57575e7209de008ec7bcdfc5db218f087335b."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission with Skydio X2D and FLIR Hadron 640R payload is approved for execution. The drone will hover at 60m altitude for 180s, covering a distance of 1500m. The recommended takeoff location is (39.7392, -104.9903). The drone will consume approximately 139.78W during hover and will have a residual battery capacity of 43.59Wh. Please be aware of the wind conditions (3m/s, 180\u00b0) and consider contingencies if necessary.\",\n  \"suggested_contingencies\": [\"Check wind conditions frequently and adjust flight plan if necessary\", \"Consider landing early if wind gusts exceed 4m/s\", \"Monitor battery level and land if residual capacity drops below 20%\"],\n  \"cited_chunk_ids\": [\"airframe\", \"payload\", \"mission\", \"weather\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "go"
+        }
+      ],
+      "narrative_source": "deterministic",
+      "ungrounded_numerics": [
+        "60 m",
+        "180 s",
+        "1500 m",
+        "3 m/s"
+      ]
+    },
+    {
+      "fixture_id": "dl-03",
+      "trap": "delisted_config",
+      "expected_decision": "go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "go",
+        "mode": "advisory",
+        "hover_power_w": 161.26,
+        "residual_wh": 31.07,
+        "prose": "The mission is approved with the decision set to 'go' and the mode set to 'advisory'. The Golden Eagle UAS will consume approximately 161.26 watts during hover and 143.8 watts during cruise. The residual battery capacity after the mission will be 31.07 Wh."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission is approved with the decision set to 'go' and the mode set to 'advisory'. The Golden Eagle UAS will consume approximately 161.26 watts during hover and 143.8 watts during cruise. The residual battery capacity after the mission will be 31.07 Wh.\",\n  \"suggested_contingencies\": [\"Monitor wind conditions and adjust flight plan if wind speed exceeds 8.05 mps.\", \"Ensure the temperature remains within the UAS's operational range of -35.6\u00b0C to 43.3\u00b0C.\"],\n  \"cited_chunk_ids\": [\"airframe\", \"mission\", \"weather\", \"decision\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "go"
+        }
+      ],
+      "narrative_source": "model"
+    },
+    {
+      "fixture_id": "dc-01",
+      "trap": "datasheet_conflict",
+      "expected_decision": "no_go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "no_go",
+        "mode": "advisory",
+        "hover_power_w": 458.66,
+        "residual_wh": 82.75,
+        "prose": "Based on the mission parameters and current weather conditions, the Freefly Astro Max UAS is not recommended for operation due to exceeding the maximum hover power (458.66 W) and residual battery capacity (82.75 Wh) requirements. Consider reducing the mission distance or adjusting the altitude to meet power and battery capacity constraints."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"Based on the mission parameters and current weather conditions, the Freefly Astro Max UAS is not recommended for operation due to exceeding the maximum hover power (458.66 W) and residual battery capacity (82.75 Wh) requirements. Consider reducing the mission distance or adjusting the altitude to meet power and battery capacity constraints.\",\n  \"suggested_contingencies\": [\"Reduce mission distance\", \"Adjust target altitude\", \"Postpone mission until weather conditions improve\"],\n  \"cited_chunk_ids\": [\"airframe\", \"mission\", \"weather\", \"decision\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "no_go"
+        }
+      ],
+      "narrative_source": "model"
+    },
+    {
+      "fixture_id": "dc-02",
+      "trap": "datasheet_conflict",
+      "expected_decision": "no_go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "no_go",
+        "mode": "advisory",
+        "hover_power_w": 539.84,
+        "residual_wh": 50.16,
+        "prose": "Mission status: NO-GO (advisory).\n\nThe generated brief was withheld because it disagreed with this assessment. What follows comes from the calculator alone.\n\nLimiting factors:\n- Ambient temperature is below the battery pack's documented takeoff minimum.\n\nBlocking operational use:\n- POWER_NOT_OPERATIONAL_GRADE\n- FIELD_NOT_OPERATIONAL_GRADE\n- CONFIGURATION_NOT_LAB_OPERATIONAL\n- BLUE_LIST_SNAPSHOT_UNAVAILABLE\n\nCalculator 1.9.0, inputs 2fb0d30b851b48a0c8faa4b7ef983c0fb2dcdc921169e8a909c7664008e80e4d."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission cannot proceed due to insufficient battery capacity. The calculated hover power (539.84 W) exceeds the available battery capacity (314 Wh), resulting in a residual energy of 50.16 Wh. The mission is advised not to proceed.\",\n  \"suggested_contingencies\": [\"Reduce mission distance or hover time.\", \"Increase battery capacity.\", \"Decrease payload weight.\"],\n  \"cited_chunk_ids\": [\"airframe\", \"payload\", \"mission\", \"weather\", \"decision\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "no_go"
+        }
+      ],
+      "narrative_source": "deterministic",
+      "ungrounded_numerics": [
+        "314 Wh"
+      ]
+    },
+    {
+      "fixture_id": "wd-01",
+      "trap": "wind_limit",
+      "expected_decision": "no_go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "no_go",
+        "mode": "advisory",
+        "hover_power_w": 487.98,
+        "residual_wh": 193.11,
+        "prose": "The mission cannot proceed due to wind speeds exceeding the UAS's wind limit. The calculated hover power is 487.98 watts, which exceeds the available battery capacity by 193.11 watt-hours."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission cannot proceed due to wind speeds exceeding the UAS's wind limit. The calculated hover power is 487.98 watts, which exceeds the available battery capacity by 193.11 watt-hours.\",\n  \"suggested_contingencies\": [\"Reschedule the mission for a time with lower wind speeds.\", \"Reduce the mission distance or hover time.\", \"Consider using a larger or more powerful UAS.\"],\n  \"cited_chunk_ids\": [\"airframe\", \"mission\", \"weather\", \"decision\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "no_go"
+        }
+      ],
+      "narrative_source": "model"
+    },
+    {
+      "fixture_id": "wd-02",
+      "trap": "wind_limit",
+      "expected_decision": "no_go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "no_go",
+        "mode": "advisory",
+        "hover_power_w": 131.36,
+        "residual_wh": 50.99,
+        "prose": "The mission cannot proceed due to wind speeds exceeding the UAS's wind limit. The wind speed is 13.0 mps, which is above the UAS's max wind speed of 10.28 mps. The residual battery capacity after the mission would be 50.99 Wh."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission cannot proceed due to wind speeds exceeding the UAS's wind limit. The wind speed is 13.0 mps, which is above the UAS's max wind speed of 10.28 mps. The residual battery capacity after the mission would be 50.99 Wh.\",\n  \"suggested_contingencies\": [\"Reschedule the mission for a time with lower wind speeds.\", \"Reduce the mission distance or duration to accommodate the wind conditions.\"],\n  \"cited_chunk_ids\": [\"airframe\", \"mission\", \"weather\", \"decision\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "no_go"
+        }
+      ],
+      "narrative_source": "model"
+    },
+    {
+      "fixture_id": "wd-03",
+      "trap": "wind_limit",
+      "expected_decision": "no_go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "no_go",
+        "mode": "advisory",
+        "hover_power_w": 74.2,
+        "residual_wh": 26.01,
+        "prose": "Mission cannot proceed due to wind speed exceeding the maximum allowable limit. The wind speed is 10.0 mps, which is above the ANAFI USA's maximum wind limit of 14.7 mps. The residual battery capacity after the mission would be 26.01 Wh."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"Mission cannot proceed due to wind speed exceeding the maximum allowable limit. The wind speed is 10.0 mps, which is above the ANAFI USA's maximum wind limit of 14.7 mps. The residual battery capacity after the mission would be 26.01 Wh.\",\n  \"suggested_contingencies\": [\"Reschedule the mission for a time with lower wind speeds.\", \"Consider using a different UAS with a higher wind tolerance.\"],\n  \"cited_chunk_ids\": [\"wd-03\", \"airframe\", \"mission\", \"weather\", \"decision\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "no_go"
+        }
+      ],
+      "narrative_source": "model"
+    },
+    {
+      "fixture_id": "en-01",
+      "trap": "endurance",
+      "expected_decision": "no_go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "no_go",
+        "mode": "advisory",
+        "hover_power_w": 140.05,
+        "residual_wh": -69.11,
+        "prose": "Mission status: NO-GO (advisory).\n\nThe generated brief was withheld because it disagreed with this assessment. What follows comes from the calculator alone.\n\nLimiting factors:\n- Energy required exceeds usable battery capacity after reserve.\n\nBlocking operational use:\n- POWER_NOT_OPERATIONAL_GRADE\n- FIELD_NOT_OPERATIONAL_GRADE\n- CONFIGURATION_NOT_LAB_OPERATIONAL\n- BLUE_LIST_SNAPSHOT_UNAVAILABLE\n\nCalculator 1.9.0, inputs 031368da2237700515814b98c1680a49d05ba8b7fce4c68dbad775355abe417c."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission cannot proceed due to insufficient battery capacity. The calculated hover power (140.05 W) exceeds the available battery capacity (76.0 Wh), resulting in a residual energy deficit of -69.11 Wh.\",\n  \"suggested_contingencies\": [\n    \"Reduce the mission distance or hover time.\",\n    \"Increase the battery capacity of the airframe.\",\n    \"Use a smaller payload with lower power draw.\"\n  ],\n  \"cited_chunk_ids\": [\"airframe\", \"payload\", \"mission\", \"weather\", \"decision\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "no_go"
+        }
+      ],
+      "narrative_source": "deterministic",
+      "ungrounded_numerics": [
+        "76.0 Wh",
+        "69.11 Wh"
+      ]
+    },
+    {
+      "fixture_id": "en-02",
+      "trap": "endurance",
+      "expected_decision": "no_go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "no_go",
+        "mode": "advisory",
+        "hover_power_w": 74.34,
+        "residual_wh": -47.9,
+        "prose": "Mission status: NO-GO (advisory).\n\nThe generated brief was withheld because it disagreed with this assessment. What follows comes from the calculator alone.\n\nLimiting factors:\n- Energy required exceeds usable battery capacity after reserve.\n\nBlocking operational use:\n- POWER_NOT_OPERATIONAL_GRADE\n- FIELD_NOT_OPERATIONAL_GRADE\n- CONFIGURATION_NOT_LAB_OPERATIONAL\n- BLUE_LIST_SNAPSHOT_UNAVAILABLE\n\nCalculator 1.9.0, inputs 871f3929829cfb26ed36fd515aae0e76a41f36739cb31aa3fc9aa85cc7c81bda."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission cannot proceed due to insufficient power for hovering. The calculated hover power (74.34 W) exceeds the available battery capacity (39.27 Wh), resulting in a residual power deficit of -47.9 Wh.\",\n  \"suggested_contingencies\": [\n    \"Reduce the mission distance or hover time to conserve power.\",\n    \"Consider using a larger or more powerful battery.\",\n    \"Postpone the mission until weather conditions improve, as stronger winds may increase power requirements.\"\n  ],\n  \"cited_chunk_ids\": [\"airframe\", \"mission\", \"weather\", \"decision\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "no_go"
+        }
+      ],
+      "narrative_source": "deterministic",
+      "ungrounded_numerics": [
+        "39.27 Wh",
+        "47.9 Wh"
+      ]
+    }
+  ],
+  "run": {
+    "model": "Mistral-7B-Instruct-v0.3",
+    "hf_repo": "bartowski/Mistral-7B-Instruct-v0.3-GGUF",
+    "filename": "Mistral-7B-Instruct-v0.3-Q4_K_M.gguf",
+    "sha256": "1270d22c0fbb3d092fb725d4d96c457b7b687a5f5a715abe1e818da303e562b6",
+    "quantization": "Q4_K_M",
+    "runtime": "llama.cpp 1.0.0-dev (build 12387, commit a956a852c)",
+    "hardware": "8-core Intel Xeon (KVM), 15 GiB RAM, CPU-only (no GPU), Linux 6.12.113+ x86_64",
+    "temperature": 0.0,
+    "seed": 42,
+    "base_url_configured": true,
+    "wall_time_s": 890.639
+  }
+}
