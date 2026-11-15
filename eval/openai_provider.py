@@ -19,9 +19,12 @@ import httpx
 from suas.calculations.assessment import assess_mission, build_assessment
 from suas.db.seed import load_rows
 from suas.eval.mission_scoring import MissionFixture, ModelAnswer
+from suas.graph.override import apply_sealed_override
+from suas.schemas.assessment import AssessmentMode, DeterministicAssessment
+from suas.schemas.brief import brief_response_format
 from suas.schemas.domain import Aircraft, Payload
 from suas.schemas.requests import MissionParams
-from suas.schemas.responses import WeatherReading
+from suas.schemas.responses import Calculations, WeatherReading
 
 _DEFAULT_TEMPERATURE: Final[float] = 0.0
 _DEFAULT_SEED: Final[int] = 42
@@ -48,23 +51,27 @@ ASSESS_TOOL: Final[dict[str, Any]] = {
 }
 
 _SYSTEM_NO_TOOLS: Final[str] = (
-    "You are scoring a small UAS mission. Answer from the prompt alone. "
-    "Do not invent a live weather feed or a Blue UAS clearance. "
-    "Reply with a single JSON object with keys: "
-    "decision (go or no_go), mode (advisory or operational), "
-    "hover_power_w (number or null), residual_wh (number or null), "
-    "prose (short justification). No other text."
+    "You are writing a short safety-officer narrative for a small UAS mission. "
+    "The deterministic calculator has already run; its sealed decision, mode, "
+    "and figures are authoritative and will be used as the scored answer "
+    "regardless of what you write. Do not invent a live weather feed or a "
+    "Blue UAS clearance. Reply with a single JSON object with keys "
+    "brief_markdown (the only free-text field), suggested_contingencies "
+    "(a list of short strings), and cited_chunk_ids (a list of strings). "
+    "No other keys. No other text."
 )
 
 _SYSTEM_CALCULATOR: Final[str] = (
-    "You are scoring a small UAS mission. You may call the assess_mission "
-    "tool, which runs the deterministic calculator and returns the sealed "
-    "assessment. Those figures are authoritative. After any tool result, "
-    "reply with a single JSON object with keys: "
-    "decision (go or no_go), mode (advisory or operational), "
-    "hover_power_w (number or null), residual_wh (number or null), "
-    "prose (short justification). Do not invent numbers that are not in "
-    "the tool result or the prompt. No other text."
+    "You are writing a short safety-officer narrative for a small UAS mission. "
+    "The deterministic calculator has already run in code; its sealed "
+    "decision, mode, and figures are authoritative and will be used as the "
+    "scored answer regardless of what you write. You may call the "
+    "assess_mission tool to inspect that sealed result. After any tool "
+    "result, reply with a single JSON object with keys brief_markdown "
+    "(the only free-text field), suggested_contingencies (a list of short "
+    "strings), and cited_chunk_ids (a list of strings). Do not invent "
+    "numbers that are not in the tool result or the prompt. No other keys. "
+    "No other text."
 )
 
 
@@ -97,7 +104,9 @@ def load_endpoint(env: dict[str, str] | None = None) -> EvalEndpoint:
             "SUAS_EVAL_BASE_URL and SUAS_EVAL_MODEL must be set to run an "
             "OpenAI-compatible provider (for example a local llama.cpp server)."
         )
-    temperature = float(source.get("SUAS_EVAL_TEMPERATURE", str(_DEFAULT_TEMPERATURE)))
+    # Temperature is pinned at 0. A non-zero env value is ignored rather
+    # than negotiated, because sampling is not part of this measurement.
+    temperature = _DEFAULT_TEMPERATURE
     seed = int(source.get("SUAS_EVAL_SEED", str(_DEFAULT_SEED)))
     timeout_s = float(source.get("SUAS_EVAL_TIMEOUT_S", str(_DEFAULT_TIMEOUT_S)))
     name = source.get("SUAS_EVAL_PROVIDER_NAME", "").strip() or _slug(model)
@@ -176,8 +185,17 @@ def parse_model_answer(text: str) -> ModelAnswer:
         mode=mode,
         hover_power_w=_optional_float(payload.get("hover_power_w")),
         residual_wh=_optional_float(payload.get("residual_wh")),
-        prose=str(payload.get("prose") or text),
+        prose=_narrative(payload, text),
     )
+
+
+def _narrative(payload: dict[str, Any], fallback: str) -> str:
+    """Return the model's free-text field, preferring the structured brief key."""
+    for key in ("brief_markdown", "prose", "narrative"):
+        value = payload.get(key)
+        if isinstance(value, str) and value.strip():
+            return value
+    return fallback
 
 
 def _normalise_decision(raw: object) -> str:
@@ -223,8 +241,19 @@ def mission_prompt(fixture: MissionFixture, aircraft: Aircraft, payload: Payload
         f"Mission: {json.dumps(fixture.params)}.\n"
         f"Weather: {json.dumps(fixture.weather)}.\n"
         "The hover_power_w and cruise_power_w figures above are the reference "
-        "values stored for this airframe; correct them for all-up mass and "
-        "conditions if you are answering without the calculator tool."
+        "values stored for this airframe."
+    )
+
+
+def sealed_prompt_block(assessment: DeterministicAssessment, calculations: Calculations) -> str:
+    """Return the already-computed sealed figures the narrative may use."""
+    return (
+        "The deterministic calculator has already run. Its sealed result is "
+        "authoritative and will be used as the scored decision, mode, and "
+        "figures, regardless of what you write.\n"
+        f"decision={assessment.decision.value}, mode={assessment.mode.value}, "
+        f"hover_power_w={calculations.effective_hover_power_w}, "
+        f"residual_wh={calculations.battery_check.margin_wh}."
     )
 
 
@@ -250,11 +279,46 @@ class OpenAICompatibleProvider:
         self._payloads = payloads
         self.last_raw: str = ""
         self.last_tool_results: list[dict[str, Any]] = []
+        self.last_disagreements: list[dict[str, Any]] = []
+        self.last_sealed_decision: str = ""
+        self._sealed: tuple[DeterministicAssessment, Calculations] | None = None
 
-    def answer(self, fixture: MissionFixture) -> ModelAnswer:
-        """Return this provider's answer for one fixture."""
+    def _assess(self, fixture: MissionFixture) -> tuple[DeterministicAssessment, Calculations]:
+        """Run the deterministic calculator before any model call."""
         aircraft = self._aircraft[fixture.airframe]
         payload = self._payloads[fixture.payload]
+        params = MissionParams.model_validate(fixture.params)
+        weather = WeatherReading.model_validate(fixture.weather)
+        calculations = assess_mission(
+            aircraft=aircraft, payload=payload, params=params, weather=weather
+        )
+        assessment = build_assessment(
+            calculations=calculations,
+            requested_mode=AssessmentMode.ADVISORY,
+            weather=weather,
+            aircraft=aircraft,
+            payload=payload,
+            inputs={"fixture": fixture.fixture_id},
+        )
+        return assessment, calculations
+
+    def answer(self, fixture: MissionFixture) -> ModelAnswer:
+        """Return the sealed answer, with the model's narrative attached.
+
+        The calculator always runs first. The model's JSON may propose a
+        decision, mode, or figures; those are logged as disagreements and
+        overwritten. Only brief_markdown (or legacy prose) is kept as prose.
+        """
+        aircraft = self._aircraft[fixture.airframe]
+        payload = self._payloads[fixture.payload]
+        assessment, calculations = self._assess(fixture)
+        self._sealed = (assessment, calculations)
+        self.last_sealed_decision = assessment.decision.value
+        user = (
+            mission_prompt(fixture, aircraft, payload)
+            + "\n"
+            + sealed_prompt_block(assessment, calculations)
+        )
         messages: list[dict[str, Any]] = [
             {
                 "role": "system",
@@ -262,12 +326,15 @@ class OpenAICompatibleProvider:
                 if self.track == "calculator_tool"
                 else _SYSTEM_NO_TOOLS,
             },
-            {"role": "user", "content": mission_prompt(fixture, aircraft, payload)},
+            {"role": "user", "content": user},
         ]
         self.last_tool_results = []
         raw = self._complete(messages, fixture)
         self.last_raw = raw
-        return parse_model_answer(raw)
+        parsed = parse_model_answer(raw)
+        result = apply_sealed_override(assessment, calculations, parsed, narrative=parsed.prose)
+        self.last_disagreements = list(result.disagreements)
+        return result.answer
 
     def _complete(self, messages: list[dict[str, Any]], fixture: MissionFixture) -> str:
         """Run the chat loop, dispatching tool calls when the track allows them."""
@@ -280,6 +347,7 @@ class OpenAICompatibleProvider:
                     "messages": messages,
                     "temperature": self.endpoint.temperature,
                     "seed": self.endpoint.seed,
+                    "response_format": brief_response_format(),
                 }
                 if self.track == "calculator_tool":
                     body["tools"] = [ASSESS_TOOL]
@@ -331,20 +399,9 @@ class OpenAICompatibleProvider:
         name = (call.get("function") or {}).get("name", "")
         if name != "assess_mission":
             return {"error": f"unknown tool: {name}"}
-        aircraft = self._aircraft[fixture.airframe]
-        payload = self._payloads[fixture.payload]
-        params = MissionParams.model_validate(fixture.params)
-        weather = WeatherReading.model_validate(fixture.weather)
-        calculations = assess_mission(
-            aircraft=aircraft, payload=payload, params=params, weather=weather
-        )
-        assessment = build_assessment(
-            calculations=calculations,
-            inputs={"fixture": fixture.fixture_id},
-            weather=weather,
-            aircraft=aircraft,
-            payload=payload,
-        )
+        if self._sealed is None:
+            self._sealed = self._assess(fixture)
+        assessment, calculations = self._sealed
         return {
             "decision": assessment.decision.value,
             "mode": assessment.mode.value,

@@ -218,6 +218,11 @@ class Settings(BaseSettings):
     # is never operational grade, so every plan is advisory.
     demo_mode: bool = Field(default=False)
     openai_model: str = Field(default="gpt-4o-mini")
+    # Optional OpenAI-compatible base URL (for example a local llama.cpp server).
+    # Empty means the library default (api.openai.com).
+    openai_base_url: str = Field(default="")
+    llm_seed: int = Field(default=42)
+    llm_model_sha256: str = Field(default="")
     api_key: str = Field(default="")
     # Per-operator keys (#81): "alpha:key-a,bravo:key-b". Each mission belongs to
     # the operator whose key planned it, and only that key can read it.
