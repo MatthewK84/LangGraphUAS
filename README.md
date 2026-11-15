@@ -100,21 +100,13 @@ deterministic go/no-go summary instead of a model narrative.
 
 The graph is defined in `backend/suas/graph/`. Nodes are built by factories that
 receive dependencies explicitly, so no node relies on global state and each is
-unit testable. The flow is:
+unit testable. The flow is a single column, so it stays readable on a phone:
 
-```mermaid
-flowchart TD
-    S([START]) --> validate
-    validate -- viable --> weather
-    validate -- validation failed --> report
-    weather --> calculations
-    calculations --> cite_limits
-    cite_limits --> human_ack
-    human_ack -- confirm --> report
-    human_ack -- edit --> calculations
-    human_ack -- abort --> E([END])
-    report --> E
-```
+- START → `validate`
+- `validate` → `weather` when the setup is viable, otherwise straight to `report`
+- `weather` → `calculations` → `cite_limits` → `human_ack`
+- `human_ack` → `report` on confirm, back to `calculations` on edit, or END on abort
+- `report` → END
 
 `human_ack` interrupts the run and waits for a person. The order is a security
 control rather than a workflow preference: the operator signs an assessment that
