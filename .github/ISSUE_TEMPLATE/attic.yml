@@ -1,0 +1,29 @@
+name: Attic idea
+description: Park a new idea until the showcase freeze ends. Oracle bugs are not attic items.
+title: "attic: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The `v0.4.0-eval` showcase freeze (2026-11-15 through 2026-11-29) allows
+        only oracle-bug fixes on `main`. An idea that is not an oracle bug waits
+        here, titled `attic:`, until the freeze lifts.
+
+        If the calculator is wrong, do not use this template. File a bug and
+        fix it.
+
+  - type: textarea
+    id: idea
+    attributes:
+      label: The idea
+      description: What you would want to build after the freeze. Not a pitch.
+    validations:
+      required: true
+
+  - type: textarea
+    id: why_not_oracle
+    attributes:
+      label: Why this is not an oracle bug
+      description: One or two sentences. Oracle bugs stay in scope during the freeze.
+    validations:
+      required: true

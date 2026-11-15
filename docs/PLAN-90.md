@@ -18,11 +18,14 @@ beside it:
 | `docs/adr/` | The four decisions that everything else assumes |
 | `docs/backlog/` | The seventeen opening issues, ready to file |
 
-## Status as of 2026-11-14
+## Status as of 2026-11-15
 
-Calendar day 7 of 90. The calendar is not the progress bar: all seventeen
-opening issues are merged, including the Phase 3 eval work, so the backlog is
-ahead of the dates. What follows is measured from `main`, not from the plan.
+**Showcase freeze.** From the `v0.4.0-eval` tag (2026-11-15) through 2026-11-29,
+only oracle-bug fixes may land on `main`. Feature work waits. New ideas are
+filed with the `attic:` issue template and stay parked until the freeze lifts.
+Oracle bugs in the calculator remain in scope.
+
+What follows is measured from `main`, not from the plan.
 
 ### On main
 
@@ -80,13 +83,10 @@ make the seed pass.
 
 ### Next three PRs
 
-#74 to #78 wait on data or a decision (a ticket to open, a datasheet, a flight
-log, a gate review), so the next three continue wave 2 now that #84 is on
-`main`:
-
-1. **#85** — a shared weather cache.
-2. **#86** — a checkpoint purge job.
-3. **#87** — migrations as an explicit deploy step.
+The showcase freeze is in effect through 2026-11-29: no feature PRs until it
+lifts. Only oracle-bug fixes may merge. #85 (shared weather cache), #86
+(checkpoint purge job), and #87 (migrations as an explicit deploy step) wait
+with other feature work. #74 to #78 still wait on data or a decision.
 
 Updated in any PR that changes what is on `main`.
 
