@@ -25,7 +25,9 @@ describe("results panel states (#95)", () => {
       narrative_source: "model" as const,
     };
     render(<ResultsPanel loading={false} error={null} result={written} />);
-    screen.getByText("Model narrative: every number matches the sealed result.");
+    screen.getByText(
+      "Model narrative: every number matches the sealed result.",
+    );
     expect(screen.queryByText(/Model narrative withheld/)).toBeNull();
   });
 
