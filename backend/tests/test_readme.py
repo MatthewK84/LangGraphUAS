@@ -93,6 +93,13 @@ def test_the_opening_states_what_it_is_what_it_is_not_and_links_the_eval() -> No
     assert "eval/LEADERBOARD.md" in opening
 
 
+def test_the_opening_links_a_real_demo_recording() -> None:
+    """The README may only link a recording of this app, not a placeholder (#99)."""
+    opening = _opening()
+    assert "not yet recorded" not in opening
+    assert "v0.4.0-eval-demo.webm" in opening
+
+
 def test_the_opening_avoids_tactics_frequencies_and_procedures() -> None:
     opening = _opening()
     for term in ("MHz", "GHz", "kHz", "frequency", "frequencies", "tactic", "tactics"):
