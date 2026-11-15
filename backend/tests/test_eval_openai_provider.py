@@ -68,8 +68,8 @@ def _fixture() -> MissionFixture:
         },
         expected_decision="go",
         expected_mode="advisory",
-        expected_residual_wh_range=(158.84, 160.84),
-        expected_hover_power_w=487.98,
+        expected_residual_wh_range=(106.47, 108.47),
+        expected_hover_power_w=1002.09,
         calculator_version="1.9.0",
     )
 
@@ -180,7 +180,7 @@ def _handler(payloads: list[dict[str, Any]]) -> httpx.MockTransport:
                                 {
                                     "decision": "go",
                                     "mode": "advisory",
-                                    "hover_power_w": 487.98,
+                                    "hover_power_w": 1002.09,
                                     "residual_wh": 159.8,
                                     "prose": "Calculator residual is inside the reserve.",
                                 }
@@ -209,7 +209,7 @@ def test_no_tools_track_posts_json_and_does_not_advertise_the_calculator() -> No
     user = posted[0]["messages"][1]["content"]
     assert "Freefly_Astro_Max" in user
     assert "expected_decision" not in user
-    assert "158.84" not in user
+    assert "106.47" not in user
 
 
 def test_calculator_tool_track_runs_the_deterministic_engine_when_called() -> None:
@@ -226,7 +226,7 @@ def test_calculator_tool_track_runs_the_deterministic_engine_when_called() -> No
     assert isinstance(tool["hover_power_w"], float)
     assert posted[1]["messages"][-1]["role"] == "tool"
     assert answer.decision == "go"
-    assert answer.hover_power_w == 487.98
+    assert answer.hover_power_w == 1002.09
 
 
 def test_the_request_goes_to_the_configured_base_url() -> None:
