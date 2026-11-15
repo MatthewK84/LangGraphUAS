@@ -20,6 +20,7 @@ from suas.calculations.assessment import assess_mission, build_assessment
 from suas.db.seed import load_rows
 from suas.eval.mission_scoring import MissionFixture, ModelAnswer
 from suas.graph.override import apply_sealed_override
+from suas.graph.seal import ground_narrative
 from suas.schemas.assessment import AssessmentMode, DeterministicAssessment
 from suas.schemas.brief import brief_response_format
 from suas.schemas.domain import Aircraft, Payload
@@ -280,6 +281,8 @@ class OpenAICompatibleProvider:
         self.last_raw: str = ""
         self.last_tool_results: list[dict[str, Any]] = []
         self.last_disagreements: list[dict[str, Any]] = []
+        self.last_ungrounded: list[str] = []
+        self.last_narrative_source: str = "model"
         self.last_sealed_decision: str = ""
         self._sealed: tuple[DeterministicAssessment, Calculations] | None = None
 
@@ -334,7 +337,18 @@ class OpenAICompatibleProvider:
         parsed = parse_model_answer(raw)
         result = apply_sealed_override(assessment, calculations, parsed, narrative=parsed.prose)
         self.last_disagreements = list(result.disagreements)
-        return result.answer
+        published, invented = ground_narrative(result.answer.prose, assessment, calculations)
+        self.last_ungrounded = invented
+        self.last_narrative_source = "deterministic" if invented else "model"
+        if not invented:
+            return result.answer
+        return ModelAnswer(
+            decision=result.answer.decision,
+            mode=result.answer.mode,
+            hover_power_w=result.answer.hover_power_w,
+            residual_wh=result.answer.residual_wh,
+            prose=published,
+        )
 
     def _complete(self, messages: list[dict[str, Any]], fixture: MissionFixture) -> str:
         """Run the chat loop, dispatching tool calls when the track allows them."""

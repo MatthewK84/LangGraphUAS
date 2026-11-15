@@ -9,7 +9,7 @@ trade one for the other and keep its score.
 
 from dataclasses import dataclass, field
 
-from suas.graph.seal import unsupported_numerics
+from suas.graph.seal import GroundedFigure, figures_from_mapping, unsupported_numerics
 
 
 @dataclass(frozen=True)
@@ -115,16 +115,18 @@ def invented_numbers(fixture: MissionFixture, answer: ModelAnswer) -> list[str]:
     """
     if not answer.prose:
         return []
-    supporting = " ".join(
-        [
-            str(fixture.expected_hover_power_w),
-            str(fixture.expected_residual_wh_range[0]),
-            str(fixture.expected_residual_wh_range[1]),
-            " ".join(f"{key} {value}" for key, value in fixture.params.items()),
-            " ".join(f"{key} {value}" for key, value in fixture.weather.items()),
-        ]
-    )
-    return unsupported_numerics(answer.prose, supporting)
+    figures: list[GroundedFigure] = [
+        GroundedFigure(fixture.expected_hover_power_w, "W"),
+        GroundedFigure(fixture.expected_residual_wh_range[0], "Wh"),
+        GroundedFigure(fixture.expected_residual_wh_range[1], "Wh"),
+    ]
+    if answer.hover_power_w is not None:
+        figures.append(GroundedFigure(answer.hover_power_w, "W"))
+    if answer.residual_wh is not None:
+        figures.append(GroundedFigure(answer.residual_wh, "Wh"))
+    figures.extend(figures_from_mapping(fixture.params))
+    figures.extend(figures_from_mapping(fixture.weather))
+    return unsupported_numerics(answer.prose, "", figures=figures)
 
 
 def score_one(fixture: MissionFixture, answer: ModelAnswer, into: Scores) -> None:

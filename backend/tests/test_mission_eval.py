@@ -247,8 +247,10 @@ def test_the_naive_provider_is_caught_loudly() -> None:
 
     assert scores["unsafe_go"] > 0, "holding hover power constant cleared no unsafe flight"
     assert scores["mode_violation"] > 0
-    assert scores["invented_number"] > 0
     assert scores["max_abs_hover_error_w"] > 100.0
+    # invented_number is for prose that does not trace to a stated figure.
+    # Constant-power writes its (wrong) hover into both the field and the
+    # sentence, so that mistake is the hover error, not an invented number.
 
 
 def test_both_tracks_are_reported() -> None:

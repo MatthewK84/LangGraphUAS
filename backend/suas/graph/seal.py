@@ -16,12 +16,14 @@ counted rather than swallowed.
 """
 
 import re
-from typing import Any, Final
+from collections.abc import Sequence
+from typing import Any, Final, NamedTuple
 
 from pydantic import ValidationError
 
 from suas.schemas.assessment import Decision, DeterministicAssessment
 from suas.schemas.brief import BriefOutput
+from suas.schemas.responses import Calculations
 
 # The only state keys the report node may write. Enforced by test, because the
 # refactor that quietly adds a seventh key is the one worth catching.
@@ -120,9 +122,85 @@ _UNIT_NUMERIC: Final[re.Pattern[str]] = re.compile(
 _ANY_NUMERIC: Final[re.Pattern[str]] = re.compile(r"(?<![\w.])(\d+(?:\.\d+)?)")
 
 
+class GroundedFigure(NamedTuple):
+    """A number from the seal, the calculator, or unit-bearing supporting text."""
+
+    value: float
+    unit: str
+
+
+# Longer suffixes first so _wh wins over _w and _mps wins over _s and _m.
+_KEY_UNITS: Final[tuple[tuple[str, str], ...]] = (
+    ("_wh", "Wh"),
+    ("_w", "W"),
+    ("_mps", "m/s"),
+    ("_kmh", "km/h"),
+    ("_kph", "kph"),
+    ("_mph", "mph"),
+    ("_mah", "mAh"),
+    ("_kg", "kg"),
+    ("_percent", "%"),
+    ("_min", "min"),
+    ("_c", "C"),
+    ("_s", "s"),
+    ("_m", "m"),
+)
+
+_ABS_TOLERANCE: Final[float] = 0.005
+
+
 def _supported_values(supporting_text: str) -> set[float]:
     """Return every number appearing in text the brief is allowed to draw from."""
     return {float(match) for match in _ANY_NUMERIC.findall(supporting_text)}
+
+
+def _unit_for_key(key: str) -> str | None:
+    """Return the unit implied by a JSON key suffix, if one is known."""
+    lowered = key.lower()
+    for suffix, unit in _KEY_UNITS:
+        if lowered.endswith(suffix):
+            return unit
+    return None
+
+
+def figures_from_mapping(value: object, key: str = "") -> list[GroundedFigure]:
+    """Return unit-tagged figures walked out of a mapping or model dump."""
+    if isinstance(value, dict):
+        return _figures_from_items(value)
+    if isinstance(value, (list, tuple)):
+        return _figures_from_sequence(value, key)
+    return _figure_from_scalar(value, key)
+
+
+def _figures_from_items(mapping: dict[object, object]) -> list[GroundedFigure]:
+    found: list[GroundedFigure] = []
+    for child_key, child in mapping.items():
+        found.extend(figures_from_mapping(child, str(child_key)))
+    return found
+
+
+def _figures_from_sequence(
+    values: list[object] | tuple[object, ...], key: str
+) -> list[GroundedFigure]:
+    found: list[GroundedFigure] = []
+    for child in values:
+        found.extend(figures_from_mapping(child, key))
+    return found
+
+
+def _figure_from_scalar(value: object, key: str) -> list[GroundedFigure]:
+    if isinstance(value, bool) or value is None or isinstance(value, str):
+        return []
+    if isinstance(value, (int, float)):
+        unit = _unit_for_key(key)
+        if unit:
+            return [GroundedFigure(float(value), unit)]
+    return []
+
+
+def figures_from_text(text: str) -> list[GroundedFigure]:
+    """Return unit-bearing numbers found in supporting prose or citations."""
+    return [GroundedFigure(float(literal), unit) for literal, unit in _UNIT_NUMERIC.findall(text)]
 
 
 def _is_supported(literal: str, supported: set[float]) -> bool:
@@ -137,29 +215,72 @@ def _is_supported(literal: str, supported: set[float]) -> bool:
     return any(round(value, decimals) == target for value in supported)
 
 
-def unsupported_numerics(prose: str, supporting_text: str) -> list[str]:
+def _figure_matches(literal: str, unit: str, figure: GroundedFigure) -> bool:
+    """Return whether one sealed figure supports a prose number of the same unit."""
+    if figure.unit != unit:
+        return False
+    decimals: int = len(literal.partition(".")[2])
+    target: float = float(literal)
+    if round(figure.value, decimals) == target:
+        return True
+    return abs(figure.value - target) <= _ABS_TOLERANCE
+
+
+def unsupported_numerics(
+    prose: str,
+    supporting_text: str,
+    *,
+    figures: Sequence[GroundedFigure] | None = None,
+) -> list[str]:
     """Return unit-bearing numbers in prose that trace to nothing.
 
-    The model is told to state no number that is not in the assessment or
-    verbatim in evidence; this verifies it rather than trusting it. Every
-    instance is returned so the caller can log each one -- see the
-    unsupported_numeric_rate row in docs/rag-eval.md.
+    When ``figures`` is provided, matching is unit-aware: "3 W" is not
+    supported by a wind speed of 3 m/s. Rounding to the precision the prose
+    chose remains legitimate (119.94 W may be written "120 W"), and a
+    0.005 absolute tolerance covers a figure restated one tick off. Unit-
+    bearing numbers in ``supporting_text`` (citation excerpts) are also
+    accepted. The text-only, unit-blind path is kept for callers that have
+    not yet collected structured figures.
 
-    **This is a tripwire, not a proof, and it is unit-blind.** Matching is on the
-    numeric value alone, so a wind speed of 6.9 m/s in the supporting text will
-    accept "7 W" in prose. Making it unit-aware would mean inferring units from
-    JSON key suffixes, which cannot work for numbers quoted out of citation text
-    -- free prose carries no key. It catches the case it exists for, a wattage
-    the calculator never produced, and it will miss a fabricated number that
-    happens to collide with an unrelated quantity. The seal is what makes that
+    Every instance is returned so the caller can log each one -- see the
+    unsupported_numeric_rate row in docs/rag-eval.md. This is still a
+    tripwire, not a proof: a fabricated number that collides with a same-
+    unit sealed figure will slip through. The seal is what makes that
     survivable: no number here can change a decision or a stored field.
     """
+    if figures is not None:
+        allowed: list[GroundedFigure] = [*figures, *figures_from_text(supporting_text)]
+        found: list[str] = []
+        for literal, unit in _UNIT_NUMERIC.findall(prose):
+            if not any(_figure_matches(literal, unit, item) for item in allowed):
+                found.append(f"{literal} {unit}")
+        return found
     supported: set[float] = _supported_values(supporting_text)
-    found: list[str] = []
+    found = []
     for literal, unit in _UNIT_NUMERIC.findall(prose):
         if not _is_supported(literal, supported):
             found.append(f"{literal} {unit}")
     return found
+
+
+def ground_narrative(
+    prose: str,
+    assessment: DeterministicAssessment,
+    calculations: Calculations | None,
+    extra_text: str = "",
+) -> tuple[str, list[str]]:
+    """Return a publishable brief, or the template if the prose invents a number.
+
+    Figures are taken from the sealed assessment and the calculator output.
+    Citation or weather text can be passed as ``extra_text``.
+    """
+    sourced: list[GroundedFigure] = figures_from_mapping(assessment.model_dump(mode="json"))
+    if calculations is not None:
+        sourced.extend(figures_from_mapping(calculations.model_dump(mode="json")))
+    invented: list[str] = unsupported_numerics(prose, extra_text, figures=sourced)
+    if invented:
+        return render_template_brief(assessment), invented
+    return prose, []
 
 
 def render_template_brief(assessment: DeterministicAssessment) -> str:
