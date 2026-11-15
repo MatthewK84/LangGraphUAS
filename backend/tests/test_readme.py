@@ -61,10 +61,13 @@ def test_quality_gates_name_every_ci_job() -> None:
 
 
 def test_architecture_diagram_names_every_graph_node() -> None:
+    """Name every graph node in Architecture. Mermaid is optional: GitHub
+    failed to render a mermaid flowchart on phone-width README views."""
     nodes = re.findall(r'add_node\("(\w+)"', WORKFLOW)
-    diagram = re.search(r"```mermaid\n(.*?)```", README, re.DOTALL)
-    assert diagram is not None
-    assert nodes and [n for n in nodes if n not in diagram.group(1)] == []
+    section = _section("Architecture")
+    diagram = re.search(r"```mermaid\n(.*?)```", section, re.DOTALL)
+    haystack = diagram.group(1) if diagram else section
+    assert nodes and [n for n in nodes if n not in haystack] == []
 
 
 def test_safety_language_is_kept() -> None:
