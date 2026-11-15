@@ -1,0 +1,902 @@
+{
+  "provider": "mistral-7b-instruct-v0.3",
+  "track": "calculator_tool",
+  "fixtures": 30,
+  "calculator_version": "1.9.0",
+  "scores": {
+    "unsafe_go": 0,
+    "missed_go": 0,
+    "mode_violation": 0,
+    "invented_number": 0,
+    "max_abs_energy_error_wh": 0.0,
+    "max_abs_hover_error_w": 0.0
+  },
+  "per_trap": {
+    "datasheet_conflict": {
+      "unsafe_go": 0,
+      "missed_go": 0,
+      "mode_violation": 0,
+      "invented_number": 0,
+      "max_abs_energy_error_wh": 0.0,
+      "max_abs_hover_error_w": 0.0
+    },
+    "delisted_config": {
+      "unsafe_go": 0,
+      "missed_go": 0,
+      "mode_violation": 0,
+      "invented_number": 0,
+      "max_abs_energy_error_wh": 0.0,
+      "max_abs_hover_error_w": 0.0
+    },
+    "density_altitude": {
+      "unsafe_go": 0,
+      "missed_go": 0,
+      "mode_violation": 0,
+      "invented_number": 0,
+      "max_abs_energy_error_wh": 0.0,
+      "max_abs_hover_error_w": 0.0
+    },
+    "endurance": {
+      "unsafe_go": 0,
+      "missed_go": 0,
+      "mode_violation": 0,
+      "invented_number": 0,
+      "max_abs_energy_error_wh": 0.0,
+      "max_abs_hover_error_w": 0.0
+    },
+    "fallback_weather": {
+      "unsafe_go": 0,
+      "missed_go": 0,
+      "mode_violation": 0,
+      "invented_number": 0,
+      "max_abs_energy_error_wh": 0.0,
+      "max_abs_hover_error_w": 0.0
+    },
+    "pack_procedure": {
+      "unsafe_go": 0,
+      "missed_go": 0,
+      "mode_violation": 0,
+      "invented_number": 0,
+      "max_abs_energy_error_wh": 0.0,
+      "max_abs_hover_error_w": 0.0
+    },
+    "payload_scale": {
+      "unsafe_go": 0,
+      "missed_go": 0,
+      "mode_violation": 0,
+      "invented_number": 0,
+      "max_abs_energy_error_wh": 0.0,
+      "max_abs_hover_error_w": 0.0
+    },
+    "wind_limit": {
+      "unsafe_go": 0,
+      "missed_go": 0,
+      "mode_violation": 0,
+      "invented_number": 0,
+      "max_abs_energy_error_wh": 0.0,
+      "max_abs_hover_error_w": 0.0
+    }
+  },
+  "wall_time_s": 821.243,
+  "cases": [
+    {
+      "fixture_id": "ps-01",
+      "trap": "payload_scale",
+      "expected_decision": "go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "go",
+        "mode": "advisory",
+        "hover_power_w": 487.98,
+        "residual_wh": 159.84,
+        "prose": "The mission is approved with the advisory mode. The UAS will require a hover power of 487.98 watts and will consume 159.84 Wh during the mission."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission is approved with the advisory mode. The UAS will require a hover power of 487.98 watts and will consume 159.84 Wh during the mission.\",\n  \"suggested_contingencies\": [\n    \"Monitor battery level regularly to ensure safe return.\",\n    \"Adjust flight plan if wind conditions exceed the maximum limit of 8 m/s.\",\n    \"Consider grounding the UAS if temperature drops below -20\u00b0C or rises above 50\u00b0C.\"\n  ],\n  \"cited_chunk_ids\": [\"airframe\", \"mission\", \"weather\", \"decision\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "go"
+        }
+      ],
+      "narrative_source": "model"
+    },
+    {
+      "fixture_id": "ps-02",
+      "trap": "payload_scale",
+      "expected_decision": "go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "go",
+        "mode": "advisory",
+        "hover_power_w": 520.12,
+        "residual_wh": 153.1,
+        "prose": "The mission is approved with the advisory mode. The UAS will require an additional power of 520.12 watts during hover, and will have a residual battery capacity of 153.1 Wh after the mission."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission is approved with the advisory mode. The UAS will require an additional power of 520.12 watts during hover, and will have a residual battery capacity of 153.1 Wh after the mission.\",\n  \"suggested_contingencies\": [\n    \"Monitor UAS power consumption closely during the mission.\",\n    \"Consider reducing the mission distance or hover time if power consumption exceeds the available battery capacity.\",\n    \"Ensure the UAS is grounded if the wind speed exceeds the maximum allowable limit of 8 mps.\"\n  ],\n  \"cited_chunk_ids\": [\"airframe\", \"payload\", \"mission\", \"weather\", \"decision\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "go"
+        }
+      ],
+      "narrative_source": "model"
+    },
+    {
+      "fixture_id": "ps-03",
+      "trap": "payload_scale",
+      "expected_decision": "go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "go",
+        "mode": "advisory",
+        "hover_power_w": 574.78,
+        "residual_wh": 142.12,
+        "prose": "The mission is approved with the advisory mode. The UAS will consume approximately 574.78 watts during hover and have a residual battery capacity of 142.12 Wh. Ensure the battery is fully charged before takeoff."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission is approved with the advisory mode. The UAS will consume approximately 574.78 watts during hover and have a residual battery capacity of 142.12 Wh. Ensure the battery is fully charged before takeoff.\",\n  \"suggested_contingencies\": [\n    \"Monitor wind conditions and adjust flight path if necessary to stay below the maximum wind speed limit of 8 m/s.\",\n    \"Maintain a safe distance from obstacles and other aircraft during the mission.\",\n    \"Have a backup battery available in case of unexpected power consumption.\",\n    \"Check the weather forecast and avoid flying in adverse conditions.\"\n  ],\n  \"cited_chunk_ids\": [\"airframe\", \"payload\", \"mission\", \"weather\", \"decision\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "go"
+        }
+      ],
+      "narrative_source": "model"
+    },
+    {
+      "fixture_id": "ps-04",
+      "trap": "payload_scale",
+      "expected_decision": "go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "go",
+        "mode": "advisory",
+        "hover_power_w": 2004.47,
+        "residual_wh": 543.69,
+        "prose": "The mission is deemed safe to proceed with the Inspired Flight IF1200A UAS, given the current weather conditions and the calculated hover power of 2004.47 watts. However, it's important to note that the residual battery capacity after the mission is 543.69 Wh, which should be considered when planning for potential contingencies."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission is deemed safe to proceed with the Inspired Flight IF1200A UAS, given the current weather conditions and the calculated hover power of 2004.47 watts. However, it's important to note that the residual battery capacity after the mission is 543.69 Wh, which should be considered when planning for potential contingencies.\",\n  \"suggested_contingencies\": [\n    \"Monitor wind conditions and adjust flight plan if necessary.\",\n    \"Consider reducing mission distance or hover time to conserve battery.\",\n    \"Have a backup plan in case of unexpected weather changes or technical issues.\"\n  ],\n  \"cited_chunk_ids\": [\"airframe\", \"mission\", \"weather\", \"decision\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "go"
+        }
+      ],
+      "narrative_source": "model"
+    },
+    {
+      "fixture_id": "ps-05",
+      "trap": "payload_scale",
+      "expected_decision": "go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "go",
+        "mode": "advisory",
+        "hover_power_w": 2124.62,
+        "residual_wh": 505.6,
+        "prose": "The mission is deemed safe to proceed with the Inspired Flight IF1200A drone carrying the Trillium HD40-LV Gimbal payload. The drone will operate in advisory mode, consuming approximately 2124.62 watts during hover and 1784.2 watts during cruise. The residual battery capacity after the mission is estimated to be 505.6 Wh."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission is deemed safe to proceed with the Inspired Flight IF1200A drone carrying the Trillium HD40-LV Gimbal payload. The drone will operate in advisory mode, consuming approximately 2124.62 watts during hover and 1784.2 watts during cruise. The residual battery capacity after the mission is estimated to be 505.6 Wh.\",\n  \"suggested_contingencies\": [\n    \"Monitor wind conditions and adjust flight plan if wind speed exceeds 12 mps.\",\n    \"Ensure the drone is within visual line of sight at all times.\",\n    \"Check battery level regularly and abort mission if battery level drops below safe limits.\"\n  ],\n  \"cited_chunk_ids\": [\"airframe\", \"payload\", \"mission\", \"weather\", \"decision\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "go"
+        }
+      ],
+      "narrative_source": "model"
+    },
+    {
+      "fixture_id": "ps-06",
+      "trap": "payload_scale",
+      "expected_decision": "go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "go",
+        "mode": "advisory",
+        "hover_power_w": 4515.0,
+        "residual_wh": 34.72,
+        "prose": "Mission status: GO (advisory).\n\nThe generated brief was withheld because it disagreed with this assessment. What follows comes from the calculator alone.\n\nBlocking operational use:\n- POWER_NOT_OPERATIONAL_GRADE\n- FIELD_NOT_OPERATIONAL_GRADE\n- CONFIGURATION_NOT_LAB_OPERATIONAL\n- BLUE_LIST_SNAPSHOT_UNAVAILABLE\n\nCalculator 1.9.0, inputs 488f4f1a4433fa6e41effd637e94664e2d01df519ad0091f82db3bf428d9e39d."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission is approved with the advisory mode. The Freefly Alta X (Blue) drone with Trillium HD40-LV Gimbal payload will fly a 4000m distance at 100m altitude, given the current weather conditions. The required hover power is 4515W, with a residual battery capacity of 34.72Wh remaining after the mission.\",\n  \"suggested_contingencies\": [\n    \"Monitor wind conditions and adjust flight path if necessary to maintain safe flight.\",\n    \"Ensure the drone is within visual line of sight at all times.\",\n    \"Check battery level regularly and land immediately if the battery level drops below safe limits.\"\n  ],\n  \"cited_chunk_ids\": [\"airframe\", \"payload\", \"mission\", \"weather\", \"decision\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "go"
+        }
+      ],
+      "narrative_source": "deterministic",
+      "ungrounded_numerics": [
+        "4000 m",
+        "100 m"
+      ]
+    },
+    {
+      "fixture_id": "da-01",
+      "trap": "density_altitude",
+      "expected_decision": "go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "go",
+        "mode": "advisory",
+        "hover_power_w": 520.63,
+        "residual_wh": 120.96,
+        "prose": "Mission status: GO (advisory).\n\nThe generated brief was withheld because it disagreed with this assessment. What follows comes from the calculator alone.\n\nBlocking operational use:\n- POWER_NOT_OPERATIONAL_GRADE\n- FIELD_NOT_OPERATIONAL_GRADE\n- BLUE_LIST_SNAPSHOT_UNAVAILABLE\n\nCalculator 1.9.0, inputs c2a6385bee0971b2d8d05f0d861cbe3095b97b08da271438354fdc7e6ac076a9."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission is deemed safe to proceed with the Freefly Astro Max drone carrying the Sony ILX-LR1 payload. The drone will hover at 120m altitude for 420 seconds, covering a distance of 4000m. The required hover power is 520.63W, which is within the drone's capabilities. The residual battery capacity after the mission will be 120.96Wh.\",\n  \"suggested_contingencies\": [\n    \"Monitor wind conditions and adjust flight plan if necessary.\",\n    \"Ensure the drone and payload are within their respective temperature limits.\",\n    \"Check the battery health and charge level before the flight.\"\n  ],\n  \"cited_chunk_ids\": [\"airframe\", \"payload\", \"mission\", \"weather\", \"decision\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "go"
+        }
+      ],
+      "narrative_source": "deterministic",
+      "ungrounded_numerics": [
+        "120 m",
+        "4000 m"
+      ]
+    },
+    {
+      "fixture_id": "da-02",
+      "trap": "density_altitude",
+      "expected_decision": "go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "go",
+        "mode": "advisory",
+        "hover_power_w": 570.41,
+        "residual_wh": 109.53,
+        "prose": "The mission is approved with the advisory mode. The UAS will require an additional power of 570.41 watts during hover, and will have a residual battery capacity of 109.53 Wh after the mission."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission is approved with the advisory mode. The UAS will require an additional power of 570.41 watts during hover, and will have a residual battery capacity of 109.53 Wh after the mission.\",\n  \"suggested_contingencies\": [\n    \"Monitor UAS power consumption closely during the mission.\",\n    \"Consider reducing the mission distance or hover time if power constraints become an issue.\",\n    \"Ensure the UAS is grounded if the wind speed exceeds 8 mps or the wind gust exceeds 4 mps.\"\n  ],\n  \"cited_chunk_ids\": [\"airframe\", \"payload\", \"mission\", \"weather\", \"decision\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "go"
+        }
+      ],
+      "narrative_source": "model"
+    },
+    {
+      "fixture_id": "da-03",
+      "trap": "density_altitude",
+      "expected_decision": "go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "go",
+        "mode": "advisory",
+        "hover_power_w": 627.54,
+        "residual_wh": 96.41,
+        "prose": "The mission is approved with the advisory mode. The UAS will require an increased power output of 627.54 W during hover, and will have a residual battery capacity of 96.41 Wh after the mission."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission is approved with the advisory mode. The UAS will require an increased power output of 627.54 W during hover, and will have a residual battery capacity of 96.41 Wh after the mission.\",\n  \"suggested_contingencies\": [\n    \"Monitor UAS power consumption closely during the mission.\",\n    \"Consider reducing the mission distance or hover time if battery constraints become a concern.\",\n    \"Ensure the UAS is grounded if the wind speed exceeds 8 m/s or the wind gust exceeds 12 m/s.\"\n  ],\n  \"cited_chunk_ids\": [\"airframe\", \"payload\", \"mission\", \"weather\", \"decision\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "go"
+        }
+      ],
+      "narrative_source": "model"
+    },
+    {
+      "fixture_id": "da-04",
+      "trap": "density_altitude",
+      "expected_decision": "go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "go",
+        "mode": "advisory",
+        "hover_power_w": 236.67,
+        "residual_wh": 83.51,
+        "prose": "The mission is approved with an advisory mode. The UAS will require an additional power of 236.67 Watts to hover at the target altitude and complete the mission. The residual battery capacity after the mission will be 83.51 Wh."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission is approved with an advisory mode. The UAS will require an additional power of 236.67 Watts to hover at the target altitude and complete the mission. The residual battery capacity after the mission will be 83.51 Wh.\",\n  \"suggested_contingencies\": [\n    \"Monitor UAS power consumption closely during the mission.\",\n    \"Consider reducing the mission distance or hover time if the wind conditions worsen.\",\n    \"Ensure the UAS is in a safe location before landing to avoid potential obstacles.\"\n  ],\n  \"cited_chunk_ids\": [\"airframe\", \"mission\", \"weather\", \"decision\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "go"
+        }
+      ],
+      "narrative_source": "model"
+    },
+    {
+      "fixture_id": "da-05",
+      "trap": "density_altitude",
+      "expected_decision": "go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "go",
+        "mode": "advisory",
+        "hover_power_w": 276.18,
+        "residual_wh": 77.23,
+        "prose": "The mission is approved with an advisory mode. The UAS will require an additional power of 276.18 watts to hover at the target altitude and complete the mission. The residual battery capacity after the mission will be 77.23 Wh."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission is approved with an advisory mode. The UAS will require an additional power of 276.18 watts to hover at the target altitude and complete the mission. The residual battery capacity after the mission will be 77.23 Wh.\",\n  \"suggested_contingencies\": [\n    \"Monitor UAS power consumption closely during the mission.\",\n    \"Consider reducing the mission distance or hover time if the wind conditions worsen.\",\n    \"Ensure the UAS is grounded if the temperature drops below -20\u00b0C or rises above 45\u00b0C.\"\n  ],\n  \"cited_chunk_ids\": [\"da-05\", \"airframe\", \"mission\", \"weather\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "go"
+        }
+      ],
+      "narrative_source": "model"
+    },
+    {
+      "fixture_id": "da-06",
+      "trap": "density_altitude",
+      "expected_decision": "go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "go",
+        "mode": "advisory",
+        "hover_power_w": 193.43,
+        "residual_wh": 26.14,
+        "prose": "The mission is approved with the advisory mode. The UAS will require an additional power of 193.43 Watts during hover and will have a residual battery capacity of 26.14 Wh after the mission."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission is approved with the advisory mode. The UAS will require an additional power of 193.43 Watts during hover and will have a residual battery capacity of 26.14 Wh after the mission.\",\n  \"suggested_contingencies\": [\n    \"Monitor UAS power consumption closely during the mission.\",\n    \"Consider reducing the mission distance or hover time if power constraints become an issue.\",\n    \"Ensure the UAS is grounded if the wind speed exceeds 8.05 mps or the temperature drops below -35.6\u00b0C.\"\n  ],\n  \"cited_chunk_ids\": [\"airframe\", \"payload\", \"mission\", \"weather\", \"decision\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "go"
+        }
+      ],
+      "narrative_source": "model"
+    },
+    {
+      "fixture_id": "fw-01",
+      "trap": "fallback_weather",
+      "expected_decision": "go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "go",
+        "mode": "advisory",
+        "hover_power_w": 487.98,
+        "residual_wh": 159.84,
+        "prose": "The mission is approved with advisory mode. The UAS will require an additional power of 487.98 watts during hover and will have a residual battery capacity of 159.84 Wh after the mission."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission is approved with advisory mode. The UAS will require an additional power of 487.98 watts during hover and will have a residual battery capacity of 159.84 Wh after the mission.\",\n  \"suggested_contingencies\": [\"Monitor UAS power consumption closely during the mission.\", \"Consider reducing the mission distance or hover time if power consumption exceeds the available battery capacity.\"],\n  \"cited_chunk_ids\": [\"fw-01\", \"airframe\", \"mission\", \"weather\", \"decision\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "go"
+        }
+      ],
+      "narrative_source": "model"
+    },
+    {
+      "fixture_id": "fw-02",
+      "trap": "fallback_weather",
+      "expected_decision": "go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "go",
+        "mode": "advisory",
+        "hover_power_w": 236.44,
+        "residual_wh": 91.24,
+        "prose": "Mission status: GO (advisory).\n\nThe generated brief was withheld because it disagreed with this assessment. What follows comes from the calculator alone.\n\nBlocking operational use:\n- WEATHER_NOT_LIVE\n- WEATHER_DEGRADED\n- POWER_NOT_OPERATIONAL_GRADE\n- FIELD_NOT_OPERATIONAL_GRADE\n- CONFIGURATION_NOT_LAB_OPERATIONAL\n- BLUE_LIST_SNAPSHOT_UNAVAILABLE\n\nCalculator 1.9.0, inputs 74cabe76454f8157c4fdf994ad19afd33cf6ffb671aee28af693bb0c5c2036cb."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission can proceed with the advisory mode, as the calculated hover power (236.44 W) is within the airframe's hover power limit (234.3 W). However, due to the wind speed (3.0 mps) and gust (4.0 mps), there is a residual energy of 91.24 Wh. Please consider the suggested contingencies for potential wind changes.\",\n  \"suggested_contingencies\": [\n    \"Monitor wind conditions throughout the mission.\",\n    \"Adjust the flight plan to account for wind direction and speed.\",\n    \"Consider grounding the UAS if wind conditions exceed the maximum wind limit (12.8 mps).\"\n  ],\n  \"cited_chunk_ids\": [\"airframe\", \"mission\", \"weather\", \"decision\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "go"
+        }
+      ],
+      "narrative_source": "deterministic",
+      "ungrounded_numerics": [
+        "234.3 W"
+      ]
+    },
+    {
+      "fixture_id": "fw-03",
+      "trap": "fallback_weather",
+      "expected_decision": "go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "go",
+        "mode": "advisory",
+        "hover_power_w": 520.12,
+        "residual_wh": 153.1,
+        "prose": "The mission is approved with the advisory mode. The UAS will require an increased power output of 520.12 watts during hover due to wind conditions. The remaining battery capacity after the mission is estimated to be 153.1 Wh."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission is approved with the advisory mode. The UAS will require an increased power output of 520.12 watts during hover due to wind conditions. The remaining battery capacity after the mission is estimated to be 153.1 Wh.\",\n  \"suggested_contingencies\": [\n    \"Monitor UAS power consumption closely during the mission.\",\n    \"Consider reducing the mission distance or hover time if power constraints become a concern.\",\n    \"Ensure the UAS is equipped with a wind-resistant gimbal or stabilizer for the payload.\"\n  ],\n  \"cited_chunk_ids\": [\"fw-03\", \"airframe\", \"payload\", \"mission\", \"weather\", \"decision\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "go"
+        }
+      ],
+      "narrative_source": "model"
+    },
+    {
+      "fixture_id": "fw-04",
+      "trap": "fallback_weather",
+      "expected_decision": "go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "go",
+        "mode": "advisory",
+        "hover_power_w": 2002.53,
+        "residual_wh": 722.4,
+        "prose": "The mission is approved with an advisory mode. The UAS will require an additional power of 2002.53 watts to hover and has a residual battery capacity of 722.4 Wh."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission is approved with an advisory mode. The UAS will require an additional power of 2002.53 watts to hover and has a residual battery capacity of 722.4 Wh.\",\n  \"suggested_contingencies\": [\"Monitor wind conditions and adjust flight path if necessary.\", \"Consider reducing mission distance or hover time to conserve battery.\"],\n  \"cited_chunk_ids\": [\"fw-04\", \"airframe\", \"mission\", \"weather\", \"decision\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "go"
+        }
+      ],
+      "narrative_source": "model"
+    },
+    {
+      "fixture_id": "pp-01",
+      "trap": "pack_procedure",
+      "expected_decision": "no_go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "no_go",
+        "mode": "advisory",
+        "hover_power_w": 477.08,
+        "residual_wh": 123.57,
+        "prose": "The mission cannot proceed due to insufficient battery capacity. The calculated hover power (477.08 W) exceeds the available battery capacity (123.57 Wh)."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission cannot proceed due to insufficient battery capacity. The calculated hover power (477.08 W) exceeds the available battery capacity (123.57 Wh).\",\n  \"suggested_contingencies\": [\n    \"Reduce the mission distance or hover time.\",\n    \"Increase the battery capacity.\",\n    \"Use a different UAS with higher battery capacity.\"\n  ],\n  \"cited_chunk_ids\": [\"pp-01\", \"airframe\", \"mission\", \"weather\", \"decision\", \"mode\", \"hover_power_w\", \"battery_wh\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "no_go"
+        }
+      ],
+      "narrative_source": "model"
+    },
+    {
+      "fixture_id": "pp-02",
+      "trap": "pack_procedure",
+      "expected_decision": "no_go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "no_go",
+        "mode": "advisory",
+        "hover_power_w": 461.0,
+        "residual_wh": 82.35,
+        "prose": "Mission status: NO-GO (advisory).\n\nThe generated brief was withheld because it disagreed with this assessment. What follows comes from the calculator alone.\n\nLimiting factors:\n- Ambient temperature is below the battery pack's documented takeoff minimum.\n\nBlocking operational use:\n- POWER_NOT_OPERATIONAL_GRADE\n- FIELD_NOT_OPERATIONAL_GRADE\n- CONFIGURATION_NOT_LAB_OPERATIONAL\n- BLUE_LIST_SNAPSHOT_UNAVAILABLE\n\nCalculator 1.9.0, inputs a60c2f71b752ff47280f46b2e4efab5bd4aac1935ee440d0a14116823988c9f4."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission cannot proceed due to insufficient battery capacity. The calculated hover power (461.0 W) exceeds the available battery capacity (314.0 Wh), leaving a residual capacity of 82.35 Wh.\",\n  \"suggested_contingencies\": [\n    \"Reduce the mission distance or hover time to conserve battery.\",\n    \"Consider using a larger or more efficient battery.\",\n    \"Postpone the mission until weather conditions improve to reduce power consumption.\"\n  ],\n  \"cited_chunk_ids\": [\"airframe\", \"mission\", \"weather\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "no_go"
+        }
+      ],
+      "narrative_source": "deterministic",
+      "ungrounded_numerics": [
+        "314.0 Wh"
+      ]
+    },
+    {
+      "fixture_id": "pp-03",
+      "trap": "pack_procedure",
+      "expected_decision": "go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "go",
+        "mode": "advisory",
+        "hover_power_w": 514.72,
+        "residual_wh": 136.42,
+        "prose": "The mission is approved with the advisory mode. The UAS will require an additional power of 514.72 Watts during hover and will have a residual battery capacity of 136.42 Wh after the mission."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission is approved with the advisory mode. The UAS will require an additional power of 514.72 Watts during hover and will have a residual battery capacity of 136.42 Wh after the mission.\",\n  \"suggested_contingencies\": [\n    \"Monitor UAS power consumption closely during the mission.\",\n    \"Ensure the UAS has sufficient battery capacity for the return journey.\",\n    \"Consider reducing the mission distance or hover time if wind conditions worsen.\"\n  ],\n  \"cited_chunk_ids\": [\"airframe\", \"payload\", \"mission\", \"weather\", \"decision\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "go"
+        }
+      ],
+      "narrative_source": "model"
+    },
+    {
+      "fixture_id": "pp-04",
+      "trap": "pack_procedure",
+      "expected_decision": "go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "go",
+        "mode": "advisory",
+        "hover_power_w": 4206.91,
+        "residual_wh": 236.8,
+        "prose": "The mission is approved with the advisory mode. The UAS will require a hover power of approximately 4206.91 watts and will have a residual battery capacity of 236.8 Wh."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission is approved with the advisory mode. The UAS will require a hover power of approximately 4206.91 watts and will have a residual battery capacity of 236.8 Wh.\",\n  \"suggested_contingencies\": [\"Monitor battery level regularly to ensure safe return-to-base.\", \"Adjust flight plan to account for wind conditions.\", \"Consider grounding the UAS if wind gusts exceed 12 mps.\"],\n  \"cited_chunk_ids\": [\"decision\", \"mode\", \"hover_power_w\", \"residual_wh\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "go"
+        }
+      ],
+      "narrative_source": "model"
+    },
+    {
+      "fixture_id": "dl-01",
+      "trap": "delisted_config",
+      "expected_decision": "go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "go",
+        "mode": "advisory",
+        "hover_power_w": 74.27,
+        "residual_wh": 19.15,
+        "prose": "Mission status: GO (advisory).\n\nThe generated brief was withheld because it disagreed with this assessment. What follows comes from the calculator alone.\n\nBlocking operational use:\n- POWER_NOT_OPERATIONAL_GRADE\n- FIELD_NOT_OPERATIONAL_GRADE\n- CONFIGURATION_NOT_LAB_OPERATIONAL\n- BLUE_LIST_SNAPSHOT_UNAVAILABLE\n\nCalculator 1.9.0, inputs 181073d92c1e62be60ab8d0642d7501cc5b37e094f781f8491ffc565230765d4."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission is approved with the advisory mode. The UAS will consume approximately 74.27 watts during hover and have a residual energy of 19.15 Wh. The mission involves flying 2000 meters at an altitude of 80 meters, with a hover time of 240 seconds, under clear weather conditions with a wind speed of 3 m/s and a temperature of 18\u00b0C.\",\n  \"suggested_contingencies\": [\n    \"Monitor wind conditions and adjust flight plan if wind speed exceeds 14.7 m/s.\",\n    \"Ensure the UAS is within its temperature operating range (-36\u00b0C to 50\u00b0C).\",\n    \"Maintain visual line of sight or use a spotter during the mission.\"\n  ],\n  \"cited_chunk_ids\": [\"dl-01\", \"airframe\", \"mission\", \"weather\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "go"
+        }
+      ],
+      "narrative_source": "deterministic",
+      "ungrounded_numerics": [
+        "3 m/s"
+      ]
+    },
+    {
+      "fixture_id": "dl-02",
+      "trap": "delisted_config",
+      "expected_decision": "go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "go",
+        "mode": "advisory",
+        "hover_power_w": 139.78,
+        "residual_wh": 43.59,
+        "prose": "The mission is approved with the advisory mode. The UAS will consume approximately 139.78 watts during hover and 117.3 watts during cruise. The residual battery capacity after the mission is estimated to be 43.59 Wh."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission is approved with the advisory mode. The UAS will consume approximately 139.78 watts during hover and 117.3 watts during cruise. The residual battery capacity after the mission is estimated to be 43.59 Wh.\",\n  \"suggested_contingencies\": [\n    \"Monitor wind conditions and adjust flight plan if wind speed exceeds 10.28 mps.\",\n    \"Ensure the UAS is within the temperature range of -10.0\u00b0C to 43.0\u00b0C during the mission.\",\n    \"Check the battery level before takeoff and ensure it is above the minimum takeoff capacity.\"\n  ],\n  \"cited_chunk_ids\": [\"airframe\", \"payload\", \"mission\", \"weather\", \"decision\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "go"
+        }
+      ],
+      "narrative_source": "model"
+    },
+    {
+      "fixture_id": "dl-03",
+      "trap": "delisted_config",
+      "expected_decision": "go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "go",
+        "mode": "advisory",
+        "hover_power_w": 161.26,
+        "residual_wh": 31.07,
+        "prose": "The mission is approved with the advisory mode. The UAS will consume approximately 161.26 watts during hover and have a residual battery capacity of 31.07 Wh. No contingencies are suggested as the mission falls within the UAS's capabilities."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission is approved with the advisory mode. The UAS will consume approximately 161.26 watts during hover and have a residual battery capacity of 31.07 Wh. No contingencies are suggested as the mission falls within the UAS's capabilities.\",\n  \"suggested_contingencies\": [],\n  \"cited_chunk_ids\": [\"dl-03\", \"airframe\", \"mission\", \"weather\", \"decision\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "go"
+        }
+      ],
+      "narrative_source": "model"
+    },
+    {
+      "fixture_id": "dc-01",
+      "trap": "datasheet_conflict",
+      "expected_decision": "no_go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "no_go",
+        "mode": "advisory",
+        "hover_power_w": 458.66,
+        "residual_wh": 82.75,
+        "prose": "The mission cannot proceed due to insufficient battery capacity. The calculated hover power (458.66 W) exceeds the available battery capacity (82.75 Wh)."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission cannot proceed due to insufficient battery capacity. The calculated hover power (458.66 W) exceeds the available battery capacity (82.75 Wh).\",\n  \"suggested_contingencies\": [\n    \"Reduce the mission distance or hover time to conserve battery.\",\n    \"Consider using a larger or more powerful battery.\",\n    \"Postpone the mission until weather conditions improve to reduce power requirements.\"\n  ],\n  \"cited_chunk_ids\": [\"dc-01\", \"airframe\", \"mission\", \"weather\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "no_go"
+        }
+      ],
+      "narrative_source": "model"
+    },
+    {
+      "fixture_id": "dc-02",
+      "trap": "datasheet_conflict",
+      "expected_decision": "no_go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "no_go",
+        "mode": "advisory",
+        "hover_power_w": 539.84,
+        "residual_wh": 50.16,
+        "prose": "Mission status: NO-GO (advisory).\n\nThe generated brief was withheld because it disagreed with this assessment. What follows comes from the calculator alone.\n\nLimiting factors:\n- Ambient temperature is below the battery pack's documented takeoff minimum.\n\nBlocking operational use:\n- POWER_NOT_OPERATIONAL_GRADE\n- FIELD_NOT_OPERATIONAL_GRADE\n- CONFIGURATION_NOT_LAB_OPERATIONAL\n- BLUE_LIST_SNAPSHOT_UNAVAILABLE\n\nCalculator 1.9.0, inputs 2fb0d30b851b48a0c8faa4b7ef983c0fb2dcdc921169e8a909c7664008e80e4d."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission cannot proceed due to insufficient battery capacity. The calculated hover power (539.84 W) exceeds the available battery capacity (314 Wh), resulting in a residual energy of 50.16 Wh.\",\n  \"suggested_contingencies\": [\n    \"Reduce the mission distance or hover time to conserve battery power.\",\n    \"Consider using a larger or more powerful battery.\",\n    \"Evaluate the importance of the mission and decide if it can be postponed until weather conditions improve or battery capacity is sufficient.\"\n  ],\n  \"cited_chunk_ids\": [\"dc-02\", \"airframe\", \"payload\", \"mission\", \"weather\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "no_go"
+        }
+      ],
+      "narrative_source": "deterministic",
+      "ungrounded_numerics": [
+        "314 Wh"
+      ]
+    },
+    {
+      "fixture_id": "wd-01",
+      "trap": "wind_limit",
+      "expected_decision": "no_go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "no_go",
+        "mode": "advisory",
+        "hover_power_w": 487.98,
+        "residual_wh": 193.11,
+        "prose": "The mission cannot proceed due to insufficient power to hover and maintain the required altitude in the given wind conditions. The calculated hover power exceeds the available battery capacity."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission cannot proceed due to insufficient power to hover and maintain the required altitude in the given wind conditions. The calculated hover power exceeds the available battery capacity.\",\n  \"suggested_contingencies\": [\n    \"Reduce the mission distance or hover time to conserve battery power.\",\n    \"Consider using a larger or more powerful battery.\",\n    \"Postpone the mission until wind conditions improve.\"\n  ],\n  \"cited_chunk_ids\": [\"airframe\", \"mission\", \"weather\", \"decision\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "no_go"
+        }
+      ],
+      "narrative_source": "model"
+    },
+    {
+      "fixture_id": "wd-02",
+      "trap": "wind_limit",
+      "expected_decision": "no_go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "no_go",
+        "mode": "advisory",
+        "hover_power_w": 131.36,
+        "residual_wh": 50.99,
+        "prose": "Mission status: NO-GO (advisory).\n\nThe generated brief was withheld because it disagreed with this assessment. What follows comes from the calculator alone.\n\nLimiting factors:\n- Headwind meets or exceeds cruise speed; no ground progress.\n- Gusts exceed the airframe wind limit.\n- Sustained wind exceeds the airframe limit.\n\nBlocking operational use:\n- POWER_NOT_OPERATIONAL_GRADE\n- FIELD_NOT_OPERATIONAL_GRADE\n- CONFIGURATION_NOT_LAB_OPERATIONAL\n- BLUE_LIST_SNAPSHOT_UNAVAILABLE\n\nCalculator 1.9.0, inputs 66b01586331f6630f5b739034d34ba26e9079f2c29ee5a7d5cd466a3f1d28603."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission cannot proceed due to excessive power requirements and potential battery depletion. The calculated hover power is 131.36 watts, which exceeds the reference value of 130.3 watts. The residual battery capacity after the mission is 50.99 Wh, which is below the recommended minimum of 60 Wh for safe operation.\",\n  \"suggested_contingencies\": [\n    \"Reduce the mission distance or hover time to decrease power requirements.\",\n    \"Consider using a different airframe with higher power capacity.\",\n    \"Postpone the mission until weather conditions improve to reduce wind speed and power requirements.\"\n  ],\n  \"cited_chunk_ids\": [\"airframe\", \"mission\", \"weather\", \"decision\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "no_go"
+        }
+      ],
+      "narrative_source": "deterministic",
+      "ungrounded_numerics": [
+        "60 Wh"
+      ]
+    },
+    {
+      "fixture_id": "wd-03",
+      "trap": "wind_limit",
+      "expected_decision": "no_go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "no_go",
+        "mode": "advisory",
+        "hover_power_w": 74.2,
+        "residual_wh": 26.01,
+        "prose": "The mission cannot proceed due to excessive power requirements and wind conditions. The UAS would require 74.2 watts of power to hover, which is above the reference value of 73.6 watts. Additionally, the wind speed is 10 mps, exceeding the UAS's maximum wind limit of 14.7 mps. The residual energy after the mission is 26.01 watt-hours."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission cannot proceed due to excessive power requirements and wind conditions. The UAS would require 74.2 watts of power to hover, which is above the reference value of 73.6 watts. Additionally, the wind speed is 10 mps, exceeding the UAS's maximum wind limit of 14.7 mps. The residual energy after the mission is 26.01 watt-hours.\",\n  \"suggested_contingencies\": [\n    \"Reschedule the mission for a time with lower wind speeds.\",\n    \"Reduce the mission distance or hover time to reduce power requirements.\",\n    \"Consider using a UAS with a higher wind limit or lower power requirements.\"\n  ],\n  \"cited_chunk_ids\": [\"airframe\", \"mission\", \"weather\", \"decision\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "no_go"
+        }
+      ],
+      "narrative_source": "model"
+    },
+    {
+      "fixture_id": "en-01",
+      "trap": "endurance",
+      "expected_decision": "no_go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "no_go",
+        "mode": "advisory",
+        "hover_power_w": 140.05,
+        "residual_wh": -69.11,
+        "prose": "The mission cannot proceed due to insufficient battery capacity. The calculated hover power exceeds the available battery capacity, resulting in a residual energy deficit."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission cannot proceed due to insufficient battery capacity. The calculated hover power exceeds the available battery capacity, resulting in a residual energy deficit.\",\n  \"suggested_contingencies\": [\n    \"Reduce the mission distance or hover time.\",\n    \"Increase the battery capacity of the airframe.\",\n    \"Use a different payload with lower power requirements.\"\n  ],\n  \"cited_chunk_ids\": [\"en-01\", \"airframe\", \"payload\", \"mission\", \"weather\", \"decision\", \"mode\", \"hover_power_w\", \"residual_wh\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "no_go"
+        }
+      ],
+      "narrative_source": "model"
+    },
+    {
+      "fixture_id": "en-02",
+      "trap": "endurance",
+      "expected_decision": "no_go",
+      "expected_mode": "advisory",
+      "answer": {
+        "decision": "no_go",
+        "mode": "advisory",
+        "hover_power_w": 74.34,
+        "residual_wh": -47.9,
+        "prose": "Mission status: NO-GO (advisory).\n\nThe generated brief was withheld because it disagreed with this assessment. What follows comes from the calculator alone.\n\nLimiting factors:\n- Energy required exceeds usable battery capacity after reserve.\n\nBlocking operational use:\n- POWER_NOT_OPERATIONAL_GRADE\n- FIELD_NOT_OPERATIONAL_GRADE\n- CONFIGURATION_NOT_LAB_OPERATIONAL\n- BLUE_LIST_SNAPSHOT_UNAVAILABLE\n\nCalculator 1.9.0, inputs 871f3929829cfb26ed36fd515aae0e76a41f36739cb31aa3fc9aa85cc7c81bda."
+      },
+      "unsafe_go": false,
+      "missed_go": false,
+      "mode_violation": false,
+      "invented_number": false,
+      "raw": "{\n  \"brief_markdown\": \"The mission cannot proceed due to insufficient battery capacity. The calculated hover power (74.34 W) exceeds the available battery capacity (39.27 Wh).\",\n  \"suggested_contingencies\": [\n    \"Reduce the mission distance or hover time.\",\n    \"Use a larger or more powerful battery.\",\n    \"Consider a different airframe with higher endurance capabilities.\"\n  ],\n  \"cited_chunk_ids\": [\"airframe\", \"mission\", \"weather\", \"decision\"]\n}",
+      "disagreements": [
+        {
+          "field": "decision",
+          "model": "unknown",
+          "sealed": "no_go"
+        }
+      ],
+      "narrative_source": "deterministic",
+      "ungrounded_numerics": [
+        "39.27 Wh"
+      ]
+    }
+  ],
+  "run": {
+    "model": "Mistral-7B-Instruct-v0.3",
+    "hf_repo": "bartowski/Mistral-7B-Instruct-v0.3-GGUF",
+    "filename": "Mistral-7B-Instruct-v0.3-Q4_K_M.gguf",
+    "sha256": "1270d22c0fbb3d092fb725d4d96c457b7b687a5f5a715abe1e818da303e562b6",
+    "quantization": "Q4_K_M",
+    "runtime": "llama.cpp 1.0.0-dev (build 12387, commit a956a852c)",
+    "hardware": "8-core Intel Xeon (KVM), 15 GiB RAM, CPU-only (no GPU), Linux 6.12.113+ x86_64",
+    "temperature": 0.0,
+    "seed": 42,
+    "base_url_configured": true,
+    "wall_time_s": 821.243
+  }
+}

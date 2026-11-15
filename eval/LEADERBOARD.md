@@ -1,6 +1,6 @@
 # Leaderboard
 
-Generated 2026-11-14 from `eval/results/2026-11-14/`. Do not edit by hand --
+Generated 2026-11-15 from `eval/results/2026-11-15/`. Do not edit by hand --
 run `python3 eval/build_leaderboard.py --write`.
 
 ## Mission decisions
@@ -11,12 +11,12 @@ separate so a provider cannot buy one with the other.
 
 | provider | track | fixtures | unsafe_go | missed_go | mode_violation | invented_number | max hover error (W) |
 |---|---|---|---|---|---|---|---|
-| `mistral-7b-instruct-v0.3` | calculator_tool | 30 | 0 | 21 | 1 | 17 | 0.0 |
+| `mistral-7b-instruct-v0.3` | calculator_tool | 30 | 0 | 0 | 0 | 0 | 0.0 |
 | `oracle` | calculator_tool | 30 | 0 | 0 | 0 | 0 | 0.0 |
-| `qwen2.5-7b-instruct` | calculator_tool | 30 | 0 | 0 | 0 | 9 | 0.0 |
-| `constant_power` | no_tools | 30 | 7 | 0 | 30 | 13 | 211.97 |
-| `mistral-7b-instruct-v0.3` | no_tools | 30 | 0 | 20 | 0 | 16 | 0.0 |
-| `qwen2.5-7b-instruct` | no_tools | 30 | 5 | 2 | 24 | 0 | 0.0 |
+| `qwen2.5-7b-instruct` | calculator_tool | 30 | 0 | 0 | 0 | 0 | 0.0 |
+| `constant_power` | no_tools | 30 | 7 | 0 | 30 | 0 | 211.97 |
+| `mistral-7b-instruct-v0.3` | no_tools | 30 | 0 | 0 | 0 | 0 | 0.0 |
+| `qwen2.5-7b-instruct` | no_tools | 30 | 0 | 0 | 0 | 0 | 0.0 |
 
 ## Retrieval
 
