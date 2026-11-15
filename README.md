@@ -37,9 +37,8 @@ DIU/DCMA Blue UAS (NDAA-compliant) multirotor platforms.
 
 <div align="center">
 
-<!-- Demo recording: reserved for issue #99. Add only a real recording of this app. -->
-<i>Demo recording: not yet recorded, tracked in <a href="https://github.com/MatthewK84/LangGraphUAS/issues/99">#99</a>.
-Until then the <a href="#quickstart">demo quickstart</a> runs the whole flow locally with no keys.</i>
+<!-- Demo recording: a real walkthrough of this app (#99). -->
+<p align="center"><a href="https://github.com/MatthewK84/LangGraphUAS/releases/download/v0.4.0-eval/v0.4.0-eval-demo.webm">Demo recording</a> (62 seconds): catalog, an advisory plan, review, signature, brief, and a NO-GO when the energy budget does not close. No operational claim. Every on-screen number comes from the committed fixtures and the calculator.</p>
 
 </div>
 
