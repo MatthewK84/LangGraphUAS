@@ -26,7 +26,9 @@ await page.addStyleTag({
 });
 
 const aircraft = page.getByLabel("Aircraft Platform");
-await aircraft.locator("option", { hasText: "Skydio X10D" }).waitFor({ state: "attached" });
+await aircraft
+  .locator("option", { hasText: "Skydio X10D" })
+  .waitFor({ state: "attached" });
 await page.waitForTimeout(2000);
 await aircraft.selectOption("Skydio_X10D");
 await page.waitForTimeout(1200);
@@ -37,14 +39,18 @@ await page.waitForTimeout(1500);
 
 const planned = page.waitForResponse(
   (response) =>
-    response.url().endsWith("/api/plan") && response.request().method() === "POST",
+    response.url().endsWith("/api/plan") &&
+    response.request().method() === "POST",
 );
 await page.getByRole("button", { name: "Analyze flight feasibility" }).click();
 const plan = await (await planned).json();
 if (plan.weather?.source !== "fixture") {
   throw new Error(`expected fixture weather, got ${plan.weather?.source}`);
 }
-if (plan.assessment?.decision !== "go" || plan.assessment?.mode !== "advisory") {
+if (
+  plan.assessment?.decision !== "go" ||
+  plan.assessment?.mode !== "advisory"
+) {
   throw new Error(
     `expected advisory go, got ${plan.assessment?.decision} ${plan.assessment?.mode}`,
   );
@@ -70,7 +76,8 @@ await page.getByLabel("Distance (m)").fill("500000");
 await page.waitForTimeout(1500);
 const planned2 = page.waitForResponse(
   (response) =>
-    response.url().endsWith("/api/plan") && response.request().method() === "POST",
+    response.url().endsWith("/api/plan") &&
+    response.request().method() === "POST",
 );
 await page.getByRole("button", { name: "Analyze flight feasibility" }).click();
 const plan2 = await (await planned2).json();
@@ -90,9 +97,23 @@ await browser.close();
 const raw = await video.path();
 const dest = path.join(outDir, "v0.4.0-eval-demo.webm");
 fs.renameSync(raw, dest);
-console.log(JSON.stringify({ dest, elapsed_s: elapsed, plan: {
-  decision: plan.assessment.decision,
-  mode: plan.assessment.mode,
-  energy_required_wh: plan.calculations?.energy_required_wh,
-  weather: plan.weather?.source,
-}, refusal: { decision: plan2.assessment.decision, reasons: plan2.assessment.reasons } }, null, 2));
+console.log(
+  JSON.stringify(
+    {
+      dest,
+      elapsed_s: elapsed,
+      plan: {
+        decision: plan.assessment.decision,
+        mode: plan.assessment.mode,
+        energy_required_wh: plan.calculations?.energy_required_wh,
+        weather: plan.weather?.source,
+      },
+      refusal: {
+        decision: plan2.assessment.decision,
+        reasons: plan2.assessment.reasons,
+      },
+    },
+    null,
+    2,
+  ),
+);
