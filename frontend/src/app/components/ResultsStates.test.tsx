@@ -34,7 +34,7 @@ describe("results panel states (#95)", () => {
   it("lists one withheld figure beside the deterministic brief", () => {
     const withheld = {
       ...BRIEFED_PLAN,
-      report: "Mission status: NO-GO (advisory).",
+      report: "Mission status: GO (advisory).",
       report_source: "deterministic" as const,
       narrative_source: "deterministic" as const,
       ungrounded_numerics: [{ value: "225.7", unit: "Wh" }],
@@ -44,6 +44,10 @@ describe("results panel states (#95)", () => {
     screen.getByText(
       "Model narrative withheld: 225.7 Wh not found in the sealed result. Showing deterministic brief.",
     );
+    // The sealed plan is an advisory GO; the brief must not invent a NO-GO.
+    screen.getByText("ADVISORY GO - NOT FOR OPERATIONAL USE");
+    screen.getByText("Mission status: GO (advisory).");
+    expect(screen.queryByText(/Mission status: NO-GO/)).toBeNull();
   });
 
   it("lists each withheld figure when several fail the seal", () => {
