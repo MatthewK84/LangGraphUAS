@@ -4,7 +4,7 @@
 
 <p align="center"><b>What it is not.</b> It is explicitly not an airspace, NOTAM, or regulatory clearance tool. A GO means only that the energy budget and airframe envelope close. Today operational mode is unreachable.</p>
 
-<p align="center"><b>Eval.</b> The frozen mission pack and generated leaderboard live in <a href="eval/LEADERBOARD.md"><code>eval/</code></a>. One failure trace, Qwen no_tools on pack_procedure pp-01 from the 2026-11-14 run, is in <a href="eval/traces/pp-01-qwen2.5-7b-instruct.no_tools.2026-11-14.md"><code>eval/traces/</code></a>.</p>
+<p align="center"><b>Eval.</b> The frozen mission pack and generated leaderboard live in <a href="eval/LEADERBOARD.md"><code>eval/</code></a>. One failure trace, Qwen no_tools on pack_procedure pp-01 from the 2026-11-14 run, is in <a href="eval/traces/pp-01-qwen2.5-7b-instruct.no_tools.2026-11-14.md"><code>eval/traces/</code></a>. The writeup of both local-model runs is in <a href="eval/WRITEUP.md"><code>eval/WRITEUP.md</code></a>.</p>
 
 <div align="center">
 
@@ -844,6 +844,7 @@ specifications:
 |---|---|
 | [`docs/engineering-practices.md`](docs/engineering-practices.md) | Branching, CI gates, environments, review bar |
 | [`docs/retrieval.md`](docs/retrieval.md) | pgvector hybrid search for datasheet citations |
+| [`eval/WRITEUP.md`](eval/WRITEUP.md) | Prose account of the 2026-11-14 and 2026-11-15 local-model runs |
 | [`docs/rag-eval.md`](docs/rag-eval.md) | Retrieval and citation metrics and their gate thresholds (not yet run in CI) |
 | [`docs/injection-defense.md`](docs/injection-defense.md) | Prompt injection surfaces and controls |
 | [`docs/threat-model.md`](docs/threat-model.md) | STRIDE across every trust boundary |
@@ -972,7 +973,7 @@ frontend/
 corpus/             manifest-listed manufacturer documents for citations
 attic/              earlier repositories that fed this one, and what they contributed
 docs/               plan, practices, threat model, ADRs, runbooks
-eval/               frozen mission pack, retrieval evaluation, committed 2026-11-14 and 2026-11-15 local-model results, and one published failure trace (offline by default; a real model is optional via `--provider openai` and `SUAS_EVAL_BASE_URL`; scored decision, mode, and figures come from the sealed calculator)
+eval/               frozen mission pack, retrieval evaluation, committed 2026-11-14 and 2026-11-15 local-model results, one published failure trace, and the eval writeup (offline by default; a real model is optional via `--provider openai` and `SUAS_EVAL_BASE_URL`; scored decision, mode, and figures come from the sealed calculator)
 scripts/            Compose smoke test, pinned trivy installer, backlog filer
 services/
   embeddings/       optional embedding service for retrieval
