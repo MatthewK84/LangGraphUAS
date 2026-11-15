@@ -236,9 +236,28 @@ function Skeleton(): JSX.Element {
 
 const BRIEF_SOURCE = {
   deterministic: "Deterministic: no language model wrote this brief.",
-  model:
-    "Written by a language model from the sealed figures. Check it against them.",
+  model: "Model narrative: every number matches the sealed result.",
 } as const;
+
+/**
+ * Mission planner reviewing a signed assessment and brief, deciding in
+ * seconds whether the prose can be trusted against the sealed figures.
+ */
+function formatUngrounded(result: PlanResult): string {
+  return result.ungrounded_numerics
+    .map((item) => `${item.value} ${item.unit}`)
+    .join(", ");
+}
+
+function briefNotice(result: PlanResult): string {
+  const figures = formatUngrounded(result);
+  if (figures.length > 0) {
+    const reason = result.narrative_reason || "not found in the sealed result";
+    return `Model narrative withheld: ${figures} ${reason}. Showing deterministic brief.`;
+  }
+  const source = result.narrative_source;
+  return BRIEF_SOURCE[source];
+}
 
 /**
  * The brief is written after the signature (ADR-004), so before it there is
@@ -253,16 +272,11 @@ function Brief({ result }: { readonly result: PlanResult }): JSX.Element {
       </p>
     );
   }
-  // The backend knows which briefs no model wrote; the wording is not a signal.
-  const source = result.report_source;
+  // Status colour is reserved for the decision banner, not this source note.
   return (
     <section className="px-3 py-3">
       <h3 className="section-label">Safety officer brief</h3>
-      <p
-        className={`mb-2 mt-1 text-sm ${source === "model" ? "text-caution" : "text-fg-muted"}`}
-      >
-        {BRIEF_SOURCE[source]}
-      </p>
+      <p className="mb-2 mt-1 text-sm text-fg-muted">{briefNotice(result)}</p>
       <div className="max-w-prose whitespace-pre-wrap text-md leading-normal text-fg-secondary">
         {result.report}
       </div>
