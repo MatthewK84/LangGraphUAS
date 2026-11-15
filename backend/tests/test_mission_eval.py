@@ -206,7 +206,7 @@ def test_declining_to_state_a_number_is_not_an_energy_error() -> None:
 
 
 def test_hover_error_grows_with_a_constant_power_answer() -> None:
-    """The shape an engineer recognises: the error scales with the payload."""
+    """The shape an engineer recognizes: the error scales with the payload."""
     light = hover_power_error_w(
         _fixture(expected_hover_power_w=488.0), ModelAnswer(decision="go", hover_power_w=488.0)
     )

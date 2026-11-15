@@ -3,7 +3,7 @@ title: "ops: backup and restore of missions and checkpoints"
 labels: ["wave-5", "production"]
 ---
 ## Why
-An acknowledgement is a signature on a specific assessment. A restore that cannot reproduce the hash has lost the signature while appearing to keep it.
+An acknowledgment is a signature on a specific assessment. A restore that cannot reproduce the hash has lost the signature while appearing to keep it.
 
 ## In scope
 - Backup and restore script
@@ -17,7 +17,7 @@ An acknowledgement is a signature on a specific assessment. A restore that canno
 - [ ] The runbook is the procedure that was actually tested
 
 ## Test that would have failed before
-No restore had ever been verified against a stored acknowledgement.
+No restore had ever been verified against a stored acknowledgment.
 
 ## Docs to update
 ops.md

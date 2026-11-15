@@ -179,8 +179,8 @@ def parse_model_answer(text: str) -> ModelAnswer:
     payload = extract_json(text)
     if payload is None:
         return ModelAnswer(decision="unknown", mode="advisory", prose=text)
-    decision = _normalise_decision(payload.get("decision"))
-    mode = _normalise_mode(payload.get("mode"))
+    decision = _normalize_decision(payload.get("decision"))
+    mode = _normalize_mode(payload.get("mode"))
     return ModelAnswer(
         decision=decision,
         mode=mode,
@@ -199,7 +199,7 @@ def _narrative(payload: dict[str, Any], fallback: str) -> str:
     return fallback
 
 
-def _normalise_decision(raw: object) -> str:
+def _normalize_decision(raw: object) -> str:
     text = str(raw or "unknown").strip().lower().replace("-", "_").replace(" ", "_")
     if text in {"go"}:
         return "go"
@@ -208,7 +208,7 @@ def _normalise_decision(raw: object) -> str:
     return "unknown"
 
 
-def _normalise_mode(raw: object) -> str:
+def _normalize_mode(raw: object) -> str:
     text = str(raw or "advisory").strip().lower()
     if text == "operational":
         return "operational"

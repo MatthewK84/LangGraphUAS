@@ -29,8 +29,8 @@ def test_changelog_has_no_feature_prs_during_the_showcase_freeze() -> None:
             continue
         for line in lines:
             lower = line.lower()
-            # t59u and t60u are named, user-approved exceptions. Do not
-            # generalize this escape to other work.
+            # t59u, t60u, and t61u are named, user-approved exceptions. Do
+            # not generalize this escape to other work.
             allowed = (
                 "oracle" in lower
                 or ("t59u" in lower and "freeze exception" in lower and "hover" in lower)
@@ -39,9 +39,14 @@ def test_changelog_has_no_feature_prs_during_the_showcase_freeze() -> None:
                     and "freeze exception" in lower
                     and ("ps-07" in lower or "#218" in lower or "#74" in lower)
                 )
+                or (
+                    "t61u" in lower
+                    and "freeze exception" in lower
+                    and ("spelling" in lower or "us english" in lower)
+                )
             )
             assert allowed, (
                 f"{heading}: freeze-week entries may only record oracle-bug "
-                f"fixes, or the t59u / t60u freeze exceptions, and must "
-                f"say so: {line!r}"
+                f"fixes, or the named t59u / t60u / t61u freeze exceptions, "
+                f"and must say so: {line!r}"
             )

@@ -190,7 +190,7 @@ def test_fallback_weather_names_its_blocker_on_the_assessment() -> None:
     assert Blocker.WEATHER_NOT_LIVE in assessment.blockers
 
 
-async def test_plan_endpoint_honours_requested_mode(app_with_graph: FastAPI) -> None:
+async def test_plan_endpoint_honors_requested_mode(app_with_graph: FastAPI) -> None:
     body = {**_BODY, "assessment_mode": "operational"}
     async with _client(app_with_graph) as client:
         response = await client.post("/api/plan", json=body)

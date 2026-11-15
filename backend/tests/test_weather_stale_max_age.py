@@ -145,7 +145,7 @@ async def test_a_live_fetch_still_replaces_an_expired_reading() -> None:
     )
 
 
-async def test_the_shared_cache_honours_the_max_age_too(tmp_path: Path) -> None:
+async def test_the_shared_cache_honors_the_max_age_too(tmp_path: Path) -> None:
     engine = create_engine(f"sqlite+aiosqlite:///{tmp_path / 'w.db'}")
     await create_schema(engine)
     cache = DatabaseWeatherCache(create_session_factory(engine))

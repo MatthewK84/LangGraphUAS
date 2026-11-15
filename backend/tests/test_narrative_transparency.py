@@ -71,7 +71,7 @@ def test_several_unsupported_figures_are_all_returned() -> None:
     ]
 
 
-async def test_a_grounded_model_brief_is_labelled_model(
+async def test_a_grounded_model_brief_is_labeled_model(
     app_with_graph: FastAPI, session_factory: async_sessionmaker[AsyncSession]
 ) -> None:
     app = _wire(app_with_graph, session_factory, FakeReportService("Review the limits."))

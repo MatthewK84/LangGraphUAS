@@ -86,9 +86,9 @@ def _is_stationary(sample: FlightLogSample, limit: float) -> bool:
 def select_hover_samples(samples: list[FlightLogSample]) -> list[FlightLogSample]:
     """Return the samples that are genuinely in a hover.
 
-    A row labelled ``climb`` or ``descent`` is excluded outright. Everything else
+    A row labeled ``climb`` or ``descent`` is excluded outright. Everything else
     is tested against its measured vertical rate and lateral speed, so a
-    mislabelled row cannot smuggle climb power into a hover figure.
+    mislabeled row cannot smuggle climb power into a hover figure.
     """
     rates: list[float] = climb_rates_mps(samples)
     return [
@@ -145,11 +145,11 @@ def estimate_power(samples: list[FlightLogSample]) -> PowerEstimate | None:
     if not samples:
         return None
     values: list[float] = [sample.effective_power_w for sample in samples]
-    centre: float = median(values)
+    center: float = median(values)
     iqr: float = _interquartile_range(values)
-    spread: float = iqr / centre if centre > 0.0 else 1.0
+    spread: float = iqr / center if center > 0.0 else 1.0
     return PowerEstimate(
-        median_w=round(centre, 2),
+        median_w=round(center, 2),
         sample_count=len(values),
         iqr_w=round(iqr, 2),
         confidence=_confidence_for(len(values), spread),

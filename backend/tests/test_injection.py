@@ -5,7 +5,7 @@ file is the integration-level statement of what the system refuses; the
 unit-level coverage of each mechanism lives beside the mechanism.
 
 It grows monotonically. Every technique seen in the wild becomes a row, and rows
-are never pruned, because a defence nobody re-checks is a defence that quietly
+are never pruned, because a defense nobody re-checks is a defense that quietly
 stops working.
 
 The trap documents are in corpus/eval_trap/ and are `kind: eval_trap`, which the
@@ -381,7 +381,7 @@ async def test_the_invisible_trap_is_quarantined_at_ingest(
     """Matrix row 3 claims "at ingest", so exercise ingest, not just the screener.
 
     The imperative in this document is broken up by zero-width characters. It is
-    caught only because normalisation runs before the tripwire; a filter ordered
+    caught only because normalization runs before the tripwire; a filter ordered
     the other way lets it through intact.
     """
     entry, content = _trap("invisible.txt")
@@ -441,4 +441,4 @@ def test_every_matrix_row_is_present() -> None:
 
     assert len(documented) == 13, "the matrix changed size; update this file to match"
     assert implemented == documented, "matrix rows and test sections disagree"
-    assert json.dumps(sorted(SEALED_FIELDS))  # sealed set is non-empty and serialisable
+    assert json.dumps(sorted(SEALED_FIELDS))  # sealed set is non-empty and serializable

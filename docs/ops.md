@@ -51,7 +51,7 @@ schema with `create_all`.
 
 ## Backup and restore
 
-An acknowledgement is a signature on one assessment: `mission_threads` keeps
+An acknowledgment is a signature on one assessment: `mission_threads` keeps
 the `inputs_hash` the operator signed, and the LangGraph checkpoint keeps the
 sealed assessment it was signed against. Both live in the planner's one
 Postgres database, along with the catalog, flight logs and corpus, so one
@@ -79,7 +79,7 @@ image has no `pg_dump`. From `backend/`:
 4. **Verify** every signature:
    `SUAS_DATABASE_URL=<restored> python scripts/verify_restore.py`.
    It compares each stored ack's `inputs_hash` with its checkpoint's sealed
-   assessment and prints `N acknowledgement(s) verified, 0 broken`. Exit 1
+   assessment and prints `N acknowledgment(s) verified, 0 broken`. Exit 1
    lists each `thread: signed <hash>, checkpoint has <hash|nothing>`; do not
    serve that database.
 5. **Switch**: point `SUAS_DATABASE_URL` at the restored database and restart
@@ -222,9 +222,9 @@ four vCPUs is already past the point of useful return. Either the bar belongs at
 miss rather than adjusted after the fact.
 
 The `?brief=false` flag the plan called for was not added. A plan now stops at
-the human acknowledgement before any brief exists, so the plan path never reaches
+the human acknowledgment before any brief exists, so the plan path never reaches
 the model and the flag would have been a no-op. Pass `--ack` to exercise the path
-that does call one, and keep that run small: 10 concurrent acknowledgements ran
+that does call one, and keep that run small: 10 concurrent acknowledgments ran
 at p95 0.539s.
 
 ## Crash recovery
@@ -238,14 +238,14 @@ Drill run 2026-09-15 against PostgreSQL 16, single worker, verbatim:
    `go`, **`inputs_hash` byte-identical to step 1**
 5. `POST /api/plan/{thread_id}/ack` → brief generated, `awaiting_ack: false`
 6. `mission_threads` carries `drill-operator | confirm | c0eb19e1… | 1.6.0`
-7. A second acknowledgement returns 409. The report ran once.
+7. A second acknowledgment returns 409. The report ran once.
 
 Nothing was lost between the assessment and the signature, which is what
 `durability="sync"` at those two nodes buys.
 
 ## Two workers, one interrupt
 
-An acknowledgement is serialised by two locks: an in-process `asyncio.Lock` per
+An acknowledgment is serialized by two locks: an in-process `asyncio.Lock` per
 thread id, and `SELECT … FOR UPDATE` on the mission row. Both are needed. The row
 lock is what separates worker processes sharing Postgres; it does nothing on
 SQLite, where the clause is silently ignored, and nothing between two coroutines
@@ -260,8 +260,8 @@ This is not theoretical. Measured against four workers on real Postgres:
 | Both locks, 3 simultaneous acks | 10 | 10 produced exactly one brief |
 
 The losing requests get 409. Holding the locks across the resume is deliberate:
-they cover a single mission's row, so they serialise only the duplicate that must
-be serialised, and the model client's own timeout bounds how long either is held.
+they cover a single mission's row, so they serialize only the duplicate that must
+be serialized, and the model client's own timeout bounds how long either is held.
 
 ## Operator keys
 
@@ -315,7 +315,7 @@ per-instance limits are #84.
 
 ## Key rotation
 
-A mission belongs to an operator id, not to a key, and an acknowledgement is
+A mission belongs to an operator id, not to a key, and an acknowledgment is
 bound to the assessment's `inputs_hash`, not to the key that sends it (#83). So
 rotating a key strands nothing:
 
@@ -409,7 +409,7 @@ exporter does not emit (#112). The three an operator watches first:
   the plans' `blockers` say why.
 - `suas_weather_source_total{source}`: anything but `live` and `cached_fresh`
   rising is the weather playbook below.
-- `suas_lock_contention_total{lock="thread"}`: acknowledgements of one plan
+- `suas_lock_contention_total{lock="thread"}`: acknowledgments of one plan
   that waited on each other. Occasional is a double click; steady growth means
   a client retrying acks in a loop.
 
@@ -431,7 +431,7 @@ grep '"request_id": "<X-Request-ID>"' app.log
 
 A field is `-` until it is known, so a plan that fails before weather is fetched
 still logs its request id and calculator version, including the catch-all
-`"Unhandled error"` line. An acknowledgement's lines carry the signed run's
+`"Unhandled error"` line. An acknowledgment's lines carry the signed run's
 weather source and mode. With `SUAS_JSON_LOGS=false` the same fields appear as
 `calculator_version=... weather_source=... assessment_mode=...` after
 `[request_id]`.
@@ -446,7 +446,7 @@ is an incident, not a curiosity:
 (Earlier drafts also named a per-pattern quarantine counter, a per-field
 violation label and an unverified-span counter; nothing emits them, see #112.)
 
-**A suppressed brief does not invalidate an acknowledgement.** The decision was
+**A suppressed brief does not invalidate an acknowledgment.** The decision was
 computed and signed before the model ran (ADR-004). Preserve the sealed
 assessment, preserve the ack, investigate the brief separately.
 
@@ -485,7 +485,7 @@ the sealed decision; log `"Brief contradicts sealed decision"`) and
 `"Brief states unsupported numeric"`).
 
 **Response.** The seal worked: each affected brief was replaced by the
-template. Decisions are unaffected and no acknowledgement is invalidated,
+template. Decisions are unaffected and no acknowledgment is invalidated,
 since the decision was sealed and signed before the model ran. Keep the
 threads. Contradictions suggest an injected document, so check
 `suas_corpus_quarantine_open` and the retrieved chunks. Invented numbers

@@ -1,5 +1,5 @@
 // How replan findings read on screen. One table per backend enum, keyed by
-// the full union, so a code the backend adds cannot compile unlabelled.
+// the full union, so a code the backend adds cannot compile unlabeled.
 
 import type { AlertCode, AlertSeverity } from "./types";
 

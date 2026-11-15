@@ -4,7 +4,7 @@ The provider is pluggable because the model has to live somewhere, and where it
 lives is a deployment decision rather than a code one. Two implementations ship:
 
 ``HashingEmbedder`` needs nothing. It is a deterministic lexical projection --
-hashed token counts, L2 normalised -- so it runs in tests, in CI, and in a
+hashed token counts, L2 normalized -- so it runs in tests, in CI, and in a
 deployment that has no model service at all. It is **not semantic**: it matches
 shared vocabulary, not shared meaning, and the code says so rather than letting
 a reader assume otherwise.
@@ -69,7 +69,7 @@ class HashingEmbedder:
     """A deterministic lexical projection. Runs anywhere, understands nothing.
 
     Tokens are hashed into a fixed number of buckets and the counts are L2
-    normalised. Two chunks sharing vocabulary land near each other; two chunks
+    normalized. Two chunks sharing vocabulary land near each other; two chunks
     meaning the same thing in different words do not. That is a real limitation,
     not a temporary one, and it is why this is the fallback rather than the
     default for a deployment that cares about recall.
@@ -89,11 +89,11 @@ class HashingEmbedder:
         return self._dimension
 
     async def embed(self, texts: list[str]) -> list[list[float]]:
-        """Return one hashed, normalised vector per text."""
+        """Return one hashed, normalized vector per text."""
         return [self._project(text) for text in texts]
 
     def _project(self, text: str) -> list[float]:
-        """Return the normalised bucket counts for one text."""
+        """Return the normalized bucket counts for one text."""
         vector = [0.0] * self._dimension
         for token in _TOKEN.findall(text.lower()):
             digest = hashlib.sha256(token.encode("utf-8")).digest()

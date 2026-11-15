@@ -31,7 +31,7 @@ What follows is measured from `main`, not from the plan.
 
 - **Sealed decision layer.** `decision` and every watt come from
   `backend/suas/calculations/`. The model writes prose and nothing else.
-- **Human acknowledgement before the brief.** `human_ack` precedes `report`,
+- **Human acknowledgment before the brief.** `human_ack` precedes `report`,
   asserted by a test that fails if the edge is rewired (ADR-004).
 - **Replan against live telemetry**, as a child thread of the briefed one.
 - **Explicit weather states.** `live | cached_fresh | cached_stale | fallback |
@@ -99,7 +99,7 @@ Updated in any PR that changes what is on `main`.
    `source`, `source_url`, `retrieved_at`, `confidence`.
 3. A plan is `advisory` or `operational`. Operational requires live weather, a
    cited airframe row, non-estimate power, a current Blue-list snapshot row for
-   that exact configuration, and a human acknowledgement.
+   that exact configuration, and a human acknowledgment.
 4. Checkpoints are recovery infrastructure, not the database of record. The
    `missions` table owns the mission; LangGraph owns where the graph paused.
 5. Retrieval retrieves. The calculator decides. See ADR-003.

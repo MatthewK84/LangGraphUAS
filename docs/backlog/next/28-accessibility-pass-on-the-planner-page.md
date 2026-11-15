@@ -18,7 +18,7 @@ A NO-GO that fails contrast, or a confirm modal that cannot be reached by keyboa
 - [ ] The ack path is completable without a mouse
 
 ## Test that would have failed before
-The acknowledgement could not be completed by keyboard.
+The acknowledgment could not be completed by keyboard.
 
 ## Docs to update
 README

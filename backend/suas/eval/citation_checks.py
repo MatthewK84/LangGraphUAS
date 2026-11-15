@@ -23,8 +23,8 @@ class CitedSpan:
     quote: str
 
 
-def _normalise_whitespace(text: str) -> str:
-    """Return text with unicode normalised and runs of whitespace collapsed.
+def _normalize_whitespace(text: str) -> str:
+    """Return text with unicode normalized and runs of whitespace collapsed.
 
     A quote that differs from its source only by a line break is the same quote.
     A quote that differs by a word is not, and that is the distinction this
@@ -41,7 +41,7 @@ def quote_verbatim(span: CitedSpan, chunk_text: str) -> bool:
     has destroyed the evidence chain while still sounding correct, and this
     catches it for the cost of a string operation.
     """
-    return _normalise_whitespace(span.quote) in _normalise_whitespace(chunk_text)
+    return _normalize_whitespace(span.quote) in _normalize_whitespace(chunk_text)
 
 
 def citation_resolves(span: CitedSpan, chunks_by_id: dict[str, str]) -> bool:

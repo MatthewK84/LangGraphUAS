@@ -25,7 +25,7 @@ def test_backend_and_proxy_share_the_demo_secret_by_default() -> None:
     assert _default("BACKEND_SESSION_SECRET") == DEMO_SESSION_KEY_SECRET
 
 
-def test_the_demo_secret_is_labelled_wherever_it_ships() -> None:
+def test_the_demo_secret_is_labeled_wherever_it_ships() -> None:
     for path in ("docker-compose.yml", ".env.example", "docs/ops.md", "docs/threat-model.md"):
         text = (_ROOT / path).read_text(encoding="utf-8")
         assert "demo-only" in text.lower(), path

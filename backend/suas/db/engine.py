@@ -30,7 +30,7 @@ def create_session_factory(engine: AsyncEngine) -> async_sessionmaker[AsyncSessi
 async def create_schema(engine: AsyncEngine) -> None:
     """Create all tables if they do not already exist.
 
-    Serialised across workers: create_all inspects then creates, so two
+    Serialized across workers: create_all inspects then creates, so two
     workers on an empty Postgres database collide on the table's type name.
     """
     async with engine.begin() as connection:

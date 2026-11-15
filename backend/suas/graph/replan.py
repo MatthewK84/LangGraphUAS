@@ -62,7 +62,7 @@ def make_ingest_node() -> ReplanNode:
 
     async def ingest_telemetry(state: ReplanState) -> ReplanState:
         snapshot = TelemetrySnapshot.model_validate(state["snapshot"])
-        # Re-dumped after validation so downstream nodes read a normalised shape
+        # Re-dumped after validation so downstream nodes read a normalized shape
         # rather than whatever the client happened to send.
         return {"snapshot": snapshot.model_dump(mode="json")}
 

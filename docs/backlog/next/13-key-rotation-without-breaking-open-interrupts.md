@@ -7,7 +7,7 @@ A key rotated while an operator has an unacknowledged plan open would either str
 
 ## In scope
 - Rotate a key, old key rejected immediately
-- An in-flight acknowledgement stays bound to the mission hash, not to the key
+- An in-flight acknowledgment stays bound to the mission hash, not to the key
 
 ## Out of scope
 - Automatic rotation schedules.

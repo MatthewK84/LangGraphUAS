@@ -30,7 +30,7 @@ _ASTRO = b"""Operating temperature. Astro can operate between -20 and 50 C in st
 Battery temperature at takeoff. Batteries should be kept warm, above 10 C at
 takeoff, after which self-heating maintains them.
 """
-_OTHER = b"""Maximum wind. The X10D tolerates sustained wind to 12 metres per second
+_OTHER = b"""Maximum wind. The X10D tolerates sustained wind to 12 meters per second
 before control authority is the limiting factor rather than endurance.
 """
 
@@ -66,7 +66,7 @@ async def test_the_hashing_embedder_separates_unrelated_text() -> None:
         [
             "Battery temperature at takeoff must exceed 10 C.",
             "Keep the battery above 10 C at takeoff.",
-            "Maximum wind speed is 12 metres per second.",
+            "Maximum wind speed is 12 meters per second.",
         ]
     )
     assert cosine_similarity(related, rephrased) > cosine_similarity(related, unrelated)
@@ -159,7 +159,7 @@ async def test_retrieval_never_crosses_airframes(
         # A query that only the OTHER airframe's document can satisfy.
         leaked = await retrieve(
             session,
-            query="maximum wind sustained metres per second control authority",
+            query="maximum wind sustained meters per second control authority",
             airframe_config_id="Freefly_Astro_Max",
             embedder=embedder,
         )

@@ -224,7 +224,7 @@ async def test_session_keys_record_no_ip(
         (f"alpha:{_OLD}@{_at(10)},alpha:{_OLD}@{_at(5)}", "must not repeat a key"),
     ],
 )
-def test_a_retired_key_list_that_cannot_be_honoured_is_refused(retired: str, message: str) -> None:
+def test_a_retired_key_list_that_cannot_be_honored_is_refused(retired: str, message: str) -> None:
     with pytest.raises(ValidationError, match=message):
         Settings(api_keys=f"alpha:{_NEW}", retired_api_keys=retired)
 

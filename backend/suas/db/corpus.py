@@ -1,7 +1,7 @@
 """Ingesting screened documents into the corpus.
 
 The only write path into the corpus. Everything it stores has been named by the
-manifest, verified against its recorded hash, normalised, and screened. Chunks
+manifest, verified against its recorded hash, normalized, and screened. Chunks
 that trip the screener are written to quarantine instead of to the corpus, and
 their presence blocks operational mode for the configuration they belong to
 until a person clears them.

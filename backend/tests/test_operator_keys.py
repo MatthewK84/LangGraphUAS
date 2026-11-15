@@ -22,7 +22,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from suas.api.routes import _visible_to
 from suas.config import LEGACY_OPERATOR_ID, Settings, get_settings
-from suas.db.retention import get_acknowledgement, record_thread
+from suas.db.retention import get_acknowledgment, record_thread
 from tests.test_ack import _BODY
 from tests.test_replan import _snapshot
 
@@ -122,7 +122,7 @@ async def test_key_a_cannot_acknowledge_key_bs_thread(
     assert other.json() == absent.json()
     assert still_pending.json()["awaiting_ack"] is True
     async with session_factory() as session:
-        row = await get_acknowledgement(session, thread_id)
+        row = await get_acknowledgment(session, thread_id)
     assert row is not None and row.ack_actor is None
 
 
@@ -181,8 +181,8 @@ async def test_each_mission_records_the_key_that_planned_it(
         bravo_thread = await _plan(client, _BRAVO)
 
     async with session_factory() as session:
-        alpha_row = await get_acknowledgement(session, alpha_thread)
-        bravo_row = await get_acknowledgement(session, bravo_thread)
+        alpha_row = await get_acknowledgment(session, alpha_thread)
+        bravo_row = await get_acknowledgment(session, bravo_thread)
     assert alpha_row is not None and alpha_row.operator_key_id == "alpha"
     assert bravo_row is not None and bravo_row.operator_key_id == "bravo"
 

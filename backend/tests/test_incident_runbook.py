@@ -72,8 +72,8 @@ def test_every_metric_a_playbook_names_is_exported_with_that_label(title: str) -
     for name, label in _METRIC.findall(_playbook(title)):
         assert f"# TYPE {name} " in exporter, name
         if label:
-            labelled = re.search(rf"^{name}\{{[^}}]*\b{label}=", exporter, re.MULTILINE)
-            assert labelled, f"{name} has no {label} label"
+            labeled = re.search(rf"^{name}\{{[^}}]*\b{label}=", exporter, re.MULTILINE)
+            assert labeled, f"{name} has no {label} label"
 
 
 @pytest.mark.parametrize("title", _PLAYBOOKS)
@@ -87,4 +87,4 @@ def test_the_seal_violation_spike_has_a_written_response() -> None:
     # The test that would have failed before: there was no written response.
     response = _playbook("Seal-violation spike").split("**Response.**", 1)[1]
     assert "SUAS_OPENAI_API_KEY" in response
-    assert "acknowledgement" in response
+    assert "acknowledgment" in response

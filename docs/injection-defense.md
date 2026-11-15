@@ -42,7 +42,7 @@ fence it, or drop it — but decide in writing.
 **Shipped.** `backend/suas/rag/screening.py` and `backend/suas/rag/manifest.py`,
 with the ingest path in `backend/suas/db/corpus.py` and the offline runner in
 `backend/scripts/ingest_corpus.py`. The code differs from the sketch below in
-one respect worth noting: normalisation strips invisible characters, applies
+one respect worth noting: normalization strips invisible characters, applies
 NFKC, and removes HTML and markdown link syntax in that order, so a zero-width
 space inside a keyword cannot hide it from the tripwire and a link cannot
 survive as an exfiltration target. Verified end to end against a tampered copy

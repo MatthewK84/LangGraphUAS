@@ -1,7 +1,7 @@
 """Unit tests for the pure mission assessment aggregator.
 
 The model corrects power for mass and air density, charges climb and descent,
-penalises cruise for headwind, and derates cold battery capacity. Each of those
+penalizes cruise for headwind, and derates cold battery capacity. Each of those
 was previously absent, and every omission biased the result toward GO, so these
 tests assert direction as well as magnitude.
 """

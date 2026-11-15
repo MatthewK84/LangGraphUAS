@@ -3,7 +3,7 @@
 Every function here is pure: identical inputs always yield identical outputs and
 nothing external is read or mutated (Principle 7).
 
-Modelling notes and their limits are documented per function. These are
+Modeling notes and their limits are documented per function. These are
 engineering approximations for energy feasibility, not certified performance
 data. See the data-provenance section of the README.
 """
@@ -152,7 +152,7 @@ def calculate_climb_energy(
 ) -> float:
     """Return energy in watt-hours to climb to the operating altitude.
 
-    Modelled as the power needed to stay airborne for the duration of the climb,
+    Modeled as the power needed to stay airborne for the duration of the climb,
     plus the potential energy gained divided by a propulsive efficiency.
 
     Args:

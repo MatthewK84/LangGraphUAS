@@ -93,7 +93,7 @@ class DatabaseLimiter:
 
     Each admission is one transaction: create the client's row if missing, lock
     it (``FOR UPDATE`` on Postgres; SQLite's writer lock is already held), prune,
-    decide, write. Concurrent workers on one client therefore serialise, and
+    decide, write. Concurrent workers on one client therefore serialize, and
     the ceiling holds exactly. Wall-clock time, since workers share no monotonic
     clock.
     """

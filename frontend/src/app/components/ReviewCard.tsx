@@ -32,7 +32,7 @@ function SealedSummary({
   return (
     <div className="border-l-2 border-caution bg-caution-tint px-3 py-2">
       <span className="section-label text-caution">
-        Awaiting acknowledgement
+        Awaiting acknowledgment
       </span>
       <p className="mt-1 text-xl font-semibold text-fg">
         {verdictLabel(assessment)} &middot; {assessment.mode}

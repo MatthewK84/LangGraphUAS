@@ -42,7 +42,7 @@ no keys, no internal endpoints, and no bypass phrases.
 
 ## Consequences
 
-Briefs are generated once, after acknowledgement, which costs a round trip the
+Briefs are generated once, after acknowledgment, which costs a round trip the
 UI has to absorb. In exchange, a suppressed or garbled brief is a display
 problem rather than a safety problem — a distinction `docs/ops.md` records for
 incident response: **a suppressed brief does not invalidate an ack.**

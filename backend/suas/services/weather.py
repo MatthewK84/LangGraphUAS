@@ -355,7 +355,7 @@ class WeatherService:
         source: WeatherSource,
         conditions: str,
     ) -> WeatherReading:
-        """Return the best degraded answer available, correctly labelled."""
+        """Return the best degraded answer available, correctly labeled."""
         if cached is not None:
             return cached.model_copy(
                 update={

@@ -314,7 +314,10 @@ jobs:
       - name: Mutator
         if: steps.targets.outputs.any == 'true'
         id: mutate
-        timeout-minutes: 20
+        # 20 minutes was enough for a typical PR's few modules; a wide
+        # mechanical change (for example a spelling pass) can touch most of
+        # suas and needs a longer report-only run.
+        timeout-minutes: 60
         # Report-only for survivors, not for a broken tool. mutator exits 0 when
         # every mutant is killed and 3 when some survive; both pass. Anything
         # else (2: crapper missing, or the suite failing unmutated) fails the

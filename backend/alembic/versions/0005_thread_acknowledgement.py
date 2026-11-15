@@ -28,12 +28,12 @@ _COLUMNS: tuple[sa.Column[object], ...] = (
 
 
 def upgrade() -> None:
-    """Add acknowledgement columns to mission_threads."""
+    """Add acknowledgment columns to mission_threads."""
     for column in _COLUMNS:
         op.add_column("mission_threads", column)
 
 
 def downgrade() -> None:
-    """Drop the acknowledgement columns."""
+    """Drop the acknowledgment columns."""
     for column in _COLUMNS:
         op.drop_column("mission_threads", column.name)

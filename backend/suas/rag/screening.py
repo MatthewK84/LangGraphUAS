@@ -7,8 +7,8 @@ further.
 
 Two rules shape everything here.
 
-**Normalise before you compare.** Invisible characters are stripped and the text
-is NFKC-normalised *before* the content hash is taken and before any pattern is
+**Normalize before you compare.** Invisible characters are stripped and the text
+is NFKC-normalized *before* the content hash is taken and before any pattern is
 matched. Zero-width joiners and bidirectional overrides exist precisely to make
 two different strings look identical to a person and different to a matcher; a
 screener that runs after hashing can be walked straight past.
@@ -75,8 +75,8 @@ class ScreenResult:
         return self.verdict is Verdict.CLEAN
 
 
-def normalise(text: str) -> str:
-    """Return text with invisibles stripped, NFKC-normalised, and links removed.
+def normalize(text: str) -> str:
+    """Return text with invisibles stripped, NFKC-normalized, and links removed.
 
     Order matters. Invisible characters come out first, so a zero-width joiner
     cannot hide a keyword from the tripwire or split a word the hash would
@@ -84,20 +84,20 @@ def normalise(text: str) -> str:
     the sentence still reads.
     """
     stripped: str = INVISIBLE.sub("", text)
-    normalised: str = unicodedata.normalize("NFKC", stripped)
-    without_html: str = HTML_TAG.sub(" ", normalised)
+    normalized: str = unicodedata.normalize("NFKC", stripped)
+    without_html: str = HTML_TAG.sub(" ", normalized)
     return MARKDOWN_LINK.sub(r"\1", without_html).strip()
 
 
 def screen_chunk(text: str) -> ScreenResult:
-    """Return the normalised chunk and whether it may enter the corpus.
+    """Return the normalized chunk and whether it may enter the corpus.
 
     The tripwire is a heuristic and will occasionally fire on an innocent
     sentence in a real manual. That is why it quarantines rather than deletes,
     and why the false-positive rate is worth watching: a tripwire nobody trusts
     gets switched off, which is worse than not having one.
     """
-    cleaned: str = normalise(text)[:MAX_CHUNK_CHARS]
+    cleaned: str = normalize(text)[:MAX_CHUNK_CHARS]
     match = IMPERATIVE.search(cleaned)
     if match is not None:
         return ScreenResult(text=cleaned, verdict=Verdict.QUARANTINE, pattern=match.group(1))

@@ -41,7 +41,7 @@ each pull request; `calculator-version` runs on pull requests only.
 | Migrations, SQLite | `backend` | "Verify migrations apply and match models" | `alembic upgrade head`, `alembic check` and `alembic downgrade base` succeed |
 | Migrations, Postgres | `postgres-integration` ("Postgres integration (py3.12)") | "Apply migrations against Postgres" | `alembic upgrade head` and `alembic check` on Postgres 16 |
 | Honest readiness | `postgres-integration` | "Smoke test app against Postgres", "Smoke test /ready refuses an unmigrated database" | `/ready` is 200 on a migrated Postgres with database, migrations and checkpointer all `ok`, and 503 with migrations `pending` on a database alembic never touched; `EXPECTED_REVISION` is pinned to the alembic head by `tests/test_api.py` |
-| Multi-worker startup | `postgres-integration` | "Concurrent startup on a fresh database" | `tests/test_startup_concurrency.py`: four workers at once on an empty Postgres database, five rounds each, for `create_schema`, the reference-data seed, the checkpointer's `setup()`, and the three in lifespan order; all succeed (the image starts two uvicorn workers, and each runs the whole lifespan). All three are serialised by advisory locks in `suas/db/startup_lock.py`. The startup retention purge runs in every worker unlocked on purpose: its deletes are idempotent, so a second pass only repeats work. `alembic upgrade head` runs once per container, before uvicorn forks; several replicas starting at once are not covered (backlog 17) |
+| Multi-worker startup | `postgres-integration` | "Concurrent startup on a fresh database" | `tests/test_startup_concurrency.py`: four workers at once on an empty Postgres database, five rounds each, for `create_schema`, the reference-data seed, the checkpointer's `setup()`, and the three in lifespan order; all succeed (the image starts two uvicorn workers, and each runs the whole lifespan). All three are serialized by advisory locks in `suas/db/startup_lock.py`. The startup retention purge runs in every worker unlocked on purpose: its deletes are idempotent, so a second pass only repeats work. `alembic upgrade head` runs once per container, before uvicorn forks; several replicas starting at once are not covered (backlog 17) |
 | Shared rate limit | `postgres-integration` | "Shared rate limit on Postgres" | `tests/test_shared_rate_limit.py`: two limiters over two connection pools race fifteen requests at a limit of five and admit exactly five; without the `FOR UPDATE` row lock the race overshoots. The same test runs on SQLite in the backend job (#84) |
 | Calculator version | `calculator-version` ("Calculator version bump") | "Require a version bump when the oracle changes" | `backend/scripts/check_calculator_version.py` fails a pull request that changes `calculations/` without bumping `CALCULATOR_VERSION`. Documentation-only edits need a patch bump too: the gate cannot tell prose from physics, and a version bumped for nothing beats one silently stale. The bump then fails `tests/test_mission_eval.py` until `eval/fixtures/missions.jsonl` is regenerated with `python3 backend/scripts/generate_eval_fixtures.py --write` and carries the new version, so the oracle and its expected values move together (#101) |
 | CRAP and duplication | `ub-mode` ("ub-mode (crapper, dryer)") | "Gate on CRAP < 10 and unlisted duplication < 0.8" | see [ub-mode](#ub-mode-crapper-and-dryer) below |
@@ -224,7 +224,7 @@ Promotion is by image digest. Never by `latest`.
   provenance (`none` when a plan had none), the seal's
   `suas_llm_field_violations_total` and `suas_brief_suppressed_total{reason}`,
   `suas_hallucinated_citation_total`, `suas_corpus_quarantine_open`, and
-  `suas_lock_contention_total{lock}` (`lock="thread"`: acknowledgements of one
+  `suas_lock_contention_total{lock}` (`lock="thread"`: acknowledgments of one
   plan that waited on each other in one worker; waits across workers on the
   mission row show in Postgres's `pg_stat_activity`). Interrupt age,
   checkpoint latency, retrieval hit/miss and a per-field seal label have no
@@ -259,7 +259,7 @@ a meaningful gate. The stack and its smoke remain and can be run locally:
 then `python3 scripts/compose_smoke.py`. It checks `/ready`, the dashboard page,
 the aircraft and payload catalog through the frontend proxy against
 `frontend/src/lib/types.ts`, and the golden path (plan, pending read-back,
-acknowledgement, signed read-back, still advisory on fixture weather). Nothing
+acknowledgment, signed read-back, still advisory on fixture weather). Nothing
 in CI runs it.
 
 `scripts/e2e.sh` runs the same in one command and then drives a real browser

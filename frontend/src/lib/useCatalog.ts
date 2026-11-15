@@ -26,14 +26,14 @@ export function useCatalog(): CatalogState {
   const [state, setState] = useState<CatalogState>(EMPTY);
 
   useEffect(() => {
-    let cancelled = false;
+    let canceled = false;
 
     async function load(): Promise<void> {
       const [aircraftResult, payloadResult] = await Promise.all([
         fetchAircraft(),
         fetchPayloads(),
       ]);
-      if (cancelled) {
+      if (canceled) {
         return;
       }
       if (!aircraftResult.ok) {
@@ -64,7 +64,7 @@ export function useCatalog(): CatalogState {
 
     void load();
     return () => {
-      cancelled = true;
+      canceled = true;
     };
   }, []);
 

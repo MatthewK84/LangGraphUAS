@@ -12,7 +12,7 @@ afterEach(() => {
   forward.mockClear();
 });
 
-test("POST awaits route params before forwarding the acknowledgement", async () => {
+test("POST awaits route params before forwarding the acknowledgment", async () => {
   const { POST } = await import("./route");
   const request = new Request("http://localhost/api/plan/abc-1/ack", {
     method: "POST",

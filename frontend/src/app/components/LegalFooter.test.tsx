@@ -26,15 +26,15 @@ function scrollingAncestor(element: HTMLElement): HTMLElement | null {
 }
 
 describe("legal footer (issue 117)", () => {
-  it("disclaims endorsement and authorisation, with no third-party logo", () => {
+  it("disclaims endorsement and authorization, with no third-party logo", () => {
     stubBackend(ADVISORY_PLAN);
     render(<MissionPlanner />);
     const footer = screen.getByRole("contentinfo");
     const text = footer.textContent ?? "";
-    expect(text).toMatch(/MIT licence/i);
+    expect(text).toMatch(/MIT license/i);
     expect(text).toMatch(/reference data/i);
     expect(text).toMatch(/not an endorsement/i);
-    expect(text).toMatch(/not a flight authorisation/i);
+    expect(text).toMatch(/not a flight authorization/i);
     expect(footer.querySelector("img")).toBeNull();
     expect(footer.querySelector("svg")).toBeNull();
     expect(scrollingAncestor(footer)).toBeNull();

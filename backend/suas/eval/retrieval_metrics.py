@@ -72,7 +72,7 @@ def precision_at_k(retrieved: list[RetrievedChunk], fixture: Fixture, k: int = D
     """Return the fraction of the top k that is relevant. Reported, never gated.
 
     With k=4 and often a single relevant chunk, this caps near 0.25 and
-    optimising it costs recall. It is here because a sudden move in it is worth
+    optimizing it costs recall. It is here because a sudden move in it is worth
     looking at, not because a target exists.
     """
     if not retrieved:

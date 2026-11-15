@@ -1,4 +1,4 @@
-"""Postgres advisory locks that serialise startup writes across workers.
+"""Postgres advisory locks that serialize startup writes across workers.
 
 The container runs several uvicorn workers, and each runs the whole lifespan
 against the same database. Every startup write is check-then-write --
@@ -9,7 +9,7 @@ records the rest -- so on an empty database concurrent workers all take the
 worker's startup and stops the container. Under these locks the workers run
 those steps one after another, and the later ones find the work done.
 
-SQLite already serialises writers and has no advisory locks, so on SQLite
+SQLite already serializes writers and has no advisory locks, so on SQLite
 both helpers do nothing.
 """
 

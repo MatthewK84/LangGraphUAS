@@ -41,7 +41,7 @@ def redact(value: Any) -> Any:
 
     Briefs, prompts and messages are free text that can quote a position, so
     all strings go. Anything that is not plain data is hidden rather than
-    trusted to serialise harmlessly.
+    trusted to serialize harmlessly.
     """
     if isinstance(value, Mapping):
         return {

@@ -232,15 +232,15 @@ def run_provider(provider: Provider, fixtures: list[MissionFixture]) -> dict[str
         "track": provider.track,
         "fixtures": len(fixtures),
         "calculator_version": fixtures[0].calculator_version if fixtures else None,
-        "scores": _summarise(overall),
-        "per_trap": {name: _summarise(scores) for name, scores in sorted(per_trap.items())},
+        "scores": _summarize(overall),
+        "per_trap": {name: _summarize(scores) for name, scores in sorted(per_trap.items())},
         "wall_time_s": round(time.perf_counter() - started, 3),
         "cases": cases,
     }
     return report
 
 
-def _summarise(scores: Scores) -> dict[str, Any]:
+def _summarize(scores: Scores) -> dict[str, Any]:
     """Return counts plus the worst error, which is what a reader acts on."""
     data = asdict(scores)
     energy = scores.energy_errors_wh

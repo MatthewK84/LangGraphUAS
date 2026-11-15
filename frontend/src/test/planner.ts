@@ -1,5 +1,5 @@
 // Drive the whole planner page in jsdom: a stubbed backend and the operator's
-// steps to an assessment. Used where a behaviour lives in how the page wires
+// steps to an assessment. Used where a behavior lives in how the page wires
 // its panels together, not in any one component.
 import { screen, within } from "@testing-library/react";
 import type { UserEvent } from "@testing-library/user-event";

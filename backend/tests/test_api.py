@@ -168,7 +168,7 @@ async def test_payload_catalog_returns_seeded_payloads(app_with_graph: FastAPI) 
     assert "None" in ids
 
 
-async def test_plan_endpoint_returns_an_assessment_awaiting_acknowledgement(
+async def test_plan_endpoint_returns_an_assessment_awaiting_acknowledgment(
     app_with_graph: FastAPI,
 ) -> None:
     async with _client(app_with_graph) as client:

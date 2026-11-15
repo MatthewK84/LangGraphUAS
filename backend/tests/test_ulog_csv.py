@@ -95,7 +95,7 @@ def write_min_ulog(
         for msg_id, (voltage, current) in zip(pack_ids, packs, strict=True):
             buf.extend(data(msg_id, struct.pack("<Qff", timestamp, voltage, current)))
         if local_id is not None:
-            # NED z is down, so a hover at alt_m metres has z = -alt_m.
+            # NED z is down, so a hover at alt_m meters has z = -alt_m.
             buf.extend(
                 data(
                     local_id,
@@ -255,7 +255,7 @@ def test_a_stale_landed_flag_is_not_held() -> None:
     assert rows[0].alt_m == pytest.approx(10.0)
 
 
-def test_an_upcoming_landed_flag_within_the_hold_is_honoured() -> None:
+def test_an_upcoming_landed_flag_within_the_hold_is_honored() -> None:
     with pytest.raises(FlightLogError, match="no in-air samples"):
         rows_from_topics(
             packs=[[PackReading(500_000, 22.0, 0.4)]],

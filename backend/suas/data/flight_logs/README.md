@@ -23,7 +23,7 @@ All three source logs are licensed
 same license, with attribution below.
 
 The applied figure is the 992.07 W median from `054112f4`, the only screened
-log labelled Astro Max, and the conservative (highest) of the three usable
+log labeled Astro Max, and the conservative (highest) of the three usable
 hover medians. The other two logs are supporting evidence and were not
 written into the seed: their descriptions do not say Astro Max.
 

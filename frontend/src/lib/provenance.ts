@@ -12,7 +12,7 @@ export interface FigureTag {
 }
 
 /**
- * How one W or Wh figure is labelled on screen (#79). A figure the backend did
+ * How one W or Wh figure is labeled on screen (#79). A figure the backend did
  * not label is unverified: absence of provenance is never read as a measurement.
  */
 export function figureTag(

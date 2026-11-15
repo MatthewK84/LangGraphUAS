@@ -3,7 +3,7 @@ title: "docs: attic list for feeder work"
 labels: ["wave-4", "eval"]
 ---
 ## Why
-Several earlier repositories fed into this one. Left unlabelled they compete with it for attention and dilute the pinned artifact.
+Several earlier repositories fed into this one. Left unlabeled they compete with it for attention and dilute the pinned artifact.
 
 ## In scope
 - `attic/README.md` listing feeder repositories

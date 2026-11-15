@@ -46,7 +46,7 @@ def _compose_environment() -> Iterator[tuple[str, str, str]]:
             yield service, variable, str(value)
 
 
-async def test_fixture_weather_is_labelled_and_never_operational_grade() -> None:
+async def test_fixture_weather_is_labeled_and_never_operational_grade() -> None:
     reading = await FixtureWeather().fetch(34.0, -80.0)
 
     assert reading.source is WeatherSource.FIXTURE
