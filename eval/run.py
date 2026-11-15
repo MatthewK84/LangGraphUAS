@@ -219,6 +219,12 @@ def run_provider(provider: Provider, fixtures: list[MissionFixture]) -> dict[str
         disagreements = getattr(provider, "last_disagreements", None)
         if disagreements:
             case["disagreements"] = disagreements
+        source = getattr(provider, "last_narrative_source", None)
+        if source:
+            case["narrative_source"] = source
+        ungrounded = getattr(provider, "last_ungrounded", None)
+        if ungrounded:
+            case["ungrounded_numerics"] = ungrounded
         cases.append(case)
 
     report: dict[str, Any] = {

@@ -22,7 +22,7 @@ from suas.db.corpus import has_open_quarantine
 from suas.db.repository import get_aircraft, get_payload
 from suas.errors import ReportGenerationError, SuasError
 from suas.graph.dependencies import GraphDependencies
-from suas.graph.seal import find_contradiction, render_template_brief, unsupported_numerics
+from suas.graph.seal import find_contradiction, ground_narrative, render_template_brief
 from suas.graph.state import MissionState
 from suas.logging_config import annotate_trace
 from suas.rag.retrieve import retrieve
@@ -194,7 +194,11 @@ def _vet_prose(report: str, state: MissionState) -> tuple[str, list[str]]:
         )
         return render_template_brief(assessment), [f"contradiction:{found.lower()}"]
 
-    invented: list[str] = unsupported_numerics(report, _supporting_text(state))
+    calc_dump = state.get("calculations")
+    calculations = Calculations.model_validate(calc_dump) if calc_dump else None
+    published, invented = ground_narrative(
+        report, assessment, calculations, extra_text=_supporting_text(state)
+    )
     if invented:
         # Not a rate check. A brief is short, and one wattage the calculator did
         # not produce is the entire failure mode this exists to catch -- see the
@@ -202,10 +206,8 @@ def _vet_prose(report: str, state: MissionState) -> tuple[str, list[str]]:
         # version of the same measurement.
         for value in invented:
             logger.warning("Brief states unsupported numeric %r. Substituting template.", value)
-        return render_template_brief(assessment), [
-            f"unsupported_numeric:{value.lower()}" for value in invented
-        ]
-    return report, []
+        return published, [f"unsupported_numeric:{value.lower()}" for value in invented]
+    return published, []
 
 
 def _supporting_text(state: MissionState) -> str:
