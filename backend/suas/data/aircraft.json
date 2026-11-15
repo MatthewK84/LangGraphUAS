@@ -524,11 +524,11 @@
     "weight_kg": {
       "value": 19.8,
       "unit": "kg",
-      "source": "secondary",
-      "source_url": null,
-      "retrieved_at": null,
-      "confidence": "medium",
-      "notes": "Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance."
+      "source": "datasheet",
+      "source_url": "https://freeflysystems.com/alta-x/specs",
+      "retrieved_at": "2026-11-15",
+      "confidence": "high",
+      "notes": "Typical flying mass with the standard pair of packs: Typical Standard Empty weight 10.86 kg plus 8.94 kg per pair = 19.80 kg, stored as 19.8 kg (same method as Astro AUW). Quote: \"Typical Standard Empty weight 10.86 kg / 23.94 lb\" on the specs page, and \"Weight: 4.47kg / 9.85lbs per battery 8.94kg / 19.70lbs per pair\" on the official pack page (https://store.freeflysystems.com/products/alta-x-12s-flight-packs-16ah-single). Retrieved 2026-11-15 from manufacturer documents."
     },
     "max_payload_kg": {
       "value": 15.06,
@@ -540,13 +540,13 @@
       "notes": "Quote: \"Maximum Payload 15.06 kg / 33.20 lb\". Retrieved 2026-10-28 from manufacturer document."
     },
     "battery_wh": {
-      "value": 1420.0,
+      "value": 1420.8,
       "unit": "Wh",
-      "source": "derived",
-      "source_url": "https://freeflysystems.com/alta-x/specs",
-      "retrieved_at": "2026-09-14",
-      "confidence": "medium",
-      "notes": "Two 12S 16 Ah packs in parallel at 44.4 V nominal: 2 x 16 x 44.4 = 1420.8 Wh, stored as 1420. Figure obtained from a web search summary of this page on 2026-09-14; this session could not open the page itself (network egress blocked), so it is recorded as secondary rather than datasheet."
+      "source": "datasheet",
+      "source_url": "https://store.freeflysystems.com/products/alta-x-12s-flight-packs-16ah-single",
+      "retrieved_at": "2026-11-15",
+      "confidence": "high",
+      "notes": "System energy of the two required packs: 2 x 16 Ah x 44.4 V = 1420.8 Wh (manufacturer does not print Wh). Quote: \"Capacity: 16Ah Voltage: 44.4V\" and \"Each Alta X flight requires a pair of 12S batteries like this one.\" The aircraft specs page also states \"20C for a 16A-hr pack\" and \"assumes two batteries\" (https://freeflysystems.com/alta-x/specs). Retrieved 2026-11-15 from manufacturer documents."
     },
     "max_wind_mps": {
       "value": 12.0,
