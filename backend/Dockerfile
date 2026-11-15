@@ -15,7 +15,7 @@
 # changes with it.
 
 # ---- Builder: install dependencies into a virtual environment ----
-FROM python:3.11-slim AS builder
+FROM python:3.15-slim AS builder
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
@@ -31,7 +31,7 @@ COPY backend/suas ./suas
 RUN pip install --upgrade pip && pip install .
 
 # ---- Runtime: copy the venv and app, run as a non-root user ----
-FROM python:3.11-slim AS runtime
+FROM python:3.15-slim AS runtime
 
 # SUAS_REQUIRE_POSTGRES: the container refuses to start on SQLite. A container
 # has no durable filesystem to keep a SQLite file on, and this image's non-root
