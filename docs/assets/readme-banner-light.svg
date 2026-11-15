@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 176" role="img" aria-labelledby="title desc">
+  <title id="title">sUAS Intelligent Mission Planner</title>
+  <desc id="desc">Advisory only, not a clearance. Operational mode is unreachable. The language model writes prose; the calculator writes every number.</desc>
+  <rect width="800" height="176" fill="#F2F4F7"/>
+  <rect x="0.5" y="0.5" width="799" height="175" fill="none" stroke="#D3D8DE" stroke-width="1"/>
+  <rect x="0" y="0" width="4" height="176" fill="#8B5D00"/>
+  <rect x="4" y="0" width="796" height="28" fill="#EEF1F4"/>
+  <line x1="4" y1="28" x2="800" y2="28" stroke="#D3D8DE" stroke-width="1"/>
+  <text x="20" y="19" font-family="ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace" font-size="11" font-weight="600" letter-spacing="1.2" fill="#5B6775">sUAS MISSION PLANNER</text>
+  <text x="780" y="19" font-family="ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace" font-size="11" font-weight="600" letter-spacing="1.2" fill="#8B5D00" text-anchor="end">ADVISORY ONLY</text>
+  <text x="20" y="78" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="28" font-weight="600" fill="#1C2127">sUAS Intelligent Mission Planner</text>
+  <text x="20" y="106" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="15" fill="#4A5361">Deterministic energy and performance feasibility. The calculator writes every number.</text>
+  <text x="20" y="146" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="600" letter-spacing="0.6" fill="#8B5D00">ADVISORY ONLY</text>
+  <text x="148" y="146" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" fill="#5B6775">·  not a clearance  ·  operational mode unreachable</text>
+</svg>

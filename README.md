@@ -1,25 +1,25 @@
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme-banner-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="docs/assets/readme-banner-light.svg">
+  <img src="docs/assets/readme-banner-light.svg" alt="sUAS Intelligent Mission Planner. Advisory only, not a clearance. Operational mode is unreachable." width="100%">
+</picture>
+
 <h1 align="center">sUAS Intelligent Mission Planner</h1>
+
+<p align="center">Deterministic energy and performance feasibility for small unmanned aircraft. The language model writes prose; the calculator writes every number. Advisory only: today operational mode is unreachable.</p>
+
+<p align="center">
+<a href="https://github.com/MatthewK84/LangGraphUAS/actions/workflows/ci.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/MatthewK84/LangGraphUAS/ci.yml?branch=main&style=flat-square&labelColor=0B0E12&label=CI" alt="CI"></a>
+<a href="https://github.com/MatthewK84/LangGraphUAS/releases/tag/v0.4.0-eval"><img src="https://img.shields.io/badge/release-v0.4.0--eval-4C90F0?style=flat-square&labelColor=0B0E12" alt="Release v0.4.0-eval"></a>
+<a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-4C90F0?style=flat-square&labelColor=0B0E12" alt="License: MIT"></a>
+<a href="backend/pyproject.toml"><img src="https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-4C90F0?style=flat-square&labelColor=0B0E12" alt="Python 3.11, 3.12, and 3.13"></a>
+</p>
 
 <p align="center"><b>What it is.</b> Deterministic energy and performance feasibility for small unmanned aircraft. The language model writes prose; the calculator writes every number.</p>
 
 <p align="center"><b>What it is not.</b> It is explicitly not an airspace, NOTAM, or regulatory clearance tool. A GO means only that the energy budget and airframe envelope close. Today operational mode is unreachable.</p>
 
 <p align="center"><b>Eval.</b> The frozen mission pack and generated leaderboard live in <a href="eval/LEADERBOARD.md"><code>eval/</code></a>. One failure trace, Qwen no_tools on pack_procedure pp-01 from the 2026-11-14 run, is in <a href="eval/traces/pp-01-qwen2.5-7b-instruct.no_tools.2026-11-14.md"><code>eval/traces/</code></a>. The writeup of both local-model runs is in <a href="eval/WRITEUP.md"><code>eval/WRITEUP.md</code></a>. The advisory demo and this frozen pack are pinned at tag <a href="https://github.com/MatthewK84/LangGraphUAS/releases/tag/v0.4.0-eval"><code>v0.4.0-eval</code></a>.</p>
-
-<div align="center">
-
-[![CI](https://img.shields.io/github/actions/workflow/status/MatthewK84/LangGraphUAS/ci.yml?branch=main&style=for-the-badge&labelColor=000000&label=CI&logo=githubactions&logoColor=white)](https://github.com/MatthewK84/LangGraphUAS/actions/workflows/ci.yml?query=branch%3Amain)
-[![License: MIT](https://img.shields.io/badge/license-MIT-1f6feb?style=for-the-badge&labelColor=000000)](LICENSE)
-[![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-1f6feb?style=for-the-badge&labelColor=000000&logo=python&logoColor=white)](backend/pyproject.toml)
-[![Node](https://img.shields.io/badge/node-20-1f6feb?style=for-the-badge&labelColor=000000&logo=nodedotjs&logoColor=white)](frontend/Dockerfile)
-
-[![mypy](https://img.shields.io/badge/mypy-strict-1f6feb?style=for-the-badge&labelColor=000000)](#quality-gates)
-[![ruff](https://img.shields.io/badge/ruff-incl.%20bandit-1f6feb?style=for-the-badge&labelColor=000000)](#quality-gates)
-[![CRAP](https://img.shields.io/badge/CRAP-%3C%2010-1f6feb?style=for-the-badge&labelColor=000000)](#quality-gates)
-[![gitleaks](https://img.shields.io/badge/gitleaks-full%20history-1f6feb?style=for-the-badge&labelColor=000000)](#quality-gates)
-[![workflow lint](https://img.shields.io/badge/workflows-actionlint%20%2B%20zizmor-1f6feb?style=for-the-badge&labelColor=000000)](#quality-gates)
-
-</div>
 
 > [!WARNING]
 > **Advisory only, not a clearance.** This is an energy and performance
@@ -35,12 +35,11 @@ validation, live weather, deterministic safety math, and a language-model
 safety brief. A Next.js dashboard drives it. The reference data covers a set of
 DIU/DCMA Blue UAS (NDAA-compliant) multirotor platforms.
 
-<div align="center">
+<p align="center">
+<a href="https://github.com/MatthewK84/LangGraphUAS/releases/download/v0.4.0-eval/v0.4.0-eval-demo.webm"><img src="docs/assets/v0.4.0-eval-demo.gif" alt="62-second demo: catalog, an advisory plan, review, signature, brief, and a NO-GO when the energy budget does not close. No operational claim." width="100%"></a>
+</p>
 
-<!-- Demo recording: a real walkthrough of this app (#99). -->
-<p align="center"><a href="https://github.com/MatthewK84/LangGraphUAS/releases/download/v0.4.0-eval/v0.4.0-eval-demo.webm">Demo recording</a> (62 seconds): catalog, an advisory plan, review, signature, brief, and a NO-GO when the energy budget does not close. No operational claim. Every on-screen number comes from the committed fixtures and the calculator.</p>
-
-</div>
+<p align="center"><a href="https://github.com/MatthewK84/LangGraphUAS/releases/download/v0.4.0-eval/v0.4.0-eval-demo.webm">Full demo recording</a> (62 seconds, WebM): catalog, an advisory plan, review, signature, brief, and a NO-GO when the energy budget does not close. No operational claim. Every on-screen number comes from the committed fixtures and the calculator. The GIF above is a compact copy of that recording.</p>
 
 ## Contents
 
@@ -87,17 +86,15 @@ deterministic go/no-go summary instead of a model narrative.
 
 ## Architecture
 
-| Layer | Choice |
-|---|---|
-| Frontend | Next.js 15 (App Router, standalone output), React 19, TypeScript strict, TailwindCSS. |
-| Backend | FastAPI on Python 3.11 to 3.13, fully async request path. |
-| Orchestration | LangGraph 1.x `StateGraph` with a conditional edge and durable checkpointing. |
-| Language model | `langchain-openai` `ChatOpenAI`, called with `ainvoke`, timeout, and bounded retries. |
-| Database | PostgreSQL 16 via async SQLAlchemy 2.0 (SQLite for local and tests). |
-| Migrations | Alembic, async-aware, verified against the ORM models in CI. |
-| Persistence of graph state | `AsyncPostgresSaver` in production, `InMemorySaver` otherwise. |
-| Observability | request correlation, JSON logs, Prometheus metrics, split liveness and readiness. |
-| Deployment | Docker Compose with health checks and non-root images. |
+- **Frontend.** Next.js 15 (App Router, standalone output), React 19, TypeScript strict, TailwindCSS.
+- **Backend.** FastAPI on Python 3.11 to 3.13, fully async request path.
+- **Orchestration.** LangGraph 1.x `StateGraph` with a conditional edge and durable checkpointing.
+- **Language model.** `langchain-openai` `ChatOpenAI`, called with `ainvoke`, timeout, and bounded retries.
+- **Database.** PostgreSQL 16 via async SQLAlchemy 2.0 (SQLite for local and tests).
+- **Migrations.** Alembic, async-aware, verified against the ORM models in CI.
+- **Persistence of graph state.** `AsyncPostgresSaver` in production, `InMemorySaver` otherwise.
+- **Observability.** request correlation, JSON logs, Prometheus metrics, split liveness and readiness.
+- **Deployment.** Docker Compose with health checks and non-root images.
 
 ### Graph design
 
@@ -106,7 +103,7 @@ receive dependencies explicitly, so no node relies on global state and each is
 unit testable. The flow is:
 
 ```mermaid
-flowchart LR
+flowchart TD
     S([START]) --> validate
     validate -- viable --> weather
     validate -- validation failed --> report
@@ -202,17 +199,15 @@ on a fully green run. That is project practice: the branch ruleset does not yet
 list required status checks. Rules and rationale for each gate are in
 [`docs/engineering-practices.md`](docs/engineering-practices.md).
 
-| Job | Effect | What it holds |
-|---|---|---|
-| `backend` | Blocks | On Python 3.11, 3.12 and 3.13: ruff lint (including the bandit `S` rules), ruff format, `mypy --strict`, pytest with coverage at 80% or more, and migrations that apply and match the models |
-| `postgres-integration` | Blocks | Real Postgres: migrations apply, the app boots end to end, `/ready` refuses an unmigrated database, and concurrent startup seeds all succeed |
-| `calculator-version` | Blocks (pull requests only) | A change to `backend/suas/calculations/` must bump `CALCULATOR_VERSION` |
-| `ub-mode` | Blocks | CRAP below 10 for every function in `backend/suas`, and no unlisted duplicate pair at 0.8 or above |
-| `frontend` | Blocks | `tsc`, ESLint (cyclomatic complexity 10 or less, plus `@next/eslint-plugin-next`), the UI standard scan ([docs/ui-standard.md](docs/ui-standard.md)), Prettier, Vitest (which includes axe-core over the planner page and a keyboard-only acknowledgment), production build |
-| `docker` | Blocks on the build | Both images build. Its trivy scan of HIGH and CRITICAL findings is **report-only** (job summary) |
-| `workflow-lint` | Blocks | actionlint and zizmor over `.github/`: actions pinned to commits, no template injection, least-privilege tokens |
-| `secrets-scan` | Blocks | gitleaks, a checksum-verified pinned release, over the full history |
-| `mutation` | **Report-only** | Surviving mutants (mutator) in the changed backend modules, or the safety core on `main` |
+- **`backend`** (blocks). On Python 3.11, 3.12 and 3.13: ruff lint (including the bandit `S` rules), ruff format, `mypy --strict`, pytest with coverage at 80% or more, and migrations that apply and match the models.
+- **`postgres-integration`** (blocks). Real Postgres: migrations apply, the app boots end to end, `/ready` refuses an unmigrated database, and concurrent startup seeds all succeed.
+- **`calculator-version`** (blocks, pull requests only). A change to `backend/suas/calculations/` must bump `CALCULATOR_VERSION`.
+- **`ub-mode`** (blocks). CRAP below 10 for every function in `backend/suas`, and no unlisted duplicate pair at 0.8 or above.
+- **`frontend`** (blocks). `tsc`, ESLint (cyclomatic complexity 10 or less, plus `@next/eslint-plugin-next`), the UI standard scan ([docs/ui-standard.md](docs/ui-standard.md)), Prettier, Vitest (which includes axe-core over the planner page and a keyboard-only acknowledgment), production build.
+- **`docker`** (blocks on the build). Both images build. Its trivy scan of HIGH and CRITICAL findings is **report-only** (job summary).
+- **`workflow-lint`** (blocks). actionlint and zizmor over `.github/`: actions pinned to commits, no template injection, least-privilege tokens.
+- **`secrets-scan`** (blocks). gitleaks, a checksum-verified pinned release, over the full history.
+- **`mutation`** (**report-only**). Surviving mutants (mutator) in the changed backend modules, or the safety core on `main`.
 
 Outside `ci.yml`, both report-only:
 [`audit.yml`](.github/workflows/audit.yml) runs `pip-audit` and `npm audit`
@@ -269,16 +264,14 @@ means the energy budget and airframe envelope close, nothing more.
 
 What the model accounts for:
 
-| Effect | Treatment |
-| --- | --- |
-| Payload mass | All-up mass scales induced power by `(m/m_ref)^1.5` (momentum theory). |
-| Air density | Power scales by `1/sqrt(rho/rho_0)`, with density from the ISA relation at the mission's density altitude. |
-| Density altitude | Computed at the operating altitude, surface temperature extrapolated up at the ISA lapse rate. |
-| Wind | Cruise is flown at `cruise_speed - wind_speed`. Heading is unknown, so the full wind is assumed to be a headwind. |
-| Climb | Hover power for the climb duration, plus `mgh / efficiency`. |
-| Descent | Hover power for the descent duration. No credit for recovered energy. |
-| Gusts | Checked against the airframe wind limit independently of sustained wind. |
-| Temperature | Two-sided against the airframe envelope, and battery capacity is derated when cold. |
+- **Payload mass.** All-up mass scales induced power by `(m/m_ref)^1.5` (momentum theory).
+- **Air density.** Power scales by `1/sqrt(rho/rho_0)`, with density from the ISA relation at the mission's density altitude.
+- **Density altitude.** Computed at the operating altitude, surface temperature extrapolated up at the ISA lapse rate.
+- **Wind.** Cruise is flown at `cruise_speed - wind_speed`. Heading is unknown, so the full wind is assumed to be a headwind.
+- **Climb.** Hover power for the climb duration, plus `mgh / efficiency`.
+- **Descent.** Hover power for the descent duration. No credit for recovered energy.
+- **Gusts.** Checked against the airframe wind limit independently of sustained wind.
+- **Temperature.** Two-sided against the airframe envelope, and battery capacity is derated when cold.
 
 Battery capacity derates linearly from 100% at 20 C to 65% at -10 C, flat
 outside that range. This is representative of the chemistry, not a measured
@@ -297,23 +290,21 @@ source, confidence, and notes. The full inventory is generated into
 [`backend/suas/data/CITATIONS.md`](backend/suas/data/CITATIONS.md) and a test
 fails if it drifts from the data.
 
-| Source | Meaning | Good enough to fly on |
-| --- | --- | --- |
-| `datasheet` | Read from the manufacturer's own published document | yes |
-| `flight_log` | Measured from recorded flight telemetry | yes |
-| `secondary` | Published figure from a specification summary, not the primary document | no |
-| `derived` | Computed from other fields by a formula in the notes | no |
-| `estimate` | An engineering estimate | no |
-| `unknown` | Provenance not recorded. Nobody vouched for this number | no |
+- **`datasheet`.** Read from the manufacturer's own published document. Good enough to fly on: yes.
+- **`flight_log`.** Measured from recorded flight telemetry. Good enough to fly on: yes.
+- **`secondary`.** Published figure from a specification summary, not the primary document. Good enough to fly on: no.
+- **`derived`.** Computed from other fields by a formula in the notes. Good enough to fly on: no.
+- **`estimate`.** An engineering estimate. Good enough to fly on: no.
+- **`unknown`.** Provenance not recorded. Nobody vouched for this number. Good enough to fly on: no.
 
-As of this writing: **85 numeric fields across 8 airframes and 6 payloads; 48
-are `datasheet` (good enough to fly on).** The rest stay non-operational: 15
-`derived` (the two power fields, by
-`hover_power_w = battery_wh / no_payload_endurance_hours` and
-`cruise_power_w = 0.90 * hover_power_w`), 10 `estimate`, 6 `secondary`, and 6
-`unknown`. The operational gate still refuses most plans because hover and cruise
-power remain `derived`, and Blue-list snapshot checks still apply — see
-`backend/suas/data/CITATIONS.md`.
+As of this writing: **85 numeric fields across 8 airframes and 6 payloads; 51
+are good enough to fly on (50 `datasheet`, 1 `flight_log`).** The rest stay
+non-operational: 13 `derived` (for airframes still without a measured power
+log, `hover_power_w = battery_wh / no_payload_endurance_hours` and
+`cruise_power_w = 0.90 * hover_power_w`), 10 `estimate`, 5 `secondary`, and 6
+`unknown`. The operational gate still refuses the lab pair because cruise power
+remains `derived` and `cruise_speed_mps` remains an `estimate`, and Blue-list
+snapshot checks still apply — see `backend/suas/data/CITATIONS.md`.
 
 `secondary` is not a hedge. The figures below were gathered from published
 specification summaries rather than retrieved from the manufacturers' own
@@ -325,26 +316,22 @@ stays open until those fields are promoted or a flight log settles them.
 
 Operating temperature limits are published manufacturer figures:
 
-| Aircraft | `min_temp_c` | Published range | Source |
-| --- | --- | --- | --- |
-| Skydio X10D | -20 | -20 to 45 C | Skydio X10 specifications |
-| Skydio X2D | -10 | -10 to 43 C | Skydio X2 support documentation |
-| Parrot ANAFI USA | -36 | -33 F (-36 C) to 122 F (50 C) | ANAFI USA product sheet 2023-02 |
-| Teal Golden Eagle | -35.6 | -32 F to 110 F (-35.6 to 43.3 C) | Teal Golden Eagle Operators Manual |
-| Freefly Astro Max | -20 | -20 to 50 C | Freefly Astro pilot's operating handbook |
-| Freefly Alta X | -20 | -20 to 50 C | Freefly Alta X specifications |
-| Inspired Flight IF1200A | -10 | -10 to 40 C | IF1200A Information Sheet v1.0 |
+- **Skydio X10D** `min_temp_c` -20. Published range -20 to 45 C. Source: Skydio X10 specifications.
+- **Skydio X2D** `min_temp_c` -10. Published range -10 to 43 C. Source: Skydio X2 support documentation.
+- **Parrot ANAFI USA** `min_temp_c` -36. Published range -33 F (-36 C) to 122 F (50 C). Source: ANAFI USA product sheet 2023-02.
+- **Teal Golden Eagle** `min_temp_c` -35.6. Published range -32 F to 110 F (-35.6 to 43.3 C). Source: Teal Golden Eagle Operators Manual.
+- **Freefly Astro Max** `min_temp_c` -20. Published range -20 to 50 C. Source: Freefly Astro pilot's operating handbook.
+- **Freefly Alta X** `min_temp_c` -20. Published range -20 to 50 C. Source: Freefly Alta X specifications.
+- **Inspired Flight IF1200A** `min_temp_c` -10. Published range -10 to 40 C. Source: IF1200A Information Sheet v1.0.
 
 `Freefly_Astro_Max` additionally carries `pack_min_takeoff_c` at 10 C.
 
 ### Where the four documented conflicts stand
 
-| Conflict | Resolution |
-| --- | --- |
-| IF1200A `max_temp_c` | **Promoted to datasheet 40 C** (IF1200A Information Sheet v1.0). |
-| ANAFI USA `max_temp_c` | **Promoted to datasheet 50 C** (2023-02 product sheet; resolves the prior 43/49/50 circulation). |
-| IF1200A `battery_wh` | **Promoted to datasheet 1420.8 Wh** system energy: 2 x 710.4 Wh per-pack figure; airframe flies two packs. |
-| Alta X power figures soft | **Kept, discrepancy recorded.** The stored hover figure implies ~20 minutes of endurance, which matches the published figure at a 20 lb load rather than the no-payload figure its own formula names. It is conservative, so it stays until a flight log settles it. |
+- **IF1200A `max_temp_c`.** **Promoted to datasheet 40 C** (IF1200A Information Sheet v1.0).
+- **ANAFI USA `max_temp_c`.** **Promoted to datasheet 50 C** (2023-02 product sheet; resolves the prior 43/49/50 circulation).
+- **IF1200A `battery_wh`.** **Promoted to datasheet 1420.8 Wh** system energy: 2 x 710.4 Wh per-pack figure; airframe flies two packs.
+- **Alta X power figures soft.** **Kept, discrepancy recorded.** The stored hover figure implies ~20 minutes of endurance, which matches the published figure at a 20 lb load rather than the no-payload figure its own formula names. It is conservative, so it stays until a flight log settles it.
 
 None of these became `datasheet`. Every figure above was obtained from a web
 search summary of the manufacturer's page, not by opening the page, so they are
@@ -372,14 +359,12 @@ Weather has six explicit states, because "we could not reach the provider",
 "the provider answered with nonsense", and "this is a reading from forty minutes
 ago" are different situations an operator would act on differently.
 
-| `source` | Meaning | Operational? |
-| --- | --- | --- |
-| `live` | Fetched now, parsed, complete | yes |
-| `cached_fresh` | A recent reading, still inside its freshness window | yes |
-| `cached_stale` | Past its window, used because the live fetch failed | no |
-| `fallback` | Defaults; the provider could not be reached | no |
-| `error` | Defaults; the provider answered and the answer was unusable | no |
-| `fixture` | A fixed demo-mode reading, never fetched (#97) | no |
+- **`live`.** Fetched now, parsed, complete. Operational: yes.
+- **`cached_fresh`.** A recent reading, still inside its freshness window. Operational: yes.
+- **`cached_stale`.** Past its window, used because the live fetch failed. Operational: no.
+- **`fallback`.** Defaults; the provider could not be reached. Operational: no.
+- **`error`.** Defaults; the provider answered and the answer was unusable. Operational: no.
+- **`fixture`.** A fixed demo-mode reading, never fetched (#97). Operational: no.
 
 The rule the service exists to keep is narrow and absolute: **a degraded reading
 must never be indistinguishable from a live one.** Anything short of the top two
@@ -436,18 +421,16 @@ headroom, select `Freefly_Astro_Max`.
 
 ## API
 
-| Method | Path | Purpose |
-| --- | --- | --- |
-| `GET` | `/health` | Liveness. Touches no dependencies. |
-| `GET` | `/ready` | Readiness: database reachable, schema at the code's alembic revision, checkpoint store readable. Returns 503 otherwise; a missing model key does not count. See [ops](docs/ops.md#readiness). |
-| `GET` | `/metrics` | Prometheus text exposition: request counts, latency, plan outcomes by granted mode, weather provenance, seal violations, lock contention ([practices](docs/engineering-practices.md#observability)). |
-| `GET` | `/api/aircraft` | Selectable airframes. Drives the client dropdown. |
-| `GET` | `/api/payloads` | Selectable payloads. Drives the client dropdown. |
-| `POST` | `/api/plan` | Assess a mission; pauses for a person with `awaiting_ack: true`. |
-| `POST` | `/api/plan/{thread_id}/ack` | Confirm, edit, or abort the assessment the operator was shown. |
-| `GET` | `/api/plan/{thread_id}` | Persisted state of a prior mission thread. |
-| `POST` | `/api/replan` | Compare live telemetry against the briefed plan. No language model. |
-| `POST` | `/api/logs` | Ingest a CSV flight log; `apply=true` writes measured power figures. |
+- **`GET /health`.** Liveness. Touches no dependencies.
+- **`GET /ready`.** Readiness: database reachable, schema at the code's alembic revision, checkpoint store readable. Returns 503 otherwise; a missing model key does not count. See [ops](docs/ops.md#readiness).
+- **`GET /metrics`.** Prometheus text exposition: request counts, latency, plan outcomes by granted mode, weather provenance, seal violations, lock contention ([practices](docs/engineering-practices.md#observability)).
+- **`GET /api/aircraft`.** Selectable airframes. Drives the client dropdown.
+- **`GET /api/payloads`.** Selectable payloads. Drives the client dropdown.
+- **`POST /api/plan`.** Assess a mission; pauses for a person with `awaiting_ack: true`.
+- **`POST /api/plan/{thread_id}/ack`.** Confirm, edit, or abort the assessment the operator was shown.
+- **`GET /api/plan/{thread_id}`.** Persisted state of a prior mission thread.
+- **`POST /api/replan`.** Compare live telemetry against the briefed plan. No language model.
+- **`POST /api/logs`.** Ingest a CSV flight log; `apply=true` writes measured power figures.
 
 ### Advisory and operational
 
@@ -458,7 +441,7 @@ returns `200` with `mode: "advisory"` and blockers naming what is missing.
 Operational mode is off by default (`assessment_mode` defaults to `advisory`)
 and is only considered for one lab configuration, Freefly Astro Max + Sony
 ILX-LR1 (`CONFIGURATION_NOT_LAB_OPERATIONAL` otherwise). Even that pair cannot
-be granted operational on the bundled seed: hover and cruise power are
+be granted operational on the bundled seed: cruise power is
 `derived` (`POWER_NOT_OPERATIONAL_GRADE`), `cruise_speed_mps` is an
 `estimate` (`FIELD_NOT_OPERATIONAL_GRADE`), and unless a snapshot has been
 pinned with `refresh_blue_list.py`, no Blue UAS snapshot is stored
@@ -623,14 +606,12 @@ The response carries the live energy picture, the briefed margin, and a list of
 alerts, each with `briefed`, `live`, and `delta` blocks so the recommendation can
 be checked rather than taken on faith:
 
-| Code | Severity | Action |
-| --- | --- | --- |
-| `ENERGY_BELOW_RESERVE` | abort | land now |
-| `ENERGY_NEAR_RESERVE` | warning | land soon |
-| `WIND_EXCEEDS_LIMIT` | abort | land now |
-| `SOC_STALE` | watch | advisory only |
-| `WEATHER_DEGRADED` | watch | advisory only |
-| `PAYLOAD_MISMATCH` | watch | advisory only |
+- **`ENERGY_BELOW_RESERVE`** (abort): land now.
+- **`ENERGY_NEAR_RESERVE`** (warning): land soon.
+- **`WIND_EXCEEDS_LIMIT`** (abort): land now.
+- **`SOC_STALE`** (watch): advisory only.
+- **`WEATHER_DEGRADED`** (watch): advisory only.
+- **`PAYLOAD_MISMATCH`** (watch): advisory only.
 
 Three properties worth knowing. **The briefed plan does not move**: a replan runs
 on a child thread (`{parent}:{seq}`), so the assessment an operator signed stays
@@ -773,37 +754,35 @@ Backend variables use the `SUAS_` prefix. Compose maps friendly names to them.
 <details>
 <summary><b>All variables</b></summary>
 
-| Variable | Default | Purpose |
-| --- | --- | --- |
-| `SUAS_DATABASE_URL` | `sqlite+aiosqlite:///./suas_local.db` | Async SQLAlchemy URL. Postgres enables the durable checkpointer. |
-| `SUAS_OPENAI_API_KEY` | empty | Enables the model-generated report. |
-| `SUAS_DEMO_MODE` | `false` | Fixture weather instead of the live provider; every plan advisory. Compose: `DEMO_MODE`. |
-| `SUAS_OPENAI_MODEL` | `gpt-4o-mini` | Chat model name. |
-| `SUAS_LANGSMITH_TRACING` | `false` | Opt-in LangSmith tracing; needs `SUAS_LANGSMITH_API_KEY`. Coordinates and all text are redacted unless `SUAS_LANGSMITH_REDACT=false` (local only). See `docs/ops.md#tracing`. |
-| `SUAS_API_KEY` | empty | When set, planning endpoints require header `X-API-Key`. Known as operator `default`. |
-| `SUAS_API_KEYS` | empty | Per-operator keys, `id:key,id:key`. A mission is visible only to the key that planned it. |
-| `SUAS_RETIRED_API_KEYS` | empty | Rotation overlap, `id:old-key@expiry`: the old key keeps working until the expiry, only from the client IP that last used it. See docs/ops.md, Key rotation. |
-| `SUAS_RETIRED_KEY_MAX_GRACE_S` | `3600` | Latest allowed expiry for a retired key, in seconds from startup. |
-| `SUAS_TRUSTED_PROXIES` | empty | Peer IPs whose `X-Forwarded-For` is believed. Empty trusts none. |
-| `SUAS_SESSION_KEY_SECRET` | empty | Enables per-browser operators: verifies the proxy's signed session keys. 32+ characters. Compose defaults to a demo-only value. |
-| `SUAS_CORS_ORIGINS` | `http://localhost:3000` | Comma-separated allowed origins. Only needed for non-browser clients now that the UI proxies server-side. |
-| `SUAS_LOG_LEVEL` | `INFO` | Root log level. |
-| `SUAS_JSON_LOGS` | `true` | Emit structured JSON logs. Set false for readable local output. |
-| `SUAS_BATTERY_RESERVE_PERCENT` | `20` | Reserve withheld from usable battery capacity. |
-| `SUAS_VERTICAL_SPEED_MPS` | `3` | Assumed climb and descent rate. |
-| `SUAS_CLIMB_EFFICIENCY` | `0.6` | Propulsive efficiency for the climb energy term. |
-| `SUAS_CHECKPOINT_RETENTION_DAYS` | `30` | Age at which graph checkpoints are purged. `0` disables retention. |
-| `SUAS_RETENTION_INTERVAL_S` | `3600` | How often each worker repeats retention after startup. |
-| `SUAS_RATE_LIMIT_REQUESTS` | `30` | Requests allowed per window, per client (per worker unless shared). At least 1; limiting cannot be switched off. |
-| `SUAS_RATE_LIMIT_WINDOW_S` | `60` | Rate limit window in seconds. |
-| `SUAS_WEATHER_STALE_MAX_AGE_S` | `10800` | Oldest cached reading an outage may fall back to as `cached_stale`; older is answered as no cache and pruned. At least `SUAS_WEATHER_CACHE_TTL_S`. |
-| `SUAS_BLUE_LIST_MAX_AGE_S` | `604800` | Age of the pinned Blue UAS snapshot at which operational clearance would describe the past (7 days). Advisory still runs. |
-| `SUAS_BLUE_LIST_SNAPSHOT` | (data dir default) | Path to the hashed snapshot written by `backend/scripts/refresh_blue_list.py`. A missing file is unavailable, not stale. |
-| `SUAS_WEATHER_CACHE_SHARED` | `false` | Keep weather readings in the database so all workers share one cache. Compose sets `true`. |
-| `SUAS_RATE_LIMIT_SHARED` | `false` | Keep the budget in the database so all workers share one ceiling. Compose sets `true`. |
-| `BACKEND_API_URL` | `http://localhost:8000` | Backend URL as reached by the Next.js **server**, not the browser. |
-| `BACKEND_API_KEY` | empty | Sent upstream as `X-API-Key` by the server-side proxy. Never exposed to the client. |
-| `BACKEND_SESSION_SECRET` | empty | Same value as `SUAS_SESSION_KEY_SECRET`. When set, each browser gets its own session cookie and operator, taking precedence over `BACKEND_API_KEY`. Server-only. |
+- **`SUAS_DATABASE_URL`** (default `sqlite+aiosqlite:///./suas_local.db`). Async SQLAlchemy URL. Postgres enables the durable checkpointer.
+- **`SUAS_OPENAI_API_KEY`** (default empty). Enables the model-generated report.
+- **`SUAS_DEMO_MODE`** (default `false`). Fixture weather instead of the live provider; every plan advisory. Compose: `DEMO_MODE`.
+- **`SUAS_OPENAI_MODEL`** (default `gpt-4o-mini`). Chat model name.
+- **`SUAS_LANGSMITH_TRACING`** (default `false`). Opt-in LangSmith tracing; needs `SUAS_LANGSMITH_API_KEY`. Coordinates and all text are redacted unless `SUAS_LANGSMITH_REDACT=false` (local only). See `docs/ops.md#tracing`.
+- **`SUAS_API_KEY`** (default empty). When set, planning endpoints require header `X-API-Key`. Known as operator `default`.
+- **`SUAS_API_KEYS`** (default empty). Per-operator keys, `id:key,id:key`. A mission is visible only to the key that planned it.
+- **`SUAS_RETIRED_API_KEYS`** (default empty). Rotation overlap, `id:old-key@expiry`: the old key keeps working until the expiry, only from the client IP that last used it. See docs/ops.md, Key rotation.
+- **`SUAS_RETIRED_KEY_MAX_GRACE_S`** (default `3600`). Latest allowed expiry for a retired key, in seconds from startup.
+- **`SUAS_TRUSTED_PROXIES`** (default empty). Peer IPs whose `X-Forwarded-For` is believed. Empty trusts none.
+- **`SUAS_SESSION_KEY_SECRET`** (default empty). Enables per-browser operators: verifies the proxy's signed session keys. 32+ characters. Compose defaults to a demo-only value.
+- **`SUAS_CORS_ORIGINS`** (default `http://localhost:3000`). Comma-separated allowed origins. Only needed for non-browser clients now that the UI proxies server-side.
+- **`SUAS_LOG_LEVEL`** (default `INFO`). Root log level.
+- **`SUAS_JSON_LOGS`** (default `true`). Emit structured JSON logs. Set false for readable local output.
+- **`SUAS_BATTERY_RESERVE_PERCENT`** (default `20`). Reserve withheld from usable battery capacity.
+- **`SUAS_VERTICAL_SPEED_MPS`** (default `3`). Assumed climb and descent rate.
+- **`SUAS_CLIMB_EFFICIENCY`** (default `0.6`). Propulsive efficiency for the climb energy term.
+- **`SUAS_CHECKPOINT_RETENTION_DAYS`** (default `30`). Age at which graph checkpoints are purged. `0` disables retention.
+- **`SUAS_RETENTION_INTERVAL_S`** (default `3600`). How often each worker repeats retention after startup.
+- **`SUAS_RATE_LIMIT_REQUESTS`** (default `30`). Requests allowed per window, per client (per worker unless shared). At least 1; limiting cannot be switched off.
+- **`SUAS_RATE_LIMIT_WINDOW_S`** (default `60`). Rate limit window in seconds.
+- **`SUAS_WEATHER_STALE_MAX_AGE_S`** (default `10800`). Oldest cached reading an outage may fall back to as `cached_stale`; older is answered as no cache and pruned. At least `SUAS_WEATHER_CACHE_TTL_S`.
+- **`SUAS_BLUE_LIST_MAX_AGE_S`** (default `604800`). Age of the pinned Blue UAS snapshot at which operational clearance would describe the past (7 days). Advisory still runs.
+- **`SUAS_BLUE_LIST_SNAPSHOT`** (data dir default). Path to the hashed snapshot written by `backend/scripts/refresh_blue_list.py`. A missing file is unavailable, not stale.
+- **`SUAS_WEATHER_CACHE_SHARED`** (default `false`). Keep weather readings in the database so all workers share one cache. Compose sets `true`.
+- **`SUAS_RATE_LIMIT_SHARED`** (default `false`). Keep the budget in the database so all workers share one ceiling. Compose sets `true`.
+- **`BACKEND_API_URL`** (default `http://localhost:8000`). Backend URL as reached by the Next.js **server**, not the browser.
+- **`BACKEND_API_KEY`** (default empty). Sent upstream as `X-API-Key` by the server-side proxy. Never exposed to the client.
+- **`BACKEND_SESSION_SECRET`** (default empty). Same value as `SUAS_SESSION_KEY_SECRET`. When set, each browser gets its own session cookie and operator, taking precedence over `BACKEND_API_KEY`. Server-only.
 
 </details>
 
@@ -839,22 +818,20 @@ The 90-day plan for taking this from a working demo to a system whose numbers
 can be defended lives in [`docs/PLAN-90.md`](docs/PLAN-90.md). Supporting
 specifications:
 
-| Document | Covers |
-|---|---|
-| [`docs/engineering-practices.md`](docs/engineering-practices.md) | Branching, CI gates, environments, review bar |
-| [`docs/retrieval.md`](docs/retrieval.md) | pgvector hybrid search for datasheet citations |
-| [`eval/WRITEUP.md`](eval/WRITEUP.md) | Prose account of the 2026-11-14 and 2026-11-15 local-model runs |
-| [`v0.4.0-eval`](https://github.com/MatthewK84/LangGraphUAS/releases/tag/v0.4.0-eval) | Tag pinning this advisory demo and the frozen eval pack |
-| [`docs/rag-eval.md`](docs/rag-eval.md) | Retrieval and citation metrics and their gate thresholds (not yet run in CI) |
-| [`docs/injection-defense.md`](docs/injection-defense.md) | Prompt injection surfaces and controls |
-| [`docs/threat-model.md`](docs/threat-model.md) | STRIDE across every trust boundary |
-| [`docs/ops.md`](docs/ops.md) | Retention, concurrency, incident handling |
-| [`docs/railway.md`](docs/railway.md) | Deploying on Railway, from zero |
-| [`backend/suas/data/CITATIONS.md`](backend/suas/data/CITATIONS.md) | Every reference figure with its source, generated from the data |
-| [`docs/adr/`](docs/adr/README.md) | The decisions later code is allowed to assume |
-| [`docs/backlog/`](docs/backlog/README.md) | The seventeen opening issues, ready to file |
-| [`CHANGELOG.md`](CHANGELOG.md) | What reached `main` each week, five lines at most, appended by every PR |
-| [`attic/README.md`](attic/README.md) | Earlier repositories that fed this work, and what each contributed |
+- [`docs/engineering-practices.md`](docs/engineering-practices.md) — Branching, CI gates, environments, review bar
+- [`docs/retrieval.md`](docs/retrieval.md) — pgvector hybrid search for datasheet citations
+- [`eval/WRITEUP.md`](eval/WRITEUP.md) — Prose account of the 2026-11-14 and 2026-11-15 local-model runs
+- [`v0.4.0-eval`](https://github.com/MatthewK84/LangGraphUAS/releases/tag/v0.4.0-eval) — Tag pinning this advisory demo and the frozen eval pack
+- [`docs/rag-eval.md`](docs/rag-eval.md) — Retrieval and citation metrics and their gate thresholds (not yet run in CI)
+- [`docs/injection-defense.md`](docs/injection-defense.md) — Prompt injection surfaces and controls
+- [`docs/threat-model.md`](docs/threat-model.md) — STRIDE across every trust boundary
+- [`docs/ops.md`](docs/ops.md) — Retention, concurrency, incident handling
+- [`docs/railway.md`](docs/railway.md) — Deploying on Railway, from zero
+- [`backend/suas/data/CITATIONS.md`](backend/suas/data/CITATIONS.md) — Every reference figure with its source, generated from the data
+- [`docs/adr/`](docs/adr/README.md) — The decisions later code is allowed to assume
+- [`docs/backlog/`](docs/backlog/README.md) — The seventeen opening issues, ready to file
+- [`CHANGELOG.md`](CHANGELOG.md) — What reached `main` each week, five lines at most, appended by every PR
+- [`attic/README.md`](attic/README.md) — Earlier repositories that fed this work, and what each contributed
 
 To add a mission to the frozen eval pack, open a Good first fixture issue from [`.github/ISSUE_TEMPLATE/good-first-fixture.yml`](.github/ISSUE_TEMPLATE/good-first-fixture.yml). Expected values are regenerated with `python3 backend/scripts/generate_eval_fixtures.py --write`; never hand-edit `eval/fixtures/missions.jsonl`.
 
