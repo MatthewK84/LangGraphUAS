@@ -139,6 +139,31 @@ def test_payload_scaling_is_visible_in_the_expected_values() -> None:
     }
 
     assert astro["None"] < astro["Sony_ILX_LR1"] < astro["Trillium_HD40_LV"]
+    assert "Workswell_WIRIS_Ent" in astro
+    assert astro["Trillium_HD40_LV"] < astro["Workswell_WIRIS_Ent"]
+
+
+def test_ps07_is_the_heavier_astro_payload_scale_point() -> None:
+    """WIRIS Ent extends the Astro ladder on the same route and weather as ps-01."""
+    rows = {row["id"]: row for row in _rows()}
+    assert "ps-07" in rows
+    ps07 = rows["ps-07"]
+    ps01 = rows["ps-01"]
+    assert ps07["trap"] == "payload_scale"
+    assert ps07["airframe"] == "Freefly_Astro_Max"
+    assert ps07["payload"] == "Workswell_WIRIS_Ent"
+    assert ps07["params"] == ps01["params"]
+    weather_keys = (
+        "temperature_c",
+        "wind_speed_mps",
+        "wind_gust_mps",
+        "wind_direction",
+        "humidity_percent",
+        "conditions",
+        "source",
+    )
+    for key in weather_keys:
+        assert ps07["weather"][key] == ps01["weather"][key]
 
 
 # --- scoring ------------------------------------------------------------------

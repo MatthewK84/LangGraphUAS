@@ -97,6 +97,17 @@ CASES: Final[list[tuple[str, str, str, int, int, int, int, dict[str, Any], str]]
         _weather(),
         "payload_scale",
     ),
+    (
+        "ps-07",
+        "Freefly_Astro_Max",
+        "Workswell_WIRIS_Ent",
+        3000,
+        300,
+        100,
+        0,
+        _weather(),
+        "payload_scale",
+    ),
     # --- density_altitude: same indicated mass, residual crosses reserve ------
     (
         "da-01",
