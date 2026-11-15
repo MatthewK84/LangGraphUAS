@@ -93,6 +93,11 @@ export interface NumberProvenance {
 export type FigureProvenance = Readonly<Record<string, NumberProvenance>>;
 
 /** No key, a failed call, a brief the seal withheld or an abort is deterministic. */
+export interface UngroundedNumeric {
+  readonly value: string;
+  readonly unit: string;
+}
+
 export type ReportSource = "deterministic" | "model";
 
 export type Decision = "go" | "no_go" | "insufficient_data";
@@ -133,6 +138,10 @@ export interface PlanResult {
   readonly report: string;
   /** Who wrote `report`: deterministic code or the language model. */
   readonly report_source: ReportSource;
+  /** Same as report_source; kept explicit so a withheld narrative is labelled. */
+  readonly narrative_source: ReportSource;
+  readonly ungrounded_numerics: readonly UngroundedNumeric[];
+  readonly narrative_reason: string;
   readonly thread_id: string;
   readonly degraded: boolean;
   readonly warnings: readonly string[];

@@ -165,6 +165,13 @@ class NumberProvenance(BaseModel):
     basis: list[InputBasis] = Field(default_factory=list)
 
 
+class UngroundedNumeric(BaseModel):
+    """One figure in a model narrative that did not match a sealed result."""
+
+    value: str
+    unit: str
+
+
 class PlanResponse(BaseModel):
     """The complete result of a mission planning run.
 
@@ -186,6 +193,10 @@ class PlanResponse(BaseModel):
     weather: WeatherReading | None
     report: str
     report_source: ReportSource = "deterministic"
+    # Who wrote the published brief, and why a model narrative was replaced.
+    narrative_source: ReportSource = "deterministic"
+    ungrounded_numerics: list[UngroundedNumeric] = Field(default_factory=list)
+    narrative_reason: str = ""
     thread_id: str
     degraded: bool = False
     warnings: list[str] = Field(default_factory=list)
@@ -238,6 +249,10 @@ class ThreadStateResponse(BaseModel):
     found: bool
     is_viable: bool | None
     report: str | None
+    report_source: ReportSource = "deterministic"
+    narrative_source: ReportSource = "deterministic"
+    ungrounded_numerics: list[UngroundedNumeric] = Field(default_factory=list)
+    narrative_reason: str = ""
     calculations: Calculations | None
     provenance: dict[str, NumberProvenance] = Field(default_factory=dict)
     weather: WeatherReading | None

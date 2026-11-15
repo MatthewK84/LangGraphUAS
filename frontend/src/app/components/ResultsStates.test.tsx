@@ -17,15 +17,48 @@ describe("results panel states (#95)", () => {
     expect(screen.queryByText(/language model from the sealed/)).toBeNull();
   });
 
-  it("marks a model-written brief as one to check against the figures", () => {
+  it("notes that a model-written brief is fully grounded", () => {
     const written = {
       ...BRIEFED_PLAN,
       report: "Winds are light; proceed.",
       report_source: "model" as const,
+      narrative_source: "model" as const,
     };
     render(<ResultsPanel loading={false} error={null} result={written} />);
+    screen.getByText("Model narrative: every number matches the sealed result.");
+    expect(screen.queryByText(/Model narrative withheld/)).toBeNull();
+  });
+
+  it("lists one withheld figure beside the deterministic brief", () => {
+    const withheld = {
+      ...BRIEFED_PLAN,
+      report: "Mission status: NO-GO (advisory).",
+      report_source: "deterministic" as const,
+      narrative_source: "deterministic" as const,
+      ungrounded_numerics: [{ value: "225.7", unit: "Wh" }],
+      narrative_reason: "not found in the sealed result",
+    };
+    render(<ResultsPanel loading={false} error={null} result={withheld} />);
     screen.getByText(
-      "Written by a language model from the sealed figures. Check it against them.",
+      "Model narrative withheld: 225.7 Wh not found in the sealed result. Showing deterministic brief.",
+    );
+  });
+
+  it("lists each withheld figure when several fail the seal", () => {
+    const withheld = {
+      ...BRIEFED_PLAN,
+      report: "Mission status: GO (advisory).",
+      report_source: "deterministic" as const,
+      narrative_source: "deterministic" as const,
+      ungrounded_numerics: [
+        { value: "3", unit: "m/s" },
+        { value: "45", unit: "%" },
+      ],
+      narrative_reason: "not found in the sealed result",
+    };
+    render(<ResultsPanel loading={false} error={null} result={withheld} />);
+    screen.getByText(
+      "Model narrative withheld: 3 m/s, 45 % not found in the sealed result. Showing deterministic brief.",
     );
   });
 

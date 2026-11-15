@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from suas import __version__
 from suas.api.dependencies import GraphDep, MetricsDep, ReplanGraphDep, SessionFactoryDep
+from suas.api.narrative import narrative_fields
 from suas.api.number_provenance import number_provenance
 from suas.api.observability import MetricsRegistry
 from suas.api.rate_limit_dep import enforce_rate_limit
@@ -164,6 +165,7 @@ def _build_plan_response(final_state: dict[str, Any], thread_id: str) -> PlanRes
     )
     warnings: list[str] = _collect_warnings(weather)
     awaiting: bool = bool(final_state.get("__interrupt__"))
+    narrative_source, ungrounded, reason = narrative_fields(final_state)
     return PlanResponse(
         awaiting_ack=awaiting,
         aborted=bool(final_state.get("aborted", False)),
@@ -176,6 +178,9 @@ def _build_plan_response(final_state: dict[str, Any], thread_id: str) -> PlanRes
         weather=weather,
         report=str(final_state.get("report", "")),
         report_source=report_source(final_state),
+        narrative_source=narrative_source,
+        ungrounded_numerics=ungrounded,
+        narrative_reason=reason,
         thread_id=thread_id,
         degraded=bool(warnings),
         warnings=warnings,
@@ -622,11 +627,16 @@ async def get_thread_state(
     calc_dump = values.get("calculations")
     weather_dump = values.get("weather")
     assessment_dump = values.get("assessment")
+    narrative_source, ungrounded, reason = narrative_fields(values)
     return ThreadStateResponse(
         thread_id=thread_id,
         found=True,
         is_viable=bool(values.get("is_viable", False)),
         report=str(values.get("report", "")),
+        report_source=report_source(values),
+        narrative_source=narrative_source,
+        ungrounded_numerics=ungrounded,
+        narrative_reason=reason,
         calculations=Calculations.model_validate(calc_dump) if calc_dump else None,
         provenance=_figure_provenance(values),
         weather=WeatherReading.model_validate(weather_dump) if weather_dump else None,
