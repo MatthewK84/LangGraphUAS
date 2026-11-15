@@ -17,22 +17,22 @@ has traced to a primary document, and the operational gate treats it that way.
 
 ## Summary
 
-85 numeric fields across 8 airframes and 6 payloads. **49** are good enough to fly on.
+85 numeric fields across 8 airframes and 6 payloads. **51** are good enough to fly on.
 
 | Source | Fields |
 | --- | --- |
-| `datasheet` | 48 |
-| `derived` | 14 |
+| `datasheet` | 50 |
+| `derived` | 13 |
 | `estimate` | 10 |
 | `flight_log` | 1 |
-| `secondary` | 6 |
+| `secondary` | 5 |
 | `unknown` | 6 |
 
 ## Fields by source
 
 Every numeric field, grouped by `source`, so the remaining gap is visible in one list rather than only in the per-entry tables.
 
-### `datasheet` (48)
+### `datasheet` (50)
 
 - `Skydio_X10D.battery_wh`
 - `Skydio_X10D.max_temp_c`
@@ -64,9 +64,11 @@ Every numeric field, grouped by `source`, so the remaining gap is visible in one
 - `Freefly_Astro_Max.min_temp_c`
 - `Freefly_Astro_Max.pack_min_takeoff_c`
 - `Freefly_Astro_Max.weight_kg`
+- `Freefly_Alta_X.battery_wh`
 - `Freefly_Alta_X.max_payload_kg`
 - `Freefly_Alta_X.max_temp_c`
 - `Freefly_Alta_X.min_temp_c`
+- `Freefly_Alta_X.weight_kg`
 - `Inspired_Flight_IF1200A.battery_wh`
 - `Inspired_Flight_IF1200A.max_payload_kg`
 - `Inspired_Flight_IF1200A.max_temp_c`
@@ -87,16 +89,15 @@ Every numeric field, grouped by `source`, so the remaining gap is visible in one
 
 - `Freefly_Astro_Max.hover_power_w`
 
-### `secondary` (6)
+### `secondary` (5)
 
 - `Skydio_X10D.max_payload_kg`
 - `Skydio_X2D.max_payload_kg`
 - `Parrot_ANAFI_USA.max_payload_kg`
 - `Teal_Golden_Eagle.weight_kg`
 - `Freefly_Alta_X.max_wind_mps`
-- `Freefly_Alta_X.weight_kg`
 
-### `derived` (14)
+### `derived` (13)
 
 - `Skydio_X10D.cruise_power_w`
 - `Skydio_X10D.hover_power_w`
@@ -107,7 +108,6 @@ Every numeric field, grouped by `source`, so the remaining gap is visible in one
 - `Teal_Golden_Eagle.cruise_power_w`
 - `Teal_Golden_Eagle.hover_power_w`
 - `Freefly_Astro_Max.cruise_power_w`
-- `Freefly_Alta_X.battery_wh`
 - `Freefly_Alta_X.cruise_power_w`
 - `Freefly_Alta_X.hover_power_w`
 - `Inspired_Flight_IF1200A.cruise_power_w`
@@ -226,7 +226,7 @@ Every numeric field, grouped by `source`, so the remaining gap is visible in one
 
 | Field | Value | Unit | Source | URL | Confidence | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
-| `battery_wh` | 1420.0 | Wh | `derived` | https://freeflysystems.com/alta-x/specs | medium | Two 12S 16 Ah packs in parallel at 44.4 V nominal: 2 x 16 x 44.4 = 1420.8 Wh, stored as 1420. Figure obtained from a web search summary of this page on 2026-09-14; this session could not open the page itself (network egress blocked), so it is recorded as secondary rather than datasheet. |
+| `battery_wh` | 1420.8 | Wh | `datasheet` | https://store.freeflysystems.com/products/alta-x-12s-flight-packs-16ah-single | high | System energy of the two required packs: 2 x 16 Ah x 44.4 V = 1420.8 Wh (manufacturer does not print Wh). Quote: "Capacity: 16Ah Voltage: 44.4V" and "Each Alta X flight requires a pair of 12S batteries like this one." The aircraft specs page also states "20C for a 16A-hr pack" and "assumes two batteries" (https://freeflysystems.com/alta-x/specs). Retrieved 2026-11-15 from manufacturer documents. |
 | `cruise_power_w` | 3834.0 | W | `derived` | https://freeflysystems.com/alta-x/specs | low | cruise_power_w = 0.90 * hover_power_w. The stored value implies roughly 20 minutes of endurance, which matches the published figure at a 20 lb load rather than the no-payload figure the formula names (published: about 41.7 minutes at 5 lb). The number is therefore conservative -- it overstates draw, which understates endurance -- and is left as-is rather than lowered on the strength of a search summary. A flight log settles it. Figure obtained from a web search summary of this page on 2026-09-14; this session could not open the page itself (network egress blocked), so it is recorded as secondary rather than datasheet. |
 | `cruise_speed_mps` | 15.0 | m/s | `estimate` | - | low | Nominal cruise, roughly 0.6 to 0.7 of published maximum speed. |
 | `hover_power_w` | 4260.0 | W | `derived` | https://freeflysystems.com/alta-x/specs | low | hover_power_w = battery_wh / no_payload_endurance_hours. The stored value implies roughly 20 minutes of endurance, which matches the published figure at a 20 lb load rather than the no-payload figure the formula names (published: about 41.7 minutes at 5 lb). The number is therefore conservative -- it overstates draw, which understates endurance -- and is left as-is rather than lowered on the strength of a search summary. A flight log settles it. Figure obtained from a web search summary of this page on 2026-09-14; this session could not open the page itself (network egress blocked), so it is recorded as secondary rather than datasheet. |
@@ -234,7 +234,7 @@ Every numeric field, grouped by `source`, so the remaining gap is visible in one
 | `max_temp_c` | 50.0 | C | `datasheet` | https://freeflysystems.com/alta-x/specs | high | Quote: "Operating Temperature -20C to +50C". Retrieved 2026-10-28 from manufacturer document. |
 | `max_wind_mps` | 12.0 | m/s | `secondary` | - | medium | Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance. |
 | `min_temp_c` | -20.0 | C | `datasheet` | https://freeflysystems.com/alta-x/specs | high | Quote: "Operating Temperature -20C to +50C". Retrieved 2026-10-28 from manufacturer document. |
-| `weight_kg` | 19.8 | kg | `secondary` | - | medium | Published figure taken from a specification summary rather than the manufacturer's own document. See README, Data provenance. |
+| `weight_kg` | 19.8 | kg | `datasheet` | https://freeflysystems.com/alta-x/specs | high | Typical flying mass with the standard pair of packs: Typical Standard Empty weight 10.86 kg plus 8.94 kg per pair = 19.80 kg, stored as 19.8 kg (same method as Astro AUW). Quote: "Typical Standard Empty weight 10.86 kg / 23.94 lb" on the specs page, and "Weight: 4.47kg / 9.85lbs per battery 8.94kg / 19.70lbs per pair" on the official pack page (https://store.freeflysystems.com/products/alta-x-12s-flight-packs-16ah-single). Retrieved 2026-11-15 from manufacturer documents. |
 
 ### Inspired Flight IF1200A (`Inspired_Flight_IF1200A`)
 

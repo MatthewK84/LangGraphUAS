@@ -11,7 +11,7 @@ from suas.reference_data import AIRCRAFT_FILE, PAYLOAD_FILE, load_entries
 from suas.schemas.provenance import FieldSource
 
 _QUOTE_MARKERS = ("'", '"', "“", "”", "«", "»")
-_RETRIEVED = "2026-10-28"
+_RETRIEVED = frozenset({"2026-10-28", "2026-11-15"})
 _MANUFACTURER_HOST_HINTS = (
     "skydio.com",
     "parrot.com",
@@ -60,8 +60,8 @@ def test_every_datasheet_field_cites_url_date_and_quote() -> None:
             assert any(host in record.source_url for host in _MANUFACTURER_HOST_HINTS), (
                 f"{label}: URL is not a manufacturer host: {record.source_url}"
             )
-            assert record.retrieved_at == _RETRIEVED, (
-                f"{label}: retrieved_at {record.retrieved_at!r} != {_RETRIEVED!r}"
+            assert record.retrieved_at in _RETRIEVED, (
+                f"{label}: retrieved_at {record.retrieved_at!r} not in {_RETRIEVED!r}"
             )
             notes = record.notes or ""
             assert notes.strip(), f"{label}: datasheet notes empty"
@@ -90,6 +90,30 @@ def test_if1200a_battery_is_dual_pack_system_energy() -> None:
         or "2 x" in record.notes.lower()
         or "2x" in record.notes.lower()
     )
+
+
+def test_alta_x_battery_is_two_published_16ah_packs() -> None:
+    record = next(e for e in load_entries(AIRCRAFT_FILE) if e.id == "Freefly_Alta_X").provenance[
+        "battery_wh"
+    ]
+    assert record.value == 1420.8
+    assert record.source is FieldSource.DATASHEET
+    assert "16Ah" in record.notes or "16 Ah" in record.notes or "16A-hr" in record.notes
+    assert "44.4" in record.notes
+    assert "store.freeflysystems.com" in (record.source_url or "")
+    assert record.retrieved_at == "2026-11-15"
+
+
+def test_alta_x_weight_is_empty_plus_published_pack_mass() -> None:
+    record = next(e for e in load_entries(AIRCRAFT_FILE) if e.id == "Freefly_Alta_X").provenance[
+        "weight_kg"
+    ]
+    assert record.value == 19.8
+    assert record.source is FieldSource.DATASHEET
+    assert "10.86" in record.notes
+    assert "8.94" in record.notes
+    assert record.source_url
+    assert record.retrieved_at == "2026-11-15"
 
 
 def test_teal_2_unpublished_fields_are_unknown_not_invented() -> None:

@@ -85,9 +85,10 @@ def test_if1200a_battery_is_dual_pack_datasheet_system_energy() -> None:
     assert "two" in record.notes.lower() or "2 x" in record.notes.lower()
 
 
-def test_alta_x_battery_remains_derived_until_ah_is_on_the_specs_page() -> None:
+def test_alta_x_battery_is_datasheet_now_that_ah_is_published() -> None:
     record = _entry("Freefly_Alta_X").provenance["battery_wh"]
-    assert record.source is FieldSource.DERIVED
+    assert record.source is FieldSource.DATASHEET
+    assert record.value == 1420.8
     assert "1420.8" in record.notes
 
 
@@ -113,6 +114,8 @@ def test_every_promoted_field_cites_something() -> None:
         ("Freefly_Astro_Max", "max_wind_mps"),
         ("Teal_Golden_Eagle", "max_payload_kg"),
         ("Teal_2", "weight_kg"),
+        ("Freefly_Alta_X", "battery_wh"),
+        ("Freefly_Alta_X", "weight_kg"),
     ]
     for airframe_id, field in resolved:
         record = airframes[airframe_id].provenance[field]
