@@ -99,3 +99,12 @@ def test_the_plan_does_not_claim_operational_is_reachable() -> None:
     block = _status_block().lower()
 
     assert "unreachable today" in block
+
+
+def test_the_status_block_declares_the_showcase_freeze() -> None:
+    """Feature work after the tag would make v0.4.0-eval a moving target (#118)."""
+    block = _status_block()
+    assert "freeze" in block.lower()
+    assert "oracle" in block.lower()
+    assert "2026-11-29" in block
+    assert "attic:" in block
