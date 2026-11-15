@@ -972,7 +972,7 @@ frontend/
 corpus/             manifest-listed manufacturer documents for citations
 attic/              earlier repositories that fed this one, and what they contributed
 docs/               plan, practices, threat model, ADRs, runbooks
-eval/               frozen mission pack, retrieval evaluation, and committed 2026-11-14 local-model results (offline by default; a real model is optional via `--provider openai` and `SUAS_EVAL_BASE_URL`)
+eval/               frozen mission pack, retrieval evaluation, and committed 2026-11-14 local-model results (offline by default; a real model is optional via `--provider openai` and `SUAS_EVAL_BASE_URL`; scored decision, mode, and figures come from the sealed calculator)
 scripts/            Compose smoke test, pinned trivy installer, backlog filer
 services/
   embeddings/       optional embedding service for retrieval

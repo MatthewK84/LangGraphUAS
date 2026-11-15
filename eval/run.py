@@ -216,6 +216,9 @@ def run_provider(provider: Provider, fixtures: list[MissionFixture]) -> dict[str
         tools = getattr(provider, "last_tool_results", None)
         if tools:
             case["tool_results"] = tools
+        disagreements = getattr(provider, "last_disagreements", None)
+        if disagreements:
+            case["disagreements"] = disagreements
         cases.append(case)
 
     report: dict[str, Any] = {
