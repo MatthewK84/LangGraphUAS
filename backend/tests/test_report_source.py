@@ -3,7 +3,7 @@
 The dashboard labels a model-written brief as one to check against the sealed
 figures. Every deterministic path -- no key, a failed call, a brief withheld by
 the seal, an abort, nothing written yet -- must say so, because a brief wrongly
-labelled as calculator-only is trusted more than it has earned.
+labeled as calculator-only is trusted more than it has earned.
 """
 
 from typing import Any
@@ -67,7 +67,7 @@ async def _decide(app: FastAPI, action: str) -> tuple[dict[str, Any], dict[str, 
     return created, decided.json()
 
 
-async def test_prose_from_the_model_is_labelled_as_the_models(
+async def test_prose_from_the_model_is_labeled_as_the_models(
     app_with_graph: FastAPI, session_factory: async_sessionmaker[AsyncSession]
 ) -> None:
     prose = FakeReportService("Review the limiting factors before launch.")

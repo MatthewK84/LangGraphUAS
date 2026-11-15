@@ -26,7 +26,7 @@ MAX_OPERATIONAL_SNAPSHOT_AGE_S: Final[float] = 30.0
 
 # Residual below this multiple of the reserve is a warning rather than an abort.
 # One and a half leaves room to reach an alternate; the exact figure is a policy
-# choice and lives in config, not in judgement at the call site.
+# choice and lives in config, not in judgment at the call site.
 NEAR_RESERVE_MULTIPLE: Final[float] = 1.5
 
 

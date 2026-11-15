@@ -26,7 +26,7 @@ from suas.db.repository import list_aircraft, list_payloads
 from suas.db.retention import (
     lock_thread_for_update,
     next_replan_thread_id,
-    record_acknowledgement,
+    record_acknowledgment,
     record_thread,
     thread_owner,
 )
@@ -400,7 +400,7 @@ def _require_awaiting_ack(snapshot: StateSnapshot | None) -> dict[str, Any]:
     if not values:
         raise HTTPException(status_code=404, detail=_UNKNOWN_THREAD)
     if not (snapshot and snapshot.next):
-        raise HTTPException(status_code=409, detail="This plan is not awaiting acknowledgement")
+        raise HTTPException(status_code=409, detail="This plan is not awaiting acknowledgment")
     return values
 
 
@@ -450,7 +450,7 @@ async def _record_signature(
         logger.warning("Acknowledged thread %s has no retention row", thread_id)
         return
     if current_hash:
-        await record_acknowledgement(
+        await record_acknowledgment(
             session,
             thread_id=thread_id,
             actor=request.actor,
@@ -482,7 +482,7 @@ async def acknowledge_plan(
     await _require_visible(session_factory, thread_id, operator)
     # Everything below runs under two locks on this one thread: an in-process
     # mutex, and a row lock on the mission row. Two workers handed the same
-    # acknowledgement therefore serialise rather than both resuming the
+    # acknowledgment therefore serialize rather than both resuming the
     # interrupt, and the second to get in finds the graph no longer awaiting and
     # is refused. Both cover one mission and block nothing else.
     async with thread_lock(thread_id), session_factory() as session:

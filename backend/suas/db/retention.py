@@ -64,13 +64,13 @@ async def lock_thread_for_update(
 
     This is the per-thread mutex that stops two workers resuming the same
     interrupt. It is deliberately scoped to one row: it blocks a duplicate
-    acknowledgement of *this* mission and nothing else, so holding it across the
-    resume -- including the model call the resume triggers -- serialises only the
-    request that must be serialised. The model client's own timeout bounds how
+    acknowledgment of *this* mission and nothing else, so holding it across the
+    resume -- including the model call the resume triggers -- serializes only the
+    request that must be serialized. The model client's own timeout bounds how
     long it can be held.
 
     On SQLite ``FOR UPDATE`` is a no-op and SQLite's database-level write lock
-    does the serialising instead. The guarantee holds on both; only the mechanism
+    does the serializing instead. The guarantee holds on both; only the mechanism
     differs.
     """
     result = await session.execute(
@@ -79,7 +79,7 @@ async def lock_thread_for_update(
     return result.scalars().first()
 
 
-async def record_acknowledgement(
+async def record_acknowledgment(
     session: AsyncSession,
     *,
     thread_id: str,
@@ -90,7 +90,7 @@ async def record_acknowledgement(
 ) -> None:
     """Record who acknowledged a thread's assessment, and which one.
 
-    Raises KeyError when the thread is unknown: an acknowledgement with nothing
+    Raises KeyError when the thread is unknown: an acknowledgment with nothing
     to attach to is a bug in the caller, not a row to invent.
     """
     row: MissionThreadRow | None = await session.get(MissionThreadRow, thread_id)
@@ -131,8 +131,8 @@ async def next_replan_thread_id(session: AsyncSession, parent_thread_id: str) ->
     return f"{parent_thread_id}:{row.replan_count}"
 
 
-async def get_acknowledgement(session: AsyncSession, thread_id: str) -> MissionThreadRow | None:
-    """Return the thread row carrying its acknowledgement, or None if unknown."""
+async def get_acknowledgment(session: AsyncSession, thread_id: str) -> MissionThreadRow | None:
+    """Return the thread row carrying its acknowledgment, or None if unknown."""
     return await session.get(MissionThreadRow, thread_id)
 
 

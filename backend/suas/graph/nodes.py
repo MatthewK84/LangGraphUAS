@@ -241,10 +241,10 @@ def make_human_ack_node() -> NodeFn:
     control, not a UX preference.
     """
 
-    async def await_acknowledgement(state: MissionState) -> MissionState:
+    async def await_acknowledgment(state: MissionState) -> MissionState:
         rounds: int = int(state.get("ack_rounds", 0))
         if rounds >= MAX_ACK_ROUNDS:
-            logger.warning("Acknowledgement round limit reached; proceeding to report")
+            logger.warning("Acknowledgment round limit reached; proceeding to report")
             return {"ack_action": "confirm", "ack_rounds": rounds}
 
         response: dict[str, Any] = interrupt(
@@ -272,13 +272,13 @@ def make_human_ack_node() -> NodeFn:
             updates.update(_apply_edits(state, response.get("edits") or {}))
         return updates
 
-    return await_acknowledgement
+    return await_acknowledgment
 
 
 def _apply_edits(state: MissionState, edits: dict[str, Any]) -> MissionState:
     """Return the state changes for an operator revision.
 
-    Only the fields the interrupt offered are honoured. An edit to anything else
+    Only the fields the interrupt offered are honored. An edit to anything else
     is ignored rather than merged, so a client cannot quietly rewrite the mission
     between the assessment and the signature.
     """

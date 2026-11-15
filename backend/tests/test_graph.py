@@ -28,7 +28,7 @@ def _mission_input(aircraft_id: str = "Skydio_X10D") -> dict[str, Any]:
 async def test_graph_valid_mission_pauses_before_the_brief(graph: CompiledStateGraph) -> None:
     """The run stops at the review step with the assessment ready and no brief.
 
-    This is the contract the acknowledgement exists to create: the numbers are
+    This is the contract the acknowledgment exists to create: the numbers are
     computed and durable, and nothing has been written about them yet.
     """
     config = {"configurable": {"thread_id": "test-valid"}}

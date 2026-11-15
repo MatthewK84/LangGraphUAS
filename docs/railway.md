@@ -107,7 +107,7 @@ Variables:
 Reference the database variable directly, with no hand-editing. Railway's value
 is `postgresql://`, which SQLAlchemy maps to psycopg2 -- a driver this project
 does not install, and a synchronous one that could not serve the async engine
-anyway. `suas.config.normalise_database_url` rewrites the scheme on the way in.
+anyway. `suas.config.normalize_database_url` rewrites the scheme on the way in.
 A plain `DATABASE_URL` is read too, so a linked Postgres service is sufficient
 on its own; where both exist, `SUAS_DATABASE_URL` wins.
 
@@ -121,7 +121,7 @@ openssl rand -base64 32
 
 The key guards `/api/plan`, `/api/logs`, `/api/plan/{id}/ack`, `/api/replan` and
 `/api/plan/{id}`. Leave it unset and authentication is a no-op on all of them,
-including the acknowledgement endpoint -- the operator sign-off the whole design
+including the acknowledgment endpoint -- the operator sign-off the whole design
 treats as its trust boundary. `/health` and `/ready` stay unguarded so the
 platform can probe them.
 
@@ -254,7 +254,7 @@ configuration it belongs to until a person clears it.
 1. Open the dashboard's public URL.
 2. Pick an airframe and payload, leave the defaults, **Analyze flight
    feasibility**.
-3. You should get a decision, an energy budget, and an acknowledgement prompt.
+3. You should get a decision, an energy budget, and an acknowledgment prompt.
 
 Decisions and numbers come from `backend/suas/calculations/`, never from a
 model, so step 3 works with no `SUAS_OPENAI_API_KEY` set. Without that key the

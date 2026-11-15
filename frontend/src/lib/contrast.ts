@@ -1,5 +1,5 @@
 // WCAG 2.x contrast between token colors, so the NO-GO treatment's legibility
-// is a test result rather than an eyeball judgement.
+// is a test result rather than an eyeball judgment.
 
 type Rgb = readonly [number, number, number];
 

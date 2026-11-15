@@ -1,0 +1,7 @@
+# Paths the US-English lint does not rewrite or fail on.
+# Verbatim manufacturer extracts: quoted language stays as published.
+corpus/datasheets/
+# Historical eval run artifacts: rewriting would falsify the recorded output.
+eval/results/
+# Third-party package names (for example @img/colour) in the lockfile.
+frontend/package-lock.json

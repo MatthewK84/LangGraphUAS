@@ -37,7 +37,7 @@ ingest", which the original test did not exercise — it called `screen_chunk`
 directly. `corpus/eval_trap/invisible.txt` now runs the full ingest path. Its
 only tripwire trigger is a zero-width-split imperative, deliberately: two earlier
 drafts contained a second, plainly-visible imperative, and the ingest test passed
-with normalisation switched off. The mutation check caught both. If this file
+with normalization switched off. The mutation check caught both. If this file
 ever gains another imperative, the test stops testing the ordering.
 
 **Matrix drift is now enforced.** `test_every_matrix_row_is_present` parses the

@@ -1,4 +1,4 @@
-"""Acknowledgement: the human step between the calculator and the model.
+"""Acknowledgment: the human step between the calculator and the model.
 
 Two things are under test here. First, the mechanics: a signature is recorded,
 bound to the assessment it was given, and refused when that assessment has moved
@@ -18,7 +18,7 @@ from langgraph.types import Command
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from suas.config import Settings
-from suas.db.retention import get_acknowledgement
+from suas.db.retention import get_acknowledgment
 from suas.graph.dependencies import GraphDependencies
 from suas.graph.nodes import MAX_ACK_ROUNDS
 from suas.graph.workflow import build_mission_graph
@@ -109,7 +109,7 @@ def test_report_model_has_no_tools_bound() -> None:
 # --- mechanics --------------------------------------------------------------
 
 
-async def test_no_brief_without_an_acknowledgement(
+async def test_no_brief_without_an_acknowledgment(
     session_factory: async_sessionmaker[AsyncSession],
 ) -> None:
     graph = _graph(session_factory)
@@ -120,7 +120,7 @@ async def test_no_brief_without_an_acknowledgement(
     assert result["assessment"]["decision"]
 
 
-async def test_acknowledgement_is_recorded_against_the_assessment(
+async def test_acknowledgment_is_recorded_against_the_assessment(
     app_with_graph: FastAPI,
     session_factory: async_sessionmaker[AsyncSession],
 ) -> None:
@@ -138,7 +138,7 @@ async def test_acknowledgement_is_recorded_against_the_assessment(
     assert acked.json()["report"] == "TEST REPORT"
 
     async with session_factory() as session:
-        row = await get_acknowledgement(session, thread_id)
+        row = await get_acknowledgment(session, thread_id)
     assert row is not None
     assert row.ack_actor == "dispatcher-1"
     assert row.ack_inputs_hash == signed_hash
@@ -313,10 +313,10 @@ def test_the_thread_lock_asks_postgres_for_a_row_lock() -> None:
     assert "FOR UPDATE" in compiled
 
 
-async def test_concurrent_acknowledgements_produce_one_brief(
+async def test_concurrent_acknowledgments_produce_one_brief(
     app_with_graph: FastAPI,
 ) -> None:
-    """Two acknowledgements of one plan: one proceeds, one is refused."""
+    """Two acknowledgments of one plan: one proceeds, one is refused."""
     import asyncio
 
     async with _client(app_with_graph) as client:

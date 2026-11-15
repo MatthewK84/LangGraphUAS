@@ -30,7 +30,7 @@ describe("confirm blocker (#92)", () => {
 
   it("blocks an advisory plan until the operator says they understand", () => {
     expect(confirmBlocker({ ...CLEAR, understood: false })).toBe(
-      "Tick the advisory acknowledgement to sign.",
+      "Tick the advisory acknowledgment to sign.",
     );
   });
 

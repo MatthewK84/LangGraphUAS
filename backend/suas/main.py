@@ -152,7 +152,7 @@ async def _housekeep_forever(
     checkpointer: BaseCheckpointSaver[Any],
     settings: Settings,
 ) -> None:
-    """Repeat retention every ``retention_interval_s`` until cancelled at shutdown."""
+    """Repeat retention every ``retention_interval_s`` until canceled at shutdown."""
     while True:
         await asyncio.sleep(settings.retention_interval_s)
         await _housekeep(session_factory, checkpointer, settings)

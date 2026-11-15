@@ -272,7 +272,7 @@ function Brief({ result }: { readonly result: PlanResult }): JSX.Element {
       </p>
     );
   }
-  // Status colour is reserved for the decision banner, not this source note.
+  // Status color is reserved for the decision banner, not this source note.
   return (
     <section className="px-3 py-3">
       <h3 className="section-label">Safety officer brief</h3>

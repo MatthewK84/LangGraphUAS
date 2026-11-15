@@ -51,7 +51,7 @@ jobs:
           trivy="$RUNNER_TEMP/trivy"
           "$trivy" image --quiet --cache-dir "$RUNNER_TEMP/trivy-cache" --format cyclonedx --output sbom/suas-backend.cdx.json suas-backend:sbom
           "$trivy" image --quiet --cache-dir "$RUNNER_TEMP/trivy-cache" --format cyclonedx --output sbom/suas-frontend.cdx.json suas-frontend:sbom
-      - name: Check the SBOMs and summarise
+      - name: Check the SBOMs and summarize
         run: |
           python3 - <<'PY' >> "$GITHUB_STEP_SUMMARY"
           import json, pathlib, sys

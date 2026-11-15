@@ -70,7 +70,7 @@ class MissionThreadRow(Base):
     )
 
     # Who signed off on what. The hash and calculator version pin the
-    # acknowledgement to the exact assessment it was given: if either changes,
+    # acknowledgment to the exact assessment it was given: if either changes,
     # the signature no longer describes the mission and must be taken again.
     ack_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     ack_actor: Mapped[str | None] = mapped_column(String, nullable=True)
@@ -153,7 +153,7 @@ class CorpusDocumentRow(Base):
 
 
 class CorpusChunkRow(Base):
-    """One screened, normalised chunk of a document.
+    """One screened, normalized chunk of a document.
 
     No embedding column yet. Retrieval is a later change, and a nullable vector
     on every row would imply this table already supports a search it does not.
@@ -222,7 +222,7 @@ class ApiKeyLastSeenRow(Base):
     """The client IP that last authenticated with an API key.
 
     ``key_hash`` is the SHA-256 of the key, never the key. A rotated key in
-    ``SUAS_RETIRED_API_KEYS`` is honoured only from this address.
+    ``SUAS_RETIRED_API_KEYS`` is honored only from this address.
     """
 
     __tablename__ = "api_key_last_seen"

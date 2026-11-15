@@ -7,13 +7,13 @@ Issue 9 puts provenance on the wire. This makes it reachable, which is the point
 
 ## In scope
 - Click a number, see `source`, `source_url`, `confidence`, `retrieved_at`
-- Estimated fields labelled as estimates
+- Estimated fields labeled as estimates
 
 ## Out of scope
 - Editing provenance from the UI.
 
 ## Acceptance
-- [ ] Estimated fields are labelled
+- [ ] Estimated fields are labeled
 - [ ] Datasheet fields link out to the cited URL
 
 ## Test that would have failed before

@@ -25,7 +25,7 @@ Corollaries: hard `max_tokens` and wall-clock timeout on the LLM client; `/api/r
 ## Shipped
 
 ADR-004 is Accepted. `docs/ops.md` records that a suppressed brief does not
-invalidate an acknowledgement. Both invariants are asserted by tests that live
+invalidate an acknowledgment. Both invariants are asserted by tests that live
 in `backend/tests/test_injection.py` as matrix rows 12 and 13, rather than in a
 file of their own -- they are injection controls, and keeping them in the matrix
 means the drift test counts them.

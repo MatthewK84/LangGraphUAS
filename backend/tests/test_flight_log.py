@@ -108,7 +108,7 @@ def test_payload_id_is_bounded() -> None:
 # --- selection --------------------------------------------------------------
 
 
-def test_a_row_labelled_hover_while_climbing_is_excluded() -> None:
+def test_a_row_labeled_hover_while_climbing_is_excluded() -> None:
     """The label is not enough. This is the property that keeps hover honest.
 
     Averaging climb power into a hover figure understates hover draw, which

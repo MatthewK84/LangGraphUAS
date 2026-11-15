@@ -110,7 +110,7 @@ def test_extract_json_accepts_fenced_and_bare_objects() -> None:
     assert extract_json("not json") is None
 
 
-def test_parse_model_answer_keeps_the_prose_and_normalises_the_decision() -> None:
+def test_parse_model_answer_keeps_the_prose_and_normalizes_the_decision() -> None:
     answer = parse_model_answer(
         '{"decision": "NO-GO", "mode": "Operational", "hover_power_w": 500, '
         '"residual_wh": null, "prose": "Too windy."}'

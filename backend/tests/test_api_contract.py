@@ -1,6 +1,6 @@
 """The public API's shape is frozen, so a removed field fails CI (#115).
 
-``test_api.py`` covers behaviour, not shape: removing a field from the
+``test_api.py`` covers behavior, not shape: removing a field from the
 assessment broke the dashboard and passed. ``tests/fixtures/api_contract.json``
 records, for ``/api/plan``, ``/api/plan/{thread_id}/ack`` and ``/api/replan``,
 every response field and its types and every request field and which are

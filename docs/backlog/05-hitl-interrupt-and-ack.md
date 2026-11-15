@@ -4,7 +4,7 @@ labels: [phase-1, infra]
 blocked_by: [1, 2]
 ---
 ## Goal
-No brief exists without a human acknowledgement recorded against the exact assessment that was signed.
+No brief exists without a human acknowledgment recorded against the exact assessment that was signed.
 
 ## Graph change
 ```

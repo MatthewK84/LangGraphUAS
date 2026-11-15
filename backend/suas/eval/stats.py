@@ -54,12 +54,12 @@ def wilson(successes: int, total: int, z: float = Z_95) -> Interval:
     n = float(total)
     p = successes / n
     denominator = 1.0 + z * z / n
-    centre = (p + z * z / (2.0 * n)) / denominator
+    center = (p + z * z / (2.0 * n)) / denominator
     spread = (z / denominator) * sqrt(p * (1.0 - p) / n + z * z / (4.0 * n * n))
     return Interval(
         rate=p,
-        low=max(0.0, centre - spread),
-        high=min(1.0, centre + spread),
+        low=max(0.0, center - spread),
+        high=min(1.0, center + spread),
         n=total,
     )
 

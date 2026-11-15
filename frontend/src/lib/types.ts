@@ -138,7 +138,7 @@ export interface PlanResult {
   readonly report: string;
   /** Who wrote `report`: deterministic code or the language model. */
   readonly report_source: ReportSource;
-  /** Same as report_source; kept explicit so a withheld narrative is labelled. */
+  /** Same as report_source; kept explicit so a withheld narrative is labeled. */
   readonly narrative_source: ReportSource;
   readonly ungrounded_numerics: readonly UngroundedNumeric[];
   readonly narrative_reason: string;

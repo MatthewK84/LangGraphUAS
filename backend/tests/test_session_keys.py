@@ -26,7 +26,7 @@ from suas.config import (
     Settings,
     get_settings,
 )
-from suas.db.retention import get_acknowledgement
+from suas.db.retention import get_acknowledgment
 from suas.main import warn_on_weak_auth
 from tests.test_ack import _BODY
 from tests.test_replan import _snapshot
@@ -204,7 +204,7 @@ async def test_the_mission_row_holds_a_digest_not_the_session_id(
     async with _client(session_app) as client:
         thread_id = (await _plan(client, _as(_SESSION_A)))["thread_id"]
     async with session_factory() as session:
-        row = await get_acknowledgement(session, thread_id)
+        row = await get_acknowledgment(session, thread_id)
 
     digest = hashlib.sha256(_SESSION_A.encode()).hexdigest()[:32]
     assert row is not None and row.operator_key_id == f"session:{digest}"

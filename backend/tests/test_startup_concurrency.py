@@ -10,7 +10,7 @@ stopped the whole container:
 - checkpointer setup: duplicate ``checkpoint_migrations`` version (main CI run
   40240790618).
 
-SQLite serialises writers, so this needs real Postgres: set
+SQLite serializes writers, so this needs real Postgres: set
 SUAS_TEST_POSTGRES_URL (an admin URL; each test creates and drops its own
 database). CI runs it in the postgres-integration job.
 """

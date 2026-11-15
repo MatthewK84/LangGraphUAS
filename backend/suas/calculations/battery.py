@@ -7,7 +7,7 @@ from suas.schemas.responses import BatteryCheck
 DEFAULT_RESERVE_PERCENT: Final[float] = 20.0
 
 # Lithium-polymer packs deliver less usable energy as they get cold: internal
-# resistance rises and the pack hits its voltage floor sooner. Modelled as a
+# resistance rises and the pack hits its voltage floor sooner. Modeled as a
 # piecewise-linear derate between two reference points, flat above the warm
 # point. These are representative figures for the chemistry, not a measured
 # curve for any specific pack, and they are deliberately not aggressive.

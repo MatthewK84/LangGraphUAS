@@ -1,6 +1,6 @@
 """Backup and restore keep every signature verifiable (#113).
 
-An acknowledgement is a signature on one assessment: ``mission_threads`` holds
+An acknowledgment is a signature on one assessment: ``mission_threads`` holds
 the ``inputs_hash`` the operator signed, and the checkpoint holds the sealed
 assessment it was signed against. A restore that brings back one without the
 other, or the two from different moments, keeps the signature in appearance
@@ -32,8 +32,8 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from suas.config import get_settings
 from suas.db.models import MissionThreadRow
-from suas.db.restore_check import verify_acknowledgements
-from suas.db.retention import record_acknowledgement, record_thread
+from suas.db.restore_check import verify_acknowledgments
+from suas.db.retention import record_acknowledgment, record_thread
 from tests.test_ack import _BODY
 
 _BACKEND = Path(__file__).resolve().parents[1]
@@ -80,7 +80,7 @@ async def test_a_signed_plan_verifies_and_a_pending_one_is_not_counted(
         await _plan_and_sign(client)
         await _plan(client)
 
-    check = await verify_acknowledgements(session_factory, graph.checkpointer)
+    check = await verify_acknowledgments(session_factory, graph.checkpointer)
 
     assert check.checked == 1
     assert check.broken == []
@@ -99,7 +99,7 @@ async def test_a_signature_that_no_longer_matches_its_checkpoint_is_named(
         row.ack_inputs_hash = "f" * 64
         await session.commit()
 
-    check = await verify_acknowledgements(session_factory, graph.checkpointer)
+    check = await verify_acknowledgments(session_factory, graph.checkpointer)
 
     assert check.checked == 1
     assert len(check.broken) == 1
@@ -112,7 +112,7 @@ async def test_a_signature_whose_checkpoint_is_missing_is_named(
     async with session_factory() as session:
         await record_thread(session, "lost")
     async with session_factory() as session:
-        await record_acknowledgement(
+        await record_acknowledgment(
             session,
             thread_id="lost",
             actor="dispatcher-1",
@@ -121,7 +121,7 @@ async def test_a_signature_whose_checkpoint_is_missing_is_named(
             calculator_version="1",
         )
 
-    check = await verify_acknowledgements(session_factory, graph.checkpointer)
+    check = await verify_acknowledgments(session_factory, graph.checkpointer)
 
     assert check.broken == ["lost: signed abc, checkpoint has nothing"]
 
@@ -329,7 +329,7 @@ async def test_the_runbook_restores_signatures_that_still_verify(
 
     verified = _verify(target)
     assert verified.returncode == 0, verified.stdout + verified.stderr
-    assert "1 acknowledgement(s) verified" in verified.stdout
+    assert "1 acknowledgment(s) verified" in verified.stdout
 
     async with serve(target) as client:
         ready = await client.get("/ready")
@@ -347,7 +347,7 @@ async def test_the_runbook_restores_signatures_that_still_verify(
 
     again = _verify(target)
     assert again.returncode == 0
-    assert "2 acknowledgement(s) verified" in again.stdout
+    assert "2 acknowledgment(s) verified" in again.stdout
 
 
 @_needs_postgres

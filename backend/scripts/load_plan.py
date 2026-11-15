@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Drive concurrent planning requests and report what broke first.
 
-Costs nothing in model tokens. A plan now stops at the human acknowledgement
+Costs nothing in model tokens. A plan now stops at the human acknowledgment
 before any brief is generated, so the plan path never reaches the model -- the
 ``?brief=false`` flag the plan originally called for would have been a no-op.
 Pass ``--ack`` to additionally acknowledge each plan, which is the path that does

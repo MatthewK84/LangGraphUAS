@@ -69,7 +69,7 @@ test("catalog load, plan and ack run through both containers", async ({
   await expect(review).toHaveCount(0);
   await expect(brief).toHaveCount(1);
   await expect(brief.locator("xpath=..")).not.toContainText(
-    "Unable to record the acknowledgement",
+    "Unable to record the acknowledgment",
   );
   await expect(brief.locator("xpath=following-sibling::div")).not.toBeEmpty();
 

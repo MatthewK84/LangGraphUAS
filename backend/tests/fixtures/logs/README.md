@@ -36,13 +36,13 @@ column not listed is ignored.
 
 ## What a hover window means
 
-A row counts toward hover power only if it is not labelled `climb`, `descent`,
+A row counts toward hover power only if it is not labeled `climb`, `descent`,
 or `cruise`, **and** its measured vertical rate is within ±0.5 m/s, **and** its
 speed is at or below 1.5 m/s. The label alone is not enough: a row marked
 `hover` while the aircraft was climbing is excluded on its measured rate, because
 averaging climb power into a hover figure biases the energy budget toward GO.
 
-Cruise is the mirror image: not labelled `climb`, `descent`, or `hover`, within
+Cruise is the mirror image: not labeled `climb`, `descent`, or `hover`, within
 ±1.0 m/s vertically, and at or above 3.0 m/s.
 
 ## `astro_max_hover_excerpt.csv` is real flight data, used only in tests

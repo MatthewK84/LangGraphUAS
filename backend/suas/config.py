@@ -38,7 +38,7 @@ def describe_database_url(url: str) -> str:
     return f"{scheme}://{location}" if location else scheme
 
 
-def normalise_database_url(url: str) -> str:
+def normalize_database_url(url: str) -> str:
     """Return ``url`` with an explicit async driver when it names PostgreSQL.
 
     SQLAlchemy maps a bare ``postgresql://`` to psycopg2, which this project
@@ -46,7 +46,7 @@ def normalise_database_url(url: str) -> str:
     startup with an import error that never mentions the URL. Worse, it is an
     async engine, and psycopg2 could not serve it even if it were installed.
 
-    Normalising here means ``SUAS_DATABASE_URL=${{Postgres.DATABASE_URL}}``
+    Normalizing here means ``SUAS_DATABASE_URL=${{Postgres.DATABASE_URL}}``
     works as a direct reference, with no hand-edited scheme to get wrong or to
     silently revert the next time someone re-copies the variable. Anything that
     already names a driver, and every non-PostgreSQL URL, is returned untouched.
@@ -89,7 +89,7 @@ def parse_operator_keys(api_keys: str, api_key: str) -> dict[str, str]:
 
 
 class RetiredKey(NamedTuple):
-    """A rotated API key still honoured, from its last client IP, until it expires."""
+    """A rotated API key still honored, from its last client IP, until it expires."""
 
     operator_id: str
     key: str
@@ -183,8 +183,8 @@ class Settings(BaseSettings):
     @field_validator("database_url")
     @classmethod
     def _add_async_driver(cls, value: str) -> str:
-        """Accept a managed provider's URL verbatim (see normalise_database_url)."""
-        return normalise_database_url(value)
+        """Accept a managed provider's URL verbatim (see normalize_database_url)."""
+        return normalize_database_url(value)
 
     @model_validator(mode="after")
     def _refuse_non_postgres_when_required(self) -> "Settings":
@@ -345,7 +345,7 @@ class Settings(BaseSettings):
 
     @property
     def trusted_proxy_set(self) -> frozenset[str]:
-        """Return the peers whose X-Forwarded-For header is honoured."""
+        """Return the peers whose X-Forwarded-For header is honored."""
         return frozenset(ip.strip() for ip in self.trusted_proxies.split(",") if ip.strip())
 
     @property

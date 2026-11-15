@@ -78,7 +78,7 @@ One deviation. The spec's trap list includes a trap copy of an old datasheet
 conflict, "eval-only, never in the production seed". The fixtures here reach it
 through taped weather below the Astro's airframe minimum rather than through a
 separate seed file, since the conflict that matters -- pack minimum against
-airframe minimum, from #39 -- is already modelled in the catalogue. A second
+airframe minimum, from #39 -- is already modeled in the catalog. A second
 seed would have been a second source of truth for the same numbers.
 
 Not done: no real provider is implemented, so no real model appears on the

@@ -212,7 +212,7 @@ def golden_path_checks() -> list[tuple[str, bool]]:
     acked, final, pending = acked or {}, final or {}, pending or {}
     return [
         (
-            "plan 200 and awaiting acknowledgement",
+            "plan 200 and awaiting acknowledgment",
             plan_status == 200 and plan.get("awaiting_ack") is True,
         ),
         (
@@ -229,7 +229,7 @@ def golden_path_checks() -> list[tuple[str, bool]]:
         ),
         ("another browser cannot sign it", steal_status == 404),
         (
-            "acknowledgement accepted",
+            "acknowledgment accepted",
             ack_status == 200 and acked.get("awaiting_ack") is False,
         ),
         ("brief written after the signature", bool(acked.get("report"))),

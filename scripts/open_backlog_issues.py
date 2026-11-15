@@ -83,7 +83,9 @@ def parse_item(path: Path) -> BacklogItem:
 
 def load_backlog(directory: Path) -> list[BacklogItem]:
     """Return every backlog item in filename order."""
-    paths: list[Path] = sorted(p for p in directory.glob("*.md") if p.name != "README.md")
+    paths: list[Path] = sorted(
+        p for p in directory.glob("*.md") if p.name != "README.md"
+    )
     if not paths:
         raise ValueError(f"no backlog files found in {directory}")
     return [parse_item(path) for path in paths]
@@ -132,9 +134,14 @@ def ensure_labels(items: list[BacklogItem], repo: str) -> None:
 def create_issue(item: BacklogItem, repo: str) -> int:
     """Create one issue and return its number."""
     args: list[str] = [
-        "issue", "create", "--repo", repo,
-        "--title", item.title,
-        "--body", item.body + FOOTER,
+        "issue",
+        "create",
+        "--repo",
+        repo,
+        "--title",
+        item.title,
+        "--body",
+        item.body + FOOTER,
     ]
     for label in item.labels:
         args.extend(["--label", label])
@@ -142,12 +149,16 @@ def create_issue(item: BacklogItem, repo: str) -> int:
     return int(url.rstrip("/").rsplit("/", 1)[-1])
 
 
-def append_blockers(number: int, item: BacklogItem, created: dict[int, int], repo: str) -> None:
+def append_blockers(
+    number: int, item: BacklogItem, created: dict[int, int], repo: str
+) -> None:
     """Append a 'Blocked by' line once every issue number is known."""
     refs: list[str] = [f"#{created[dep]}" for dep in item.blocked_by if dep in created]
     if not refs:
         return
-    body: str = _run_gh(["issue", "view", str(number), "--repo", repo, "--json", "body"])
+    body: str = _run_gh(
+        ["issue", "view", str(number), "--repo", repo, "--json", "body"]
+    )
     current: str = json.loads(body)["body"]
     updated: str = current.replace(FOOTER, f"\n\nBlocked by {', '.join(refs)}.{FOOTER}")
     _run_gh(["issue", "edit", str(number), "--repo", repo, "--body", updated])
@@ -168,7 +179,9 @@ def main() -> int:
 
     if parsed.dry_run:
         for item in items:
-            blockers: str = f" (blocked by {list(item.blocked_by)})" if item.blocked_by else ""
+            blockers: str = (
+                f" (blocked by {list(item.blocked_by)})" if item.blocked_by else ""
+            )
             print(f"{item.index:02d} [{', '.join(item.labels)}] {item.title}{blockers}")
         return 0
 
@@ -189,7 +202,9 @@ def main() -> int:
         try:
             append_blockers(created[item.index], item, created, parsed.repo)
         except RuntimeError as exc:
-            print(f"warning: blockers for #{created[item.index]}: {exc}", file=sys.stderr)
+            print(
+                f"warning: blockers for #{created[item.index]}: {exc}", file=sys.stderr
+            )
 
     print(f"\n{len(created)} issues created.")
     return 0

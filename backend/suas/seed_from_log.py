@@ -24,7 +24,7 @@ AIRCRAFT_SEED: Final[Path] = DATA_DIR / "aircraft.json"
 FLIGHT_LOG_DIR: Final[Path] = DATA_DIR / "flight_logs"
 ASTRO_MAX_ID: Final[str] = "Freefly_Astro_Max"
 
-# The only screened log labelled Astro Max, and the conservative hover median.
+# The only screened log labeled Astro Max, and the conservative hover median.
 APPLIED_CSV: Final[str] = "054112f4.csv"
 APPLIED_SOURCE_URL: Final[str] = (
     "https://review.px4.io/plot_app?log=054112f4-683e-49c2-8777-097f5fe35df2"
@@ -53,11 +53,11 @@ def _hover_notes(estimate: PowerEstimate) -> str:
         f"Interquartile range {estimate.iqr_w} W. Source SHA-256 "
         "5bcef1faf0bcd0a72e5ac38a4b36150951635f80edd5d888c4ae942f50b50618, "
         "retrieved 2026-11-14 14:53:58 EST. This is the only screened log "
-        "labelled Astro Max, and the conservative (highest) of the three "
+        "labeled Astro Max, and the conservative (highest) of the three "
         "usable hover medians. Supporting evidence, not applied: "
         "8f757ee6-8978-4c7c-badc-0544b3a83906 (685.15 W, 152 samples, not "
-        "labelled Astro Max) and 6ca79cb1-017c-457d-b1c5-f4f401d87eb0 "
-        "(561.66 W, 3536 samples, not labelled Astro Max)."
+        "labeled Astro Max) and 6ca79cb1-017c-457d-b1c5-f4f401d87eb0 "
+        "(561.66 W, 3536 samples, not labeled Astro Max)."
     )
 
 

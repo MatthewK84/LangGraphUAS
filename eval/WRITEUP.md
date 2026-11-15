@@ -5,7 +5,7 @@ It covers the 2026-11-14 local-model runs, the later deterministic redesign,
 and the 2026-11-15 re-measurement of the same two GGUF files. Every figure
 below is taken from a path under `eval/results/`. A GO in these files means
 only that the scored decision matched the calculator on that fixture; it is
-not a flight authorisation, an airspace approval, or a statement that the
+not a flight authorization, an airspace approval, or a statement that the
 system is ready to dispatch aircraft.
 
 ## What was measured
@@ -165,4 +165,4 @@ They are measurements of two 7B GGUFs, at temperature 0.0 and seed 42, on
 one CPU-only host, against one frozen pack, as stored under
 `eval/results/2026-11-14/` and `eval/results/2026-11-15/`. They are not a
 provider ranking that survives a different quant, host, or prompt, and they
-are not evidence that a GO from this calculator authorises a flight.
+are not evidence that a GO from this calculator authorizes a flight.

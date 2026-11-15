@@ -2,7 +2,7 @@
 
 Two layers, because one is not enough on its own.
 
-``FOR UPDATE`` on the mission row serialises workers that share a Postgres
+``FOR UPDATE`` on the mission row serializes workers that share a Postgres
 database, which is the production shape. It does nothing on SQLite, where the
 clause is silently ignored, and nothing between two coroutines inside one
 process that share a connection pool.
@@ -24,7 +24,7 @@ _MAX_TRACKED: Final[int] = 4096
 _locks: Final[dict[str, asyncio.Lock]] = {}
 
 # How many acquisitions found their thread's lock already held, so had to wait:
-# two acknowledgements of one plan racing inside this worker. /metrics reports
+# two acknowledgments of one plan racing inside this worker. /metrics reports
 # it as suas_lock_contention_total{lock="thread"} (#112).
 _contended: list[int] = [0]
 

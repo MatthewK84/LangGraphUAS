@@ -91,7 +91,7 @@ def _basis(path: str, record: FieldProvenance | None) -> InputBasis:
     )
 
 
-def _summarise(
+def _summarize(
     found: dict[str, FieldProvenance | None], inputs: tuple[str, ...]
 ) -> NumberProvenance:
     records = [found[path] or _UNRECORDED for path in inputs]
@@ -108,6 +108,6 @@ def _summarise(
 def number_provenance(aircraft: Aircraft, payload: Payload) -> dict[str, NumberProvenance]:
     """Return the provenance of each W and Wh figure, keyed by its path in ``Calculations``."""
     return {
-        figure: _summarise({path: _lookup(aircraft, payload, path) for path in inputs}, inputs)
+        figure: _summarize({path: _lookup(aircraft, payload, path) for path in inputs}, inputs)
         for figure, inputs in WATT_FIGURE_INPUTS.items()
     }

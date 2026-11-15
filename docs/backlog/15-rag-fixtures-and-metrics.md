@@ -52,7 +52,7 @@ Manufacturer documents cannot be fetched from this environment -- the constraint
 recorded in #39. The figures resemble datasheet structure and are not a source
 of truth.
 
-**Retrieval gained a relevance floor, and that is a behaviour change.**
+**Retrieval gained a relevance floor, and that is a behavior change.**
 `false_confirm_rate` measured **1.0**: every unanswerable question returned
 evidence, because RRF always fills `top_k` and the vector leg scores every chunk
 non-zero. A question the corpus cannot answer came back with a citation, which

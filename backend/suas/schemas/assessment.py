@@ -6,7 +6,7 @@ with, or corrected by language-model output. The graph passes it to the report
 node as read-only context; ``suas.graph.seal`` enforces that the node cannot
 write any field defined here.
 
-``inputs_hash`` and ``calculator_version`` exist so a later acknowledgement can
+``inputs_hash`` and ``calculator_version`` exist so a later acknowledgment can
 be bound to exactly what was assessed: if either changes, a prior sign-off no
 longer applies to the current numbers.
 """

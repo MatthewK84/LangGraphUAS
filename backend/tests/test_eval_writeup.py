@@ -17,7 +17,7 @@ FORBIDDEN = (
     "safe to fly",
     "ready to fly",
     "flight-ready",
-    "flight authorisation from this pack",
+    "flight authorization from this pack",
 )
 
 

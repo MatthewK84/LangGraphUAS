@@ -4,7 +4,7 @@ Combines the individual physics and battery calculations into a single
 deterministic result. Kept pure so it is trivial to unit test (Principle 7).
 
 The model corrects power for all-up mass and air density, charges energy for
-climb and descent, penalises cruise for a worst-case headwind, derates battery
+climb and descent, penalizes cruise for a worst-case headwind, derates battery
 capacity when cold, and checks gusts and cold limits as well as steady wind and
 heat. An earlier revision did none of these, and every one of those omissions
 biased the result toward GO.
@@ -60,7 +60,7 @@ DEFAULT_CLIMB_EFFICIENCY: float = 0.6
 # purpose: an automatic hash of the source would churn on a comment edit and
 # stop meaning anything. CI fails a change under calculations/ that does not
 # bump it, so forgetting is not a quiet failure mode.
-CALCULATOR_VERSION: str = "1.9.0"
+CALCULATOR_VERSION: str = "1.9.1"
 
 # Reason text per safety flag, used when that flag is False. Keyed by the field
 # name on SafetyFlags so a new flag that is never mapped shows up immediately as
@@ -102,7 +102,7 @@ def _build_safety_flags(
 ) -> SafetyFlags:
     """Return the independent safety constraint flags.
 
-    The temperature check is two-sided: cold limits airframe and pack behaviour
+    The temperature check is two-sided: cold limits airframe and pack behavior
     just as heat does. Gusts are checked against the same airframe wind limit as
     sustained wind, since it is the gust that actually exceeds control authority.
 
@@ -273,7 +273,7 @@ def compute_inputs_hash(inputs: Mapping[str, Any]) -> str:
     Canonical JSON with sorted keys, so the same mission hashes identically
     across processes and restarts. The hash covers inputs rather than results:
     an operator changing the payload and the calculator changing a formula are
-    different events, and an acknowledgement needs to tell them apart.
+    different events, and an acknowledgment needs to tell them apart.
     """
     canonical: str = json.dumps(inputs, sort_keys=True, separators=(",", ":"), default=str)
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()

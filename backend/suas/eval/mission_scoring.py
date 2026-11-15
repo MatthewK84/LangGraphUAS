@@ -100,7 +100,7 @@ def hover_power_error_w(fixture: MissionFixture, answer: ModelAnswer) -> float |
 
     The payload-scaling trap reads here. A model holding hover watts constant as
     payload mass rises shows up as an error that grows with the payload, which
-    is the shape an engineer recognises.
+    is the shape an engineer recognizes.
     """
     if answer.hover_power_w is None:
         return None

@@ -40,7 +40,7 @@ async function analyzeByKeyboard(user: UserEvent): Promise<HTMLElement> {
   return screen.findByRole("region", { name: "Assessment review" });
 }
 
-describe("the acknowledgement without a mouse (#98)", () => {
+describe("the acknowledgment without a mouse (#98)", () => {
   it("signs by keyboard and lands focus on the outcome", async () => {
     stubBackend(ADVISORY_PLAN, BRIEFED_PLAN);
     const user = userEvent.setup();

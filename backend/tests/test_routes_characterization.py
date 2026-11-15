@@ -28,7 +28,7 @@ from suas.api.routes import (
     _record_violations,
     _resume_payload,
 )
-from suas.db.retention import get_acknowledgement
+from suas.db.retention import get_acknowledgment
 from suas.reference_data import load_rows
 from suas.schemas.domain import Aircraft, Payload
 from suas.schemas.requests import AckRequest, MissionEdits
@@ -114,7 +114,7 @@ async def test_an_ack_without_a_hash_is_accepted_and_recorded(
 
     assert response.status_code == 200
     async with session_factory() as session:
-        row = await get_acknowledgement(session, thread_id)
+        row = await get_acknowledgment(session, thread_id)
     assert row is not None
     assert row.ack_actor == "no-hash"
     assert row.ack_inputs_hash == created["assessment"]["inputs_hash"]
@@ -134,7 +134,7 @@ async def test_an_abort_is_not_recorded_as_a_signature(
     assert response.status_code == 200
     assert response.json()["aborted"] is True
     async with session_factory() as session:
-        row = await get_acknowledgement(session, thread_id)
+        row = await get_acknowledgment(session, thread_id)
     assert row is not None
     assert row.ack_actor is None
 
@@ -157,7 +157,7 @@ async def test_confirming_a_thread_with_no_retention_row_resumes_and_warns(
     assert response.json()["report"] == "TEST REPORT"
     assert "Acknowledged thread pre-retention has no retention row" in caplog.text
     async with session_factory() as session:
-        assert await get_acknowledgement(session, "pre-retention") is None
+        assert await get_acknowledgment(session, "pre-retention") is None
 
 
 async def test_the_edit_payload_reaches_the_graph(app_with_graph: FastAPI) -> None:

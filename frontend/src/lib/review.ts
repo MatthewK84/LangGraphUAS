@@ -25,7 +25,7 @@ export function confirmBlocker(state: ConfirmState): string | null {
     return "Waiting for the backend.";
   }
   if (state.advisory && !state.understood) {
-    return "Tick the advisory acknowledgement to sign.";
+    return "Tick the advisory acknowledgment to sign.";
   }
   return null;
 }

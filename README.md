@@ -208,7 +208,7 @@ list required status checks. Rules and rationale for each gate are in
 | `postgres-integration` | Blocks | Real Postgres: migrations apply, the app boots end to end, `/ready` refuses an unmigrated database, and concurrent startup seeds all succeed |
 | `calculator-version` | Blocks (pull requests only) | A change to `backend/suas/calculations/` must bump `CALCULATOR_VERSION` |
 | `ub-mode` | Blocks | CRAP below 10 for every function in `backend/suas`, and no unlisted duplicate pair at 0.8 or above |
-| `frontend` | Blocks | `tsc`, ESLint (cyclomatic complexity 10 or less, plus `@next/eslint-plugin-next`), the UI standard scan ([docs/ui-standard.md](docs/ui-standard.md)), Prettier, Vitest (which includes axe-core over the planner page and a keyboard-only acknowledgement), production build |
+| `frontend` | Blocks | `tsc`, ESLint (cyclomatic complexity 10 or less, plus `@next/eslint-plugin-next`), the UI standard scan ([docs/ui-standard.md](docs/ui-standard.md)), Prettier, Vitest (which includes axe-core over the planner page and a keyboard-only acknowledgment), production build |
 | `docker` | Blocks on the build | Both images build. Its trivy scan of HIGH and CRITICAL findings is **report-only** (job summary) |
 | `workflow-lint` | Blocks | actionlint and zizmor over `.github/`: actions pinned to commits, no template injection, least-privilege tokens |
 | `secrets-scan` | Blocks | gitleaks, a checksum-verified pinned release, over the full history |
@@ -352,7 +352,7 @@ recorded as `secondary` with the URL and the caveat attached. The operational
 gate is unmoved, which is correct: a citation nobody has read is not evidence.
 
 Freefly documents a separate battery procedure of 10 C minimum at takeoff for
-the Astro, well above the airframe's -20 C limit. That is modelled as
+the Astro, well above the airframe's -20 C limit. That is modeled as
 `pack_min_takeoff_c` and checked as its own safety flag rather than folded into
 `min_temp_c`: they are different limits with different owners, and an airframe
 rated to -20 C can still have a pack that must not launch below +10 C. Ambient
@@ -390,7 +390,7 @@ dashed for any reading not fetched now), and an amber banner.
 
 Parsing is strict. A missing, non-numeric, NaN or infinite field makes the whole
 payload unusable rather than being quietly replaced with a default — substituting
-defaults is how a reading nobody measured ends up labelled `live`.
+defaults is how a reading nobody measured ends up labeled `live`.
 
 Timeouts are bounded twice: `SUAS_WEATHER_TIMEOUT_S` (default 3s) per request,
 and `SUAS_WEATHER_DEADLINE_S` (default 6s) across the whole operation including
@@ -493,7 +493,7 @@ from the response's `report_source`: `model` only for prose the model wrote and
 the seal kept, and `deterministic` for every brief written by code (no key, a
 failed model call, a brief the seal withheld for contradicting the assessment or
 stating an unsupported number, an abort, or no brief yet). While a plan is computing nothing claims a model is at work, a plan or
-acknowledgement that fails says what was not done (nothing computed, or the
+acknowledgment that fails says what was not done (nothing computed, or the
 signature not recorded) with the raw reason beneath, and a plan with no figures
 says so instead of showing empty tables.
 
@@ -510,7 +510,7 @@ Every response carries an `X-Request-ID` header. Supply your own to correlate a
 client trace with server logs; one is generated when absent.
 
 <details>
-<summary><b>Planning: request, acknowledgement, and the assessment</b></summary>
+<summary><b>Planning: request, acknowledgment, and the assessment</b></summary>
 
 `POST /api/plan` accepts a validated mission request and returns the go/no-go
 result, weather, deterministic calculations, a report, the `thread_id`, and any
@@ -549,7 +549,7 @@ POST /api/plan/{thread_id}/ack
 ```
 
 `action` is `confirm`, `edit`, or `abort`. `inputs_hash` is the assessment the
-operator was actually shown; if it no longer matches, the acknowledgement is
+operator was actually shown; if it no longer matches, the acknowledgment is
 refused with `409` rather than applied to numbers that changed underneath it. An
 `edit` (altitude, hover time, or payload) re-runs the calculator and pauses
 again, because a revision is a new thing to sign. An `abort` ends the run without
@@ -569,7 +569,7 @@ It has one entry per W or Wh figure, keyed by its path (`effective_hover_power_w
 weakest `source` and lowest `confidence` among the reference fields the figure
 was computed from, `operational_grade` (true only when every one of them is
 `datasheet` or `flight_log`), and those `inputs`. A figure computed from even one
-estimate is labelled as one, and the dashboard shows the label beside the
+estimate is labeled as one, and the dashboard shows the label beside the
 number. Weather's own provenance is `weather.source`.
 
 Each entry also carries `basis`: one record per input field, with the catalog's
@@ -577,11 +577,11 @@ Each entry also carries `basis`: one record per input field, with the catalog's
 `notes` (`value` and `unit` are `null` when the catalog keeps no record, and the
 source is then `unknown`). In the dashboard, the basis label beside a figure
 opens a provenance drawer under the figures listing those fields: estimates are
-labelled "Estimate", unrecorded fields "Not recorded", a cited field links out to
+labeled "Estimate", unrecorded fields "Not recorded", a cited field links out to
 its document (http and https only), and retrieval times show in UTC. Escape or
 Close shuts it and puts focus back on the figure.
 
-The acknowledgement can be done without a mouse. Tab reaches the advisory
+The acknowledgment can be done without a mouse. Tab reaches the advisory
 checkbox (Space ticks it), then Acknowledge and Abort (Enter activates them).
 Once a decision is recorded, focus moves to the note saying what happened, not
 to the page body. Once there is an assessment, the next Tab after Analyze is a
@@ -673,7 +673,7 @@ that plans are built on should be a deliberate act, not a side effect of
 uploading a file.
 
 **What a hover window means.** A sample counts toward hover power only if it is
-not labelled `climb`, `descent`, or `cruise`, **and** its measured vertical rate
+not labeled `climb`, `descent`, or `cruise`, **and** its measured vertical rate
 is within ±0.5 m/s, **and** its speed is at or below 1.5 m/s. The label alone is
 not enough: a row marked `hover` while the aircraft was climbing is excluded on
 its measured rate, because averaging climb power into a hover figure understates
@@ -738,7 +738,7 @@ Ingest is **offline by design**. The API process never parses a document, and a
 test asserts the request path does not import the ingest code.
 
 Every chunk is screened before it is stored. Invisible characters are stripped,
-the text is NFKC-normalised, and HTML and markdown link syntax is removed —
+the text is NFKC-normalized, and HTML and markdown link syntax is removed —
 **in that order, before the content is matched against anything**. Zero-width
 joiners and bidirectional overrides exist to make two different strings look
 identical to a person and different to a matcher, so a screener that runs after
@@ -894,7 +894,7 @@ the air.
   in memory and the ceiling is that times the worker count; that is the local
   default, where one process needs no shared state.
 - **Resuming an interrupt is not per process.** Two workers handed the same
-  acknowledgement serialise on a per-thread mutex and a `FOR UPDATE` row lock;
+  acknowledgment serialize on a per-thread mutex and a `FOR UPDATE` row lock;
   one proceeds, the other gets 409. Measured, not assumed: see
   [`docs/ops.md`](docs/ops.md).
 - **Load and crash-recovery figures are recorded** in [`docs/ops.md`](docs/ops.md),
@@ -910,7 +910,7 @@ the air.
   `preDeployCommand` from `railway.json`, and anywhere else runs
   `docker-entrypoint.sh migrate` once per release. `MIGRATE_ON_START=true`
   upgrades before serving, for a single local container only. Upgrades hold a
-  Postgres advisory lock, so concurrent ones serialise, and `/ready` stays 503
+  Postgres advisory lock, so concurrent ones serialize, and `/ready` stays 503
   until the schema is at the code's revision. See
   [ops: Migrations](docs/ops.md#migrations) for rollback.
 - **Reference power figures are estimates.** See Data provenance. Swap in
@@ -987,5 +987,5 @@ docker-compose.yml
 [MIT](LICENSE) © 2026 Matthew K.
 
 Blue UAS names in the bundled reference data identify published platforms.
-They are reference data, not an endorsement by those programmes, the
-manufacturers, DIU, or DCMA. A GO from this calculator is not a flight authorisation.
+They are reference data, not an endorsement by those programs, the
+manufacturers, DIU, or DCMA. A GO from this calculator is not a flight authorization.

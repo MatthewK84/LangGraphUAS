@@ -242,7 +242,7 @@
       "source_url": "https://www.parrot.com/assets/s3fs-public/2023-02/ANAFI-USA-product-sheet.pdf",
       "retrieved_at": "2026-10-28",
       "confidence": "high",
-      "notes": "2023-02 product sheet resolves the prior 43/49/50 C circulation in favour of +50 C. Quote: \"Operating temperature: -33 \u00b0F (-36 \u00b0C) to +122 \u00b0F (+50 \u00b0C)\". Retrieved 2026-10-28 from manufacturer document."
+      "notes": "2023-02 product sheet resolves the prior 43/49/50 C circulation in favor of +50 C. Quote: \"Operating temperature: -33 \u00b0F (-36 \u00b0C) to +122 \u00b0F (+50 \u00b0C)\". Retrieved 2026-10-28 from manufacturer document."
     },
     "min_temp_c": {
       "value": -36.0,
@@ -479,7 +479,7 @@
       "source_url": "https://review.px4.io/plot_app?log=054112f4-683e-49c2-8777-097f5fe35df2",
       "retrieved_at": "2026-11-14",
       "confidence": "high",
-      "notes": "Median of 179 selected hover samples from PX4 Flight Review log 054112f4-683e-49c2-8777-097f5fe35df2 (CC BY 4.0). Interquartile range 92.83 W. Source SHA-256 5bcef1faf0bcd0a72e5ac38a4b36150951635f80edd5d888c4ae942f50b50618, retrieved 2026-11-14 14:53:58 EST. This is the only screened log labelled Astro Max, and the conservative (highest) of the three usable hover medians. Supporting evidence, not applied: 8f757ee6-8978-4c7c-badc-0544b3a83906 (685.15 W, 152 samples, not labelled Astro Max) and 6ca79cb1-017c-457d-b1c5-f4f401d87eb0 (561.66 W, 3536 samples, not labelled Astro Max)."
+      "notes": "Median of 179 selected hover samples from PX4 Flight Review log 054112f4-683e-49c2-8777-097f5fe35df2 (CC BY 4.0). Interquartile range 92.83 W. Source SHA-256 5bcef1faf0bcd0a72e5ac38a4b36150951635f80edd5d888c4ae942f50b50618, retrieved 2026-11-14 14:53:58 EST. This is the only screened log labeled Astro Max, and the conservative (highest) of the three usable hover medians. Supporting evidence, not applied: 8f757ee6-8978-4c7c-badc-0544b3a83906 (685.15 W, 152 samples, not labeled Astro Max) and 6ca79cb1-017c-457d-b1c5-f4f401d87eb0 (561.66 W, 3536 samples, not labeled Astro Max)."
     },
     "cruise_power_w": {
       "value": 434.8,

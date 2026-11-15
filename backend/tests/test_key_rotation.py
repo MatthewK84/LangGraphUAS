@@ -1,7 +1,7 @@
 """Key rotation without breaking open interrupts (#83).
 
 A key is rotated by restarting with a new value under the same operator id.
-The mission's owner is the id, not the key, and the acknowledgement is bound to
+The mission's owner is the id, not the key, and the acknowledgment is bound to
 the assessment's ``inputs_hash``, not to whichever key asked for it. So a plan
 left waiting for a signature survives the rotation, the old key stops working
 at once, and a stale signature is still refused. The same holds for the
