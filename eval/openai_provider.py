@@ -30,9 +30,7 @@ from suas.schemas.responses import Calculations, WeatherReading
 _DEFAULT_TEMPERATURE: Final[float] = 0.0
 _DEFAULT_SEED: Final[int] = 42
 _DEFAULT_TIMEOUT_S: Final[float] = 180.0
-_JSON_FENCE: Final[re.Pattern[str]] = re.compile(
-    r"```(?:json)?\s*(\{.*?\})\s*```", re.DOTALL
-)
+_JSON_FENCE: Final[re.Pattern[str]] = re.compile(r"```(?:json)?\s*(\{.*?\})\s*```", re.DOTALL)
 _FIRST_OBJECT: Final[re.Pattern[str]] = re.compile(r"\{.*\}", re.DOTALL)
 
 ASSESS_TOOL: Final[dict[str, Any]] = {
@@ -226,9 +224,7 @@ def _optional_float(raw: object) -> float | None:
         return None
 
 
-def mission_prompt(
-    fixture: MissionFixture, aircraft: Aircraft, payload: Payload
-) -> str:
+def mission_prompt(fixture: MissionFixture, aircraft: Aircraft, payload: Payload) -> str:
     """Return the user prompt describing one fixture, without expected answers."""
     return (
         f"Fixture: {fixture.fixture_id}. Trap type (for your information, not "
@@ -250,9 +246,7 @@ def mission_prompt(
     )
 
 
-def sealed_prompt_block(
-    assessment: DeterministicAssessment, calculations: Calculations
-) -> str:
+def sealed_prompt_block(assessment: DeterministicAssessment, calculations: Calculations) -> str:
     """Return the already-computed sealed figures the narrative may use."""
     return (
         "The deterministic calculator has already run. Its sealed result is "
@@ -280,13 +274,8 @@ class OpenAICompatibleProvider:
         self.track = track
         self.endpoint = endpoint
         self._client = client
-        aircraft = {
-            row["id"]: Aircraft.model_validate(row)
-            for row in load_rows("aircraft.json")
-        }
-        payloads = {
-            row["id"]: Payload.model_validate(row) for row in load_rows("payloads.json")
-        }
+        aircraft = {row["id"]: Aircraft.model_validate(row) for row in load_rows("aircraft.json")}
+        payloads = {row["id"]: Payload.model_validate(row) for row in load_rows("payloads.json")}
         self._aircraft = aircraft
         self._payloads = payloads
         self.last_raw: str = ""
@@ -297,9 +286,7 @@ class OpenAICompatibleProvider:
         self.last_sealed_decision: str = ""
         self._sealed: tuple[DeterministicAssessment, Calculations] | None = None
 
-    def _assess(
-        self, fixture: MissionFixture
-    ) -> tuple[DeterministicAssessment, Calculations]:
+    def _assess(self, fixture: MissionFixture) -> tuple[DeterministicAssessment, Calculations]:
         """Run the deterministic calculator before any model call."""
         aircraft = self._aircraft[fixture.airframe]
         payload = self._payloads[fixture.payload]
@@ -348,13 +335,9 @@ class OpenAICompatibleProvider:
         raw = self._complete(messages, fixture)
         self.last_raw = raw
         parsed = parse_model_answer(raw)
-        result = apply_sealed_override(
-            assessment, calculations, parsed, narrative=parsed.prose
-        )
+        result = apply_sealed_override(assessment, calculations, parsed, narrative=parsed.prose)
         self.last_disagreements = list(result.disagreements)
-        published, invented = ground_narrative(
-            result.answer.prose, assessment, calculations
-        )
+        published, invented = ground_narrative(result.answer.prose, assessment, calculations)
         self.last_ungrounded = invented
         self.last_narrative_source = "deterministic" if invented else "model"
         if not invented:
@@ -426,9 +409,7 @@ class OpenAICompatibleProvider:
             return f"{base}/chat/completions"
         return f"{base}/v1/chat/completions"
 
-    def _run_tool(
-        self, call: dict[str, Any], fixture: MissionFixture
-    ) -> dict[str, Any]:
+    def _run_tool(self, call: dict[str, Any], fixture: MissionFixture) -> dict[str, Any]:
         name = (call.get("function") or {}).get("name", "")
         if name != "assess_mission":
             return {"error": f"unknown tool: {name}"}
