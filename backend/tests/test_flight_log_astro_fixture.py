@@ -114,7 +114,11 @@ async def test_fewer_than_thirty_hover_samples_are_stored_but_not_applied(
     assert applied == []
     assert aircraft is not None
     assert aircraft.hover_power_w == pytest.approx(seed_hover)
-    assert FieldProvenance.model_validate(aircraft.provenance["hover_power_w"]).source is not (
-        FieldSource.FLIGHT_LOG
-    )
+    # The seed hover is already flight_log (054112f4). A short log must not
+    # replace that provenance with a different excerpt.
+    seed_record = json.loads(_SEED.read_text(encoding="utf-8"))[_AIRFRAME]["hover_power_w"]
+    written = FieldProvenance.model_validate(aircraft.provenance["hover_power_w"])
+    assert written.source.value == seed_record["source"]
+    assert written.source_url == seed_record["source_url"]
+    assert written.value == seed_record["value"]
     assert _SEED.read_bytes() == seed_before

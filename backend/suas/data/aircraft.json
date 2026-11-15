@@ -473,13 +473,13 @@
       "notes": "Nominal cruise, roughly 0.6 to 0.7 of published maximum speed."
     },
     "hover_power_w": {
-      "value": 483.1,
+      "value": 992.07,
       "unit": "W",
-      "source": "derived",
-      "source_url": null,
-      "retrieved_at": null,
-      "confidence": "low",
-      "notes": "hover_power_w = battery_wh / no_payload_endurance_hours. Recomputed from datasheet battery_wh=314.0 and no-payload endurance 39 min (0.6500 h)."
+      "source": "flight_log",
+      "source_url": "https://review.px4.io/plot_app?log=054112f4-683e-49c2-8777-097f5fe35df2",
+      "retrieved_at": "2026-11-14",
+      "confidence": "high",
+      "notes": "Median of 179 selected hover samples from PX4 Flight Review log 054112f4-683e-49c2-8777-097f5fe35df2 (CC BY 4.0). Interquartile range 92.83 W. Source SHA-256 5bcef1faf0bcd0a72e5ac38a4b36150951635f80edd5d888c4ae942f50b50618, retrieved 2026-11-14 14:53:58 EST. This is the only screened log labelled Astro Max, and the conservative (highest) of the three usable hover medians. Supporting evidence, not applied: 8f757ee6-8978-4c7c-badc-0544b3a83906 (685.15 W, 152 samples, not labelled Astro Max) and 6ca79cb1-017c-457d-b1c5-f4f401d87eb0 (561.66 W, 3536 samples, not labelled Astro Max)."
     },
     "cruise_power_w": {
       "value": 434.8,
@@ -488,7 +488,7 @@
       "source_url": null,
       "retrieved_at": null,
       "confidence": "low",
-      "notes": "cruise_power_w = 0.90 * hover_power_w."
+      "notes": "Previously derived as 0.90 * the datasheet-endurance hover (483.1 W). Not updated from the flight logs: the Astro Max log's cruise window was flown at a median 4.5 m/s, not the 14 m/s catalog cruise, so that power is not evidence for catalog cruise_power_w. Not recomputed from the new hover figure, because that would invent a cruise number the logs do not support."
     },
     "max_temp_c": {
       "value": 50.0,

@@ -28,7 +28,14 @@ def test_changelog_has_no_feature_prs_during_the_showcase_freeze() -> None:
         if monday not in _FREEZE_WEEK_MONDAYS:
             continue
         for line in lines:
-            assert "oracle" in line.lower(), (
+            lower = line.lower()
+            # t59u is a one-time, user-approved exception for the Astro hover
+            # data change. Do not generalize this escape to other work.
+            allowed = "oracle" in lower or (
+                "t59u" in lower and "freeze exception" in lower and "hover" in lower
+            )
+            assert allowed, (
                 f"{heading}: freeze-week entries may only record oracle-bug "
-                f"fixes, and must say so: {line!r}"
+                f"fixes, or the t59u Astro hover freeze exception, and must "
+                f"say so: {line!r}"
             )

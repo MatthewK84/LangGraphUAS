@@ -17,13 +17,14 @@ has traced to a primary document, and the operational gate treats it that way.
 
 ## Summary
 
-85 numeric fields across 8 airframes and 6 payloads. **48** are good enough to fly on.
+85 numeric fields across 8 airframes and 6 payloads. **49** are good enough to fly on.
 
 | Source | Fields |
 | --- | --- |
 | `datasheet` | 48 |
-| `derived` | 15 |
+| `derived` | 14 |
 | `estimate` | 10 |
+| `flight_log` | 1 |
 | `secondary` | 6 |
 | `unknown` | 6 |
 
@@ -82,6 +83,10 @@ Every numeric field, grouped by `source`, so the remaining gap is visible in one
 - `Trillium_HD40_LV.power_draw_w`
 - `Trillium_HD40_LV.weight_kg`
 
+### `flight_log` (1)
+
+- `Freefly_Astro_Max.hover_power_w`
+
 ### `secondary` (6)
 
 - `Skydio_X10D.max_payload_kg`
@@ -91,7 +96,7 @@ Every numeric field, grouped by `source`, so the remaining gap is visible in one
 - `Freefly_Alta_X.max_wind_mps`
 - `Freefly_Alta_X.weight_kg`
 
-### `derived` (15)
+### `derived` (14)
 
 - `Skydio_X10D.cruise_power_w`
 - `Skydio_X10D.hover_power_w`
@@ -102,7 +107,6 @@ Every numeric field, grouped by `source`, so the remaining gap is visible in one
 - `Teal_Golden_Eagle.cruise_power_w`
 - `Teal_Golden_Eagle.hover_power_w`
 - `Freefly_Astro_Max.cruise_power_w`
-- `Freefly_Astro_Max.hover_power_w`
 - `Freefly_Alta_X.battery_wh`
 - `Freefly_Alta_X.cruise_power_w`
 - `Freefly_Alta_X.hover_power_w`
@@ -208,9 +212,9 @@ Every numeric field, grouped by `source`, so the remaining gap is visible in one
 | Field | Value | Unit | Source | URL | Confidence | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
 | `battery_wh` | 314.0 | Wh | `datasheet` | https://freeflysystems.com/astro/specs | high | System energy 2 × 157 Wh = 314 Wh. Quote: "Capacity (SL8-Air) 157Wh (two batteries required)". Retrieved 2026-10-28 from manufacturer document. |
-| `cruise_power_w` | 434.8 | W | `derived` | - | low | cruise_power_w = 0.90 * hover_power_w. |
+| `cruise_power_w` | 434.8 | W | `derived` | - | low | Previously derived as 0.90 * the datasheet-endurance hover (483.1 W). Not updated from the flight logs: the Astro Max log's cruise window was flown at a median 4.5 m/s, not the 14 m/s catalog cruise, so that power is not evidence for catalog cruise_power_w. Not recomputed from the new hover figure, because that would invent a cruise number the logs do not support. |
 | `cruise_speed_mps` | 14.0 | m/s | `estimate` | - | low | Nominal cruise, roughly 0.6 to 0.7 of published maximum speed. |
-| `hover_power_w` | 483.1 | W | `derived` | - | low | hover_power_w = battery_wh / no_payload_endurance_hours. Recomputed from datasheet battery_wh=314.0 and no-payload endurance 39 min (0.6500 h). |
+| `hover_power_w` | 992.07 | W | `flight_log` | https://review.px4.io/plot_app?log=054112f4-683e-49c2-8777-097f5fe35df2 | high | Median of 179 selected hover samples from PX4 Flight Review log 054112f4-683e-49c2-8777-097f5fe35df2 (CC BY 4.0). Interquartile range 92.83 W. Source SHA-256 5bcef1faf0bcd0a72e5ac38a4b36150951635f80edd5d888c4ae942f50b50618, retrieved 2026-11-14 14:53:58 EST. This is the only screened log labelled Astro Max, and the conservative (highest) of the three usable hover medians. Supporting evidence, not applied: 8f757ee6-8978-4c7c-badc-0544b3a83906 (685.15 W, 152 samples, not labelled Astro Max) and 6ca79cb1-017c-457d-b1c5-f4f401d87eb0 (561.66 W, 3536 samples, not labelled Astro Max). |
 | `max_payload_kg` | 3.0 | kg | `datasheet` | https://freeflysystems.com/astro/specs | high | Quote: "Maximum Payload 3,000 g". Retrieved 2026-10-28 from manufacturer document. |
 | `max_temp_c` | 50.0 | C | `datasheet` | https://freeflysystems.com/astro/specs | high | Quote: "Operating Temperatures -20 to 50 C". Retrieved 2026-10-28 from manufacturer document. |
 | `max_wind_mps` | 8.0 | m/s | `datasheet` | https://docs.freeflysystems.com/astro/pilots-operating-handbook/limitations | high | Manufacturer publishes an advisory band 8-10 m/s, not a single hard max. Conservative end 8.0 m/s used for the limit. Quote: "Operating Astro at winds greater than 8-10m/s can be dangerous". Retrieved 2026-10-28 from manufacturer document. |

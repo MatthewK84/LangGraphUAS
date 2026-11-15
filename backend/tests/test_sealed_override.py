@@ -100,8 +100,8 @@ def test_a_model_go_cannot_override_a_sealed_no_go() -> None:
             weather={},
             expected_decision="no_go",
             expected_mode="advisory",
-            expected_residual_wh_range=(122.57, 124.57),
-            expected_hover_power_w=477.08,
+            expected_residual_wh_range=(71.39, 73.39),
+            expected_hover_power_w=979.71,
             calculator_version="1.9.0",
         ),
         result.answer,
@@ -197,8 +197,8 @@ def _pp01_fixture():
         },
         expected_decision="no_go",
         expected_mode="advisory",
-        expected_residual_wh_range=(122.57, 124.57),
-        expected_hover_power_w=477.08,
+        expected_residual_wh_range=(71.39, 73.39),
+        expected_hover_power_w=979.71,
         calculator_version="1.9.0",
     )
 
